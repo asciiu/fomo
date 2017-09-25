@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import com.softwaremill.bootzooka.email.application.DummyEmailService
 import com.softwaremill.bootzooka.passwordreset.application.SqlPasswordResetCodeSchema
 import com.softwaremill.bootzooka.user.application.SqlUserSchema
-import com.softwaremill.bootzooka.{DependencyWiring, Main}
+import com.softwaremill.bootzooka.{DependencyWiring, HttpService, Main}
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.support.PageFactory
 import org.scalatest.concurrent.ScalaFutures
@@ -30,7 +30,7 @@ class BaseUiSpec extends FunSuite with Matchers with BeforeAndAfterAll with Befo
   var binding: ServerBinding              = _
 
   override def beforeAll() {
-    val (startFuture, _beans) = new Main().start()
+    val (startFuture, _beans) = new HttpService().start()
     businessLogic = _beans
 
     binding = startFuture.futureValue

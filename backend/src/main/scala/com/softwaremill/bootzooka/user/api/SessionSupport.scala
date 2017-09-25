@@ -28,7 +28,7 @@ trait SessionSupport {
     }
   }
 
-  def userIdFromSession: Directive1[UserId] = session(refreshable, usingCookies).flatMap {
+  def userIdFromSession: Directive1[UserId] = session(refreshable, usingHeaders).flatMap {
     _.toOption match {
       case None    => reject(AuthorizationFailedRejection)
       case Some(s) => provide(s.userId)
