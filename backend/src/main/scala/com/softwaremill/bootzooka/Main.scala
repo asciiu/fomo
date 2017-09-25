@@ -3,7 +3,7 @@ package com.softwaremill.bootzooka
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.stream.ActorMaterializer
-import com.flow.bittrex.BittrexWebsocketService
+import com.flow.bittrex.{BittrexWebsocketActor, BittrexWebsocketService}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 
@@ -17,7 +17,7 @@ object Main extends App with StrictLogging {
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val bittrexFeed = new BittrexWebsocketService(ConfigFactory.load())
+  val bittrexFeed = actorSystem.actorOf(BittrexWebsocketActor.props(ConfigFactory.load()), name = "bittrex.websocket")
 
   val (startFuture, bl) = new HttpService().start()
 
