@@ -12,8 +12,6 @@ import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-
-
 object BittrexWebsocketActor {
 
   def props(conf: Config)(implicit context: ExecutionContext,
@@ -27,20 +25,24 @@ class BittrexWebsocketActor(config: Config)
                               materializer: ActorMaterializer) extends Directives
   with BittrexJsonSupport with Actor with ActorLogging {
 
+  import BittrexMarketEventPublisher._
+
   val endpoint = config.getString("bittrex.websocket")
+
+  val publisher = system.actorOf(BittrexMarketEventPublisher.props(), name = "bittrex-publisher")
+
   val incoming: Sink[Message, Future[Done]] =
     Sink.foreach[Message] {
       case TextMessage.Streamed(source) =>
-        source.runFold("")(_ + _)(materializer).map{ x =>
-          Unmarshal(x).to[BittrexSummary].map { t =>
-            log.info(s"$t")
-          }
+        source.runFold("")(_ + _)(materializer).map{ str =>
+          publishSummary(str)
         }(materializer.executionContext)
-      case x =>
-        //Unmarshal(x).to[BittrexSummary].map { t =>
-        //  println(t)
-        //}
-        log.warning(s"what is this? $x")
+
+      case TextMessage.Strict(str) =>
+        publishSummary(str)
+
+      case msg =>
+        log.warning(s"received unknown message $msg")
     }
 
   // using Source.maybe materializes into a promise
@@ -64,9 +66,17 @@ class BittrexWebsocketActor(config: Config)
     log.info("closed bittrex websocket")
   }
 
+  // implements empty receive for actor
   def receive = {
     case x =>
-      println(s"received $x")
+      log.warning(s"received unknown $x")
+  }
+
+  private def publishSummary(json: String): Unit = {
+    Unmarshal(json).to[BittrexSummary].map { summary =>
+      // send the summary to our publisher to process
+      publisher ! MarketSummaries(summary.A)
+    }
   }
 }
 
