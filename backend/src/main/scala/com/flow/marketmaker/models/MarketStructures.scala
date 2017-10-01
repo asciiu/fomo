@@ -15,6 +15,8 @@ object MarketStructures {
   case class PeriodVolume(time: OffsetDateTime, btcVolume: BigDecimal)
   case class BollingerBandPoint(time: OffsetDateTime, center: BigDecimal, upper: BigDecimal, lower: BigDecimal)
 
+  // TODO we need a new generic case class here that
+  // original struct used for polo
   case class MarketMessage(time: OffsetDateTime,
                            cryptoCurrency: String,
                            last: BigDecimal,
@@ -27,7 +29,23 @@ object MarketStructures {
                            high24hr: BigDecimal,
                            low24hr: BigDecimal)
 
-  case class PriceUpdateBTC(time: OffsetDateTime, last: BigDecimal)
+  // new struct used for bittrex
+  case class MarketUpdate(MarketName: String,
+                         High: Float,
+                         Low: Float,
+                         Volume: Float,
+                         Last: Float,
+                         BaseVolume: Float,
+                         TimeStamp: String,
+                         Bid: Float,
+                         Ask: Float,
+                         OpenBuyOrders: Int,
+                         OpenSellOrders: Int,
+                         PrevDay: Float,
+                         Created: String)
+
+
+   case class PriceUpdateBTC(time: OffsetDateTime, last: BigDecimal)
 
   /**
     * Represents an Order.

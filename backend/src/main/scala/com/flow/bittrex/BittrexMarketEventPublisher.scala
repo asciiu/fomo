@@ -1,22 +1,24 @@
 package com.flow.bittrex
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import com.flow.marketmaker.{MarketEvent, MarketEventBus}
+
 import scala.concurrent.ExecutionContext
 
 
 object BittrexMarketEventPublisher {
 
-  def props()(implicit context: ExecutionContext, system: ActorSystem): Props =
-    Props(new BittrexMarketEventPublisher())
+  def props(eventBus: MarketEventBus)(implicit context: ExecutionContext, system: ActorSystem): Props =
+    Props(new BittrexMarketEventPublisher(eventBus))
 
   case class MarketSummaries(summaries: List[BittrexNonce])
 }
 
-class BittrexMarketEventPublisher()(implicit executionContext: ExecutionContext,
-                                    system: ActorSystem) extends Actor with ActorLogging {
+class BittrexMarketEventPublisher(eventBus: MarketEventBus)
+                                 (implicit executionContext: ExecutionContext, system: ActorSystem)
+  extends Actor with ActorLogging {
 
   import BittrexMarketEventPublisher._
-  val eventBus = BittrexEventBus()
 
   def receive = {
     case MarketSummaries(summaries) =>
@@ -29,8 +31,7 @@ class BittrexMarketEventPublisher()(implicit executionContext: ExecutionContext,
   def publishSummary(summary: List[BittrexNonce]) = {
     summary.foreach{ s =>
       s.Deltas.foreach{ bittrexMarketUpdate =>
-        //println(bittrexMarketUpdate)
-        eventBus.publish(MarketEvent(BittrexEventBus.Updates, bittrexMarketUpdate))
+        eventBus.publish(MarketEvent("updates", bittrexMarketUpdate))
       }
     }
   }

@@ -8,18 +8,19 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import com.flow.marketmaker.MarketEventBus
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object BittrexWebsocketActor {
 
-  def props(conf: Config)(implicit context: ExecutionContext,
+  def props(eventBus: MarketEventBus, conf: Config)(implicit context: ExecutionContext,
                           system: ActorSystem, materializer: ActorMaterializer): Props =
-    Props(new BittrexWebsocketActor(conf))
+    Props(new BittrexWebsocketActor(eventBus, conf))
 }
 
-class BittrexWebsocketActor(config: Config)
+class BittrexWebsocketActor(eventBus: MarketEventBus, config: Config)
                              (implicit executionContext: ExecutionContext,
                               system: ActorSystem,
                               materializer: ActorMaterializer) extends Directives
@@ -29,7 +30,7 @@ class BittrexWebsocketActor(config: Config)
 
   val endpoint = config.getString("bittrex.websocket")
 
-  val publisher = system.actorOf(BittrexMarketEventPublisher.props(), name = "bittrex-publisher")
+  val publisher = system.actorOf(BittrexMarketEventPublisher.props(eventBus), name = "bittrex-publisher")
 
   val incoming: Sink[Message, Future[Done]] =
     Sink.foreach[Message] {

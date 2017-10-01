@@ -3,9 +3,13 @@ package com.softwaremill.bootzooka
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.stream.ActorMaterializer
-import com.flow.bittrex.{BittrexWebsocketActor, BittrexWebsocketService}
+import com.flow.bittrex.BittrexWebsocketActor
+import com.flow.bittrex.api.BittrexClient
+import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
+import play.api.libs.ws.ahc.StandaloneAhcWSClient
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -17,7 +21,15 @@ object Main extends App with StrictLogging {
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val bittrexFeed = actorSystem.actorOf(BittrexWebsocketActor.props(ConfigFactory.load()), name = "bittrex.websocket")
+  val bittrexEventBus = new MarketEventBus("bittrex")
+  //val bittrexFeed = actorSystem.actorOf(BittrexWebsocketActor.props(bittrexEventBus, ConfigFactory.load()), name = "bittrex.websocket")
+  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus))
+
+  val config = ConfigFactory.load()
+  val apikey = config.getString("bittrex.apikey")
+  val secret = config.getString("bittrex.secret")
+  val client = new BittrexClient(apikey, secret, StandaloneAhcWSClient())
+  client.availableBalances()
 
   val (startFuture, bl) = new HttpService().start()
 
