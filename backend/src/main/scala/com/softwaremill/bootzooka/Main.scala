@@ -29,7 +29,7 @@ object Main extends App with StrictLogging {
   val apikey = config.getString("bittrex.apikey")
   val secret = config.getString("bittrex.secret")
   val client = new BittrexClient(apikey, secret, StandaloneAhcWSClient())
-  client.availableBalances()
+  client.accountGetBalance()
 
   val (startFuture, bl) = new HttpService().start()
 
