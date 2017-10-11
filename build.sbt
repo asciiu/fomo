@@ -1,11 +1,13 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import sbt._
+import sbt.{file, _}
 import Keys._
 
 import scala.util.Try
 import complete.DefaultParsers._
+import io.ino.sbtpillar.Plugin.PillarKeys.{pillarConfigFile, pillarConfigKey, _}
+
 
 val slf4jVersion        = "1.7.21"
 val logBackVersion      = "1.1.7"
@@ -56,6 +58,7 @@ val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % "10.0
 val playWS               = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.1"
 val playStack            = Seq(playWS)
 
+// Cassandra related
 val phantom              = "com.outworkers"  %% "phantom-dsl" % "2.14.5"
 
 val commonDependencies = unitTestingStack ++ loggingStack
@@ -101,6 +104,16 @@ lazy val rootProject = (project in file("."))
   )
   .aggregate(backend, ui)
 
+
+/****************************************************************
+  * The backend project uses pillar and cassandra as the data store.
+  * Use the pillar plugin to migrate.
+  *
+  * createKeyspace
+  * dropKeyspace
+  * migrate
+  * cleanMigrate
+  ***************************************************************/
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
   .settings(commonSettings)
@@ -129,7 +142,14 @@ lazy val backend: Project = (project in file("backend"))
       )
     },
     assemblyJarName in assembly := "bootzooka.jar",
-    assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
+    assembly := assembly.dependsOn(npmTask.toTask(" run build")).value,
+    pillarSettings,
+    pillarConfigFile := file("backend/src/main/resources/reference.conf"),
+    pillarConfigKey := "cassandra.url",
+    pillarReplicationStrategyConfigKey := "cassandra.replicationStrategy",
+    pillarReplicationFactorConfigKey := "cassandra.replicationFactor",
+    pillarDefaultConsistencyLevelConfigKey := "cassandra.defaultConsistencyLevel",
+    pillarMigrationsDir := file("backend/conf/pillar/migrations/fomo/")
   )
 
 lazy val ui = (project in file("ui"))
@@ -147,3 +167,4 @@ lazy val uiTests = (project in file("ui-tests"))
 RenameProject.settings
 
 fork := true
+
