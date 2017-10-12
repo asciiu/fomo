@@ -1,6 +1,5 @@
 package database.cassandra.tables
 
-import java.time.OffsetDateTime
 import java.util.UUID
 
 import com.datastax.driver.core.ConsistencyLevel

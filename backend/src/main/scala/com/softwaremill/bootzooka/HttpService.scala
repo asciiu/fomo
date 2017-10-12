@@ -13,8 +13,8 @@ import com.softwaremill.bootzooka.user.application._
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import database.AppDatabase
-import database.cassandra.CassandraUserDao
+import database.{AppDatabase, RememberMeTokenDao}
+import database.cassandra.{CassandraRememberMeTokenDao, CassandraUserDao}
 import services.UserService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,13 +29,13 @@ trait DependencyWiring extends StrictLogging {
 
   lazy val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
-  //lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
   lazy val userDao = new CassandraUserDao
   lazy val codeDao = AppDatabase.CodeDao
+  lazy val rememberMeTokenDao = new CassandraRememberMeTokenDao
 
+  //lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
   //lazy val codeDao = new PasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
-
-  lazy val rememberMeTokenDao = new RememberMeTokenDao(sqlDatabase)(daoExecutionContext)
+  //lazy val rememberMeTokenDao = new RememberMeTokenDao(sqlDatabase)(daoExecutionContext)
 
   //lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
