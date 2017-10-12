@@ -3,10 +3,12 @@ package com.softwaremill.bootzooka.user.application
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
+import com.softwaremill.bootzooka.Database
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
 import com.softwaremill.bootzooka.user.domain.{BasicUserData, User}
+import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,39 +21,35 @@ class UserService(
   def findById(userId: UserId): Future[Option[BasicUserData]] =
     userDao.findBasicDataById(userId)
 
-  def registerNewUser(login: String, email: String, password: String): Future[UserRegisterResult] = {
+  def registerNewUser(first: String, last: String, email: String, password: String): Future[UserRegisterResult] = {
     def checkUserExistence(): Future[Either[String, Unit]] = {
-      val existingLoginFuture = userDao.findByLowerCasedLogin(login)
-      val existingEmailFuture = userDao.findByEmail(email)
-
-      for {
-        existingLoginOpt <- existingLoginFuture
-        existingEmailOpt <- existingEmailFuture
-      } yield {
-        existingLoginOpt
-          .map(_ => Left("Login already in use!"))
-          .orElse(
-            existingEmailOpt.map(_ => Left("E-mail already in use!"))
-          )
-          .getOrElse(Right((): Unit))
-      }
+      Future.successful(Right(Unit))
+//      val existingEmailFuture = userDao.findByEmail(email)
+//
+//      existingEmailFuture.map{ existingEmailOpt =>
+//        existingEmailOpt match {
+//          case Some(u) => Left("E-mail already in use!")
+//          case None => Right(():Unit)
+//        }
+//      }
     }
 
     def registerValidData() = checkUserExistence().flatMap {
       case Left(msg) => Future.successful(UserRegisterResult.UserExists(msg))
       case Right(_) =>
         val salt          = Utils.randomString(128)
-        val now           = Instant.now().atOffset(ZoneOffset.UTC)
-        val userAddResult = userDao.add(User.withRandomUUID(login, email.toLowerCase, password, salt, now))
+        val now           = DateTime.now()
+        val userAddResult = userDao.add(
+          User.withRandomUUID(email.toLowerCase, first, last, password, salt, now, now))
         userAddResult.foreach { _ =>
-          val confirmationEmail = emailTemplatingEngine.registrationConfirmation(login)
+          val confirmationEmail = emailTemplatingEngine.registrationConfirmation(first)
           emailService.scheduleEmail(email, confirmationEmail)
         }
         userAddResult.map(_ => UserRegisterResult.Success)
     }
 
     UserRegisterValidator
-      .validate(login, email, password)
+      .validate(email, password)
       .fold(
         msg => Future.successful(UserRegisterResult.InvalidData(msg)),
         _ => registerValidData()
@@ -102,9 +100,8 @@ object UserRegisterValidator {
   private val ValidationOk = Right(())
   val MinLoginLength       = 3
 
-  def validate(login: String, email: String, password: String): Either[String, Unit] =
+  def validate(email: String, password: String): Either[String, Unit] =
     for {
-      _ <- validLogin(login.trim).right
       _ <- validEmail(email.trim).right
       _ <- validPassword(password.trim).right
     } yield ()

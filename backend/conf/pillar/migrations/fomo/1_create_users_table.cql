@@ -2,8 +2,8 @@
 -- authoredAt: 1507698796000
 -- up:
 
-CREATE TABLE users (
-  id timeuuid,
+CREATE TABLE users_by_id (
+  id uuid,
   first_name text,
   last_name text,
   email text,
@@ -16,5 +16,5 @@ CREATE TABLE users (
 
 -- down:
 
-DROP TABLE users
+DROP TABLE users_by_id
 

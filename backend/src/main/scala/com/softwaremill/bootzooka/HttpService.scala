@@ -26,9 +26,11 @@ trait DependencyWiring extends StrictLogging {
 
   lazy val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
-  lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
+  //lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
+  lazy val userDao = Database.UserDao
+  lazy val codeDao = Database.CodeDao
 
-  lazy val codeDao = new PasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
+  //lazy val codeDao = new PasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
 
   lazy val rememberMeTokenDao = new RememberMeTokenDao(sqlDatabase)(daoExecutionContext)
 

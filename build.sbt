@@ -8,7 +8,6 @@ import scala.util.Try
 import complete.DefaultParsers._
 import io.ino.sbtpillar.Plugin.PillarKeys.{pillarConfigFile, pillarConfigKey, _}
 
-
 val slf4jVersion        = "1.7.21"
 val logBackVersion      = "1.1.7"
 val scalaLoggingVersion = "3.5.0"

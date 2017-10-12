@@ -38,25 +38,25 @@ class PasswordResetService(
   private def randomPass(user: User): PasswordResetCode = PasswordResetCode(Utils.randomString(32), user)
 
   private def storeCode(code: PasswordResetCode): Future[Unit] = {
-    logger.debug(s"Storing reset code for user ${code.user.login}")
+    logger.debug(s"Storing reset code for user ${code.user.email}")
     codeDao.add(code)
   }
 
   private def sendCode(code: PasswordResetCode): Future[Unit] = {
-    logger.debug(s"Scheduling e-mail with reset code for user ${code.user.login}")
+    logger.debug(s"Scheduling e-mail with reset code for user ${code.user.email}")
     emailService.scheduleEmail(code.user.email, prepareResetEmail(code.user, code))
   }
 
   private def prepareResetEmail(user: User, code: PasswordResetCode): EmailContentWithSubject = {
     val resetLink = String.format(config.resetLinkPattern, code.code)
-    emailTemplatingEngine.passwordReset(user.login, resetLink)
+    emailTemplatingEngine.passwordReset(user.email, resetLink)
   }
 
   def performPasswordReset(code: String, newPassword: String): Future[Either[String, Boolean]] = {
     logger.debug("Performing password reset")
     codeDao.findByCode(code).flatMap {
       case Some(c) =>
-        if (c.validTo.toInstant.isAfter(Instant.now())) {
+        if (c.validTo.isAfter(Instant.now().getEpochSecond)) {
           for {
             _ <- changePassword(c, newPassword)
             _ <- invalidateResetCode(c)

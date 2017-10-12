@@ -2,6 +2,7 @@ package com.flow.utils.cassandra
 
 import java.net.URI
 
+
 case class CassandraConnectionUri(connectionString: String) {
 
   private val uri = new URI(connectionString)
@@ -15,6 +16,5 @@ case class CassandraConnectionUri(connectionString: String) {
   val hosts = Seq(uri.getHost) ++ additionalHosts
   val port = uri.getPort
   val keyspace = uri.getPath.substring(1)
-
 }
 

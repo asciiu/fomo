@@ -33,7 +33,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       path("register") {
         post {
           entity(as[RegistrationInput]) { registration =>
-            onSuccess(userService.registerNewUser(registration.loginEscaped, registration.email, registration.password)) {
+            onSuccess(userService.registerNewUser(registration.firstEscaped, registration.lastEscaped, registration.email, registration.password)) {
               case UserRegisterResult.InvalidData(msg) => complete(StatusCodes.BadRequest, msg)
               case UserRegisterResult.UserExists(msg)  => complete(StatusCodes.Conflict, msg)
               case UserRegisterResult.Success          => complete("success")
@@ -95,8 +95,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   }
 }
 
-case class RegistrationInput(login: String, email: String, password: String) {
-  def loginEscaped = Utils.escapeHtml(login)
+case class RegistrationInput(first: String, last: String, email: String, password: String) {
+  def firstEscaped = Utils.escapeHtml(first)
+  def lastEscaped = Utils.escapeHtml(last)
 }
 
 case class ChangePasswordInput(currentPassword: String, newPassword: String)
