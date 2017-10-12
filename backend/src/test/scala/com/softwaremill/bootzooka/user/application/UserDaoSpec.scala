@@ -3,8 +3,9 @@ package com.softwaremill.bootzooka.user.application
 import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpers}
-import com.softwaremill.bootzooka.user.domain.User
 import com.typesafe.scalalogging.StrictLogging
+import database.UserDao
+import models.User
 import org.scalatest.Matchers
 
 import scala.language.implicitConversions

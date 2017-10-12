@@ -2,9 +2,10 @@ package com.softwaremill.bootzooka.test
 
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailTemplatingEngine}
-import com.softwaremill.bootzooka.user.application.{UserDao, UserService}
-import com.softwaremill.bootzooka.user.domain.User
+import database.UserDao
+import models.User
 import org.scalatest.concurrent.ScalaFutures
+import services.UserService
 
 import scala.concurrent.ExecutionContext
 

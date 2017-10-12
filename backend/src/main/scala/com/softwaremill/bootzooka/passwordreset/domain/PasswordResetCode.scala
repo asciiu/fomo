@@ -9,7 +9,7 @@ import com.outworkers.phantom.builder.query.InsertQuery
 import com.outworkers.phantom.dsl.{PartitionKey, Table}
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetCodeDao
 import com.outworkers.phantom.dsl._
-import com.softwaremill.bootzooka.user.domain.User
+import models.User
 import org.joda.time.DateTime
 
 import scala.concurrent.Future

@@ -1,4 +1,4 @@
--- description: create users table
+-- description: create users_by_id table
 -- authoredAt: 1507698796000
 -- up:
 
@@ -7,9 +7,8 @@ CREATE TABLE users_by_id (
   first_name text,
   last_name text,
   email text,
+  salt text,
   password_hash text,
-  created_at timestamp,
-  updated_at timestamp,
 
   PRIMARY KEY (id)
 )

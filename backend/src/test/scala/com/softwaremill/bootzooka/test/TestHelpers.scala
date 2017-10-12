@@ -2,7 +2,7 @@ package com.softwaremill.bootzooka.test
 
 import java.time.{OffsetDateTime, ZoneOffset}
 
-import com.softwaremill.bootzooka.user.domain.User
+import models.User
 
 trait TestHelpers {
 

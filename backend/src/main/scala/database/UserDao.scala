@@ -1,15 +1,9 @@
-package com.softwaremill.bootzooka.user.application
+package database
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.user._
-import com.softwaremill.bootzooka.user.domain.{BasicUserData, User, Users}
-import org.joda.time.DateTime
+import models.{BasicUserData, User}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 
 //class UserDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext) extends SqlUserSchema {

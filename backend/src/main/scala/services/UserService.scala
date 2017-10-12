@@ -1,13 +1,12 @@
-package com.softwaremill.bootzooka.user.application
+package services
 
-import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
-import com.softwaremill.bootzooka.Database
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
-import com.softwaremill.bootzooka.user.domain.{BasicUserData, User}
+import database.UserDao
+import models.{BasicUserData, User}
 import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -23,24 +22,22 @@ class UserService(
 
   def registerNewUser(first: String, last: String, email: String, password: String): Future[UserRegisterResult] = {
     def checkUserExistence(): Future[Either[String, Unit]] = {
-      Future.successful(Right(Unit))
-//      val existingEmailFuture = userDao.findByEmail(email)
-//
-//      existingEmailFuture.map{ existingEmailOpt =>
-//        existingEmailOpt match {
-//          case Some(u) => Left("E-mail already in use!")
-//          case None => Right(():Unit)
-//        }
-//      }
+      val existingEmailFuture = userDao.findByEmail(email)
+
+      existingEmailFuture.map{ existingEmailOpt =>
+        existingEmailOpt match {
+          case Some(u) => Left("E-mail already in use!")
+          case None => Right(():Unit)
+        }
+      }
     }
 
     def registerValidData() = checkUserExistence().flatMap {
       case Left(msg) => Future.successful(UserRegisterResult.UserExists(msg))
       case Right(_) =>
         val salt          = Utils.randomString(128)
-        val now           = DateTime.now()
         val userAddResult = userDao.add(
-          User.withRandomUUID(email.toLowerCase, first, last, password, salt, now, now))
+          User.withRandomUUID(email.toLowerCase, first, last, password, salt))
         userAddResult.foreach { _ =>
           val confirmationEmail = emailTemplatingEngine.registrationConfirmation(first)
           emailService.scheduleEmail(email, confirmationEmail)
@@ -56,9 +53,9 @@ class UserService(
       )
   }
 
-  def authenticate(login: String, nonEncryptedPassword: String): Future[Option[BasicUserData]] =
+  def authenticate(email: String, nonEncryptedPassword: String): Future[Option[BasicUserData]] =
     userDao
-      .findByLoginOrEmail(login)
+      .findByEmail(email)
       .map(userOpt => userOpt.filter(u => User.passwordsMatch(nonEncryptedPassword, u)).map(BasicUserData.fromUser))
 
   def changeLogin(userId: UUID, newLogin: String): Future[Either[String, Unit]] =

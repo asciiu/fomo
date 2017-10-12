@@ -6,8 +6,8 @@ import java.util.UUID
 
 import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
-import com.softwaremill.bootzooka.user.domain.User
 import com.typesafe.config.ConfigFactory
+import models.User
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
 

@@ -2,12 +2,13 @@ package com.softwaremill.bootzooka.user.api
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import com.softwaremill.bootzooka.user.application.{Session, UserService}
-import com.softwaremill.bootzooka.user.domain.BasicUserData
+import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.bootzooka.user.UserId
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.softwaremill.session.{RefreshTokenStorage, SessionManager}
+import models.BasicUserData
+import services.UserService
 
 import scala.concurrent.ExecutionContext
 

@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.Directives._
 import com.softwaremill.bootzooka.common.api.RoutesRequestWrapper
 import com.softwaremill.bootzooka.passwordreset.api.PasswordResetRoutes
 import com.softwaremill.bootzooka.swagger.SwaggerDocService
-import com.softwaremill.bootzooka.user.api.UsersRoutes
 import com.softwaremill.bootzooka.version.VersionRoutes
+import routes.UsersRoutes
 
 trait Routes extends RoutesRequestWrapper with UsersRoutes with PasswordResetRoutes with VersionRoutes {
 

@@ -1,16 +1,18 @@
-package com.softwaremill.bootzooka.user.api
+package routes
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.common.api.RoutesSupport
-import com.softwaremill.bootzooka.user.application.{Session, UserRegisterResult, UserService}
-import com.softwaremill.bootzooka.user.domain.BasicUserData
+import com.softwaremill.bootzooka.user.api._
+import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
+import models.BasicUserData
+import services.{UserRegisterResult, UserService}
 
 import scala.concurrent.Future
 
@@ -24,7 +26,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     path("logout") {
       get {
         userIdFromSession { _ =>
-          invalidateSession(refreshable, usingHeaders) {
+          invalidateSession(oneOff, usingHeaders) {
             completeOk
           }
         }
@@ -56,7 +58,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       pathEnd {
         post {
           entity(as[LoginInput]) { in =>
-            onSuccess(userService.authenticate(in.login, in.password)) {
+            onSuccess(userService.authenticate(in.email, in.password)) {
               case None => reject(AuthorizationFailedRejection)
               case Some(user) =>
                 val session = Session(user.id)
@@ -102,6 +104,6 @@ case class RegistrationInput(first: String, last: String, email: String, passwor
 
 case class ChangePasswordInput(currentPassword: String, newPassword: String)
 
-case class LoginInput(login: String, password: String, rememberMe: Option[Boolean])
+case class LoginInput(email: String, password: String, rememberMe: Option[Boolean])
 
 case class PatchUserInput(login: Option[String], email: Option[String])
