@@ -80,10 +80,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           patch {
             userIdFromSession { userId =>
               entity(as[PatchUserInput]) { in =>
-                val updateAction = (in.login, in.email) match {
-                  case (Some(login), _) => userService.changeLogin(userId, login)
-                  case (_, Some(email)) => userService.changeEmail(userId, email)
-                  case _                => Future.successful(Left("You have to provide new login or email"))
+                val updateAction = in.email match {
+                  case Some(email) => userService.changeEmail(userId, email)
+                  case _           => Future.successful(Left("You have to provide new login or email"))
                 }
 
                 onSuccess(updateAction) {
@@ -106,4 +105,4 @@ case class ChangePasswordInput(currentPassword: String, newPassword: String)
 
 case class LoginInput(email: String, password: String, rememberMe: Option[Boolean])
 
-case class PatchUserInput(login: Option[String], email: Option[String])
+case class PatchUserInput(email: Option[String])

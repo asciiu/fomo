@@ -1,4 +1,4 @@
-package database
+package database.dao
 
 import com.softwaremill.bootzooka.user._
 import models.{BasicUserData, User}
@@ -50,10 +50,8 @@ trait UserDao {
    def findById(userId: UserId): Future[Option[User]]
    def findBasicDataById(userId: UserId): Future[Option[BasicUserData]]
    def findByEmail(email: String): Future[Option[User]]
-   def findByLowerCasedLogin(login: String): Future[Option[User]]
    def findByLoginOrEmail(loginOrEmail: String): Future[Option[User]]
    def changePassword(userId: UserId, newPassword: String): Future[Unit]
-   def changeLogin(userId: UserId, newLogin: String): Future[Unit]
    def changeEmail(userId: UserId, newEmail: String): Future[Unit]
 }
 

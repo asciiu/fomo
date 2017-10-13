@@ -12,8 +12,7 @@ class CassandraDatabase(override val connector: CassandraConnection)
   object UsersByIdDao extends UsersById with Connector
   object UsersByEmailDao extends UsersByEmail with Connector
   object RememberTokenDao extends RememberMeTokens with Connector
-  object CodeDao extends PasswordResetCodes with Connector
+  object PasswordResetCodeDao extends PasswordResetCodes with Connector
 }
 
 object AppDatabase extends CassandraDatabase(ConfigConnector.connector)
-

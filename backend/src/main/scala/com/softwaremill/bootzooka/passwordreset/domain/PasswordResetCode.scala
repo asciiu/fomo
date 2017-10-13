@@ -7,8 +7,8 @@ import java.util.UUID
 import com.datastax.driver.core.ConsistencyLevel
 import com.outworkers.phantom.builder.query.InsertQuery
 import com.outworkers.phantom.dsl.{PartitionKey, Table}
-import com.softwaremill.bootzooka.passwordreset.application.PasswordResetCodeDao
 import com.outworkers.phantom.dsl._
+import database.dao.PasswordResetCodeDao
 import models.User
 import org.joda.time.DateTime
 
@@ -21,17 +21,17 @@ import scala.concurrent.Future
 case class PasswordResetCode(id: UUID, code: String, user: User, validTo: DateTime)
 
 
-abstract class PasswordResetCodes extends Table[PasswordResetCodes, PasswordResetCode] with PasswordResetCodeDao {
+abstract class PasswordResetCodes extends Table[PasswordResetCodes, PasswordResetCode] {
 
-  object id extends UUIDColumn with PartitionKey
-  object code extends StringColumn
+  object code extends StringColumn with PartitionKey
+  object id extends UUIDColumn
   object user_id extends UUIDColumn
   object valid_to extends DateTimeColumn
 
-  def add(code: PasswordResetCode): Future[Unit] = {
+  def add(code: PasswordResetCode): Future[ResultSet] = {
     store(code)
       .consistencyLevel_=(ConsistencyLevel.ALL)
-      .future().map(_ => Unit)
+      .future()
   }
 
   /**
@@ -49,9 +49,15 @@ abstract class PasswordResetCodes extends Table[PasswordResetCodes, PasswordRese
   }
 
 
-  def findByCode(code: String): Future[Option[PasswordResetCode]] = ???
-  def remove(code: PasswordResetCode): Future[Unit] = ???
+  def findByCode(code: String): Future[Option[PasswordResetCode]] = {
+    select.where(_.code eqs code).one()
+  }
 
+  def remove(code: String): Future[ResultSet] = {
+    delete.where(_.code eqs code)
+      .consistencyLevel_=(ConsistencyLevel.ALL)
+      .future()
+  }
 }
 
 object PasswordResetCode {

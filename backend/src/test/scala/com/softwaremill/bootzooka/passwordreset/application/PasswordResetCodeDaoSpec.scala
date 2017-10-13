@@ -2,11 +2,13 @@ package com.softwaremill.bootzooka.passwordreset.application
 
 import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
+import database.cassandra.CassandraPasswordResetCodeDao
+import database.dao.PasswordResetCodeDao
 
 class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
   behavior of "PasswordResetCodeDao"
 
-  val dao = new PasswordResetCodeDao(sqlDatabase)
+  val dao = new CassandraPasswordResetCodeDao(cqlDatabase)
 
   it should "add and load code" in {
     // Given

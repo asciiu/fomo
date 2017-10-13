@@ -60,6 +60,7 @@ val playStack            = Seq(playWS)
 
 // Cassandra related
 val phantom              = "com.outworkers"  %% "phantom-dsl" % "2.14.5"
+val pillar               = "com.chrisomeara" % "pillar-core_2.12" % "3.0.0"
 
 val commonDependencies = unitTestingStack ++ loggingStack
 
@@ -120,7 +121,7 @@ lazy val backend: Project = (project in file("backend"))
   .settings(Revolver.settings)
   .settings(
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ playStack ++
-      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, phantom),
+      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, phantom, pillar),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](

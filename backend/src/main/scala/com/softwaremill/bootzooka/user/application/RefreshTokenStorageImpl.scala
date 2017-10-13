@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import com.softwaremill.session.{RefreshTokenData, RefreshTokenLookupResult, RefreshTokenStorage}
-import database.RememberMeTokenDao
+import database.dao.RememberMeTokenDao
 import models.RememberMeToken
 import org.joda.time.DateTime
 

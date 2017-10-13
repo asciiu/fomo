@@ -11,6 +11,7 @@ class ConnectionAndQuerySpec extends FunSpec with Matchers {
       val uri = CassandraConnectionUri("cassandra://localhost:9042/test")
       val session = Helper.createSessionAndInitKeyspace(uri)
 
+      session.execute("CREATE TABLE IF NOT EXISTS things (id int, name text, PRIMARY KEY (id))")
       session.execute("INSERT INTO things (id, name) VALUES (1, 'foo');")
 
       val selectStmt = select().column("name")

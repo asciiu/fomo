@@ -5,7 +5,7 @@ import java.util.UUID
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
-import database.UserDao
+import database.dao.UserDao
 import models.{BasicUserData, User}
 import org.joda.time.DateTime
 
@@ -57,12 +57,6 @@ class UserService(
     userDao
       .findByEmail(email)
       .map(userOpt => userOpt.filter(u => User.passwordsMatch(nonEncryptedPassword, u)).map(BasicUserData.fromUser))
-
-  def changeLogin(userId: UUID, newLogin: String): Future[Either[String, Unit]] =
-    userDao.findByLowerCasedLogin(newLogin).flatMap {
-      case Some(_) => Future.successful(Left("Login is already taken"))
-      case None    => userDao.changeLogin(userId, newLogin).map(Right(_))
-    }
 
   def changeEmail(userId: UUID, newEmail: String): Future[Either[String, Unit]] =
     userDao.findByEmail(newEmail).flatMap {

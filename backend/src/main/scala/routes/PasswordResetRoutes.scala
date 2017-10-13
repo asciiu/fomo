@@ -1,4 +1,4 @@
-package com.softwaremill.bootzooka.passwordreset.api
+package routes
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._

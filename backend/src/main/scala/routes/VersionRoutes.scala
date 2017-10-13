@@ -1,4 +1,4 @@
-package com.softwaremill.bootzooka.version
+package routes
 
 import javax.ws.rs.Path
 

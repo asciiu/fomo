@@ -7,14 +7,17 @@ import java.util.UUID
 import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
+import database.cassandra.CassandraPasswordResetCodeDao
+import database.dao.PasswordResetCodeDao
 import models.User
+import org.joda.time.DateTime
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
 
   lazy val config = new PasswordResetConfig {
     override def rootConfig = ConfigFactory.load()
   }
-  val passwordResetCodeDao = new PasswordResetCodeDao(sqlDatabase)
+  val passwordResetCodeDao = new CassandraPasswordResetCodeDao(cqlDatabase)
   val passwordResetService =
     new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, config)
 
@@ -47,7 +50,8 @@ class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
   "performPasswordReset" should "delete code and do nothing if the code expired" in {
     // given
     val user        = newRandomStoredUser()
-    val previousDay = Instant.now().minus(24, ChronoUnit.HOURS).atOffset(ZoneOffset.UTC)
+    //val previousDay = Instant.now().minus(24, ChronoUnit.HOURS).atOffset(ZoneOffset.UTC)
+    val previousDay = DateTime.now().minusDays(1)
     val code        = PasswordResetCode(UUID.randomUUID(), randomString(), user, previousDay)
     passwordResetCodeDao.add(code).futureValue
 

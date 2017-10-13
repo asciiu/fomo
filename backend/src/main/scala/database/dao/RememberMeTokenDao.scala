@@ -1,13 +1,8 @@
-package database
+package database.dao
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import models.RememberMeToken
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 
 trait RememberMeTokenDao {

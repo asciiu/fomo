@@ -1,14 +1,8 @@
-package com.softwaremill.bootzooka.passwordreset.application
+package database.dao
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
-import models.User
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.language.implicitConversions
 
 trait PasswordResetCodeDao {

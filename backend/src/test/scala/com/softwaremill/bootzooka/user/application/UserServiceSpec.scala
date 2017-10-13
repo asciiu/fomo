@@ -12,32 +12,32 @@ class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithD
   override protected def beforeEach() = {
     super.beforeEach()
 
-    userDao.add(newUser("Admin", "admin@sml.com", "pass", "salt")).futureValue
-    userDao.add(newUser("Admin2", "admin2@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("Admin", "first", "admin@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("Admin2", "second", "admin2@sml.com", "pass", "salt")).futureValue
   }
 
   "registerNewUser" should "add user with unique lowercase login info" in {
     // When
-    val result = userService.registerNewUser("John", "newUser@sml.com", "password").futureValue
+    val result = userService.registerNewUser("John", "Doe", "newUser@sml.com", "password").futureValue
 
     // Then
     result should be(UserRegisterResult.Success)
 
-    val userOpt = userDao.findByLowerCasedLogin("John").futureValue
+    val userOpt = userDao.findByEmail("newUser@sml.com").futureValue
     userOpt should be('defined)
     val user = userOpt.get
 
-    user.login should be("John")
-    user.loginLowerCased should be("john")
+    user.firstName should be("John")
+    user.lastName should be("Doe")
 
     emailService.wasEmailSentTo("newUser@sml.com") should be(true)
   }
 
   "registerNewUser" should "not register a user if a user with the given login/e-mail exists" in {
     // when
-    val resultInitial   = userService.registerNewUser("John", "newUser@sml.com", "password").futureValue
-    val resultSameLogin = userService.registerNewUser("John", "newUser2@sml.com", "password").futureValue
-    val resultSameEmail = userService.registerNewUser("John2", "newUser@sml.com", "password").futureValue
+    val resultInitial   = userService.registerNewUser("John", "Doe", "newUser@sml.com", "password").futureValue
+    val resultSameLogin = userService.registerNewUser("John", "Doe", "newUser2@sml.com", "password").futureValue
+    val resultSameEmail = userService.registerNewUser("John2", "Doe", "newUser@sml.com", "password").futureValue
 
     // then
     resultInitial should be(UserRegisterResult.Success)
@@ -50,14 +50,14 @@ class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithD
 
   "registerNewUser" should "not schedule an email on existing login" in {
     // When
-    userService.registerNewUser("Admin", "secondEmail@sml.com", "password").futureValue
+    userService.registerNewUser("Admin", "One", "secondEmail@sml.com", "password").futureValue
 
     // Then
     emailService.wasEmailSentTo("secondEmail@sml.com") should be(false)
   }
 
   "changeEmail" should "change email for specified user" in {
-    val user     = userDao.findByLowerCasedLogin("admin").futureValue
+    val user     = userDao.findByEmail("secondEmail@sml.com").futureValue
     val newEmail = "new@email.com"
     userService.changeEmail(user.get.id, newEmail).futureValue should be('right)
     userDao.findByEmail(newEmail).futureValue match {
@@ -70,23 +70,9 @@ class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithD
     userService.changeEmail(UUID.randomUUID(), "admin2@sml.com").futureValue should be('left)
   }
 
-  "changeLogin" should "change login for specified user" in {
-    val user     = userDao.findByLowerCasedLogin("admin").futureValue
-    val newLogin = "newadmin"
-    userService.changeLogin(user.get.id, newLogin).futureValue should be('right)
-    userDao.findByLowerCasedLogin(newLogin).futureValue match {
-      case Some(cu) =>
-      case None     => fail("User not found. Maybe login wasn't really changed?")
-    }
-  }
-
-  "changeLogin" should "not change login if already used by someone else" in {
-    userService.changeLogin(UUID.randomUUID(), "admin2").futureValue should be('left)
-  }
-
   "changePassword" should "change password if current is correct and new is present" in {
     // Given
-    val user            = userDao.findByLowerCasedLogin("admin").futureValue.get
+    val user            = userDao.findByEmail("admin@sml.com").futureValue.get
     val currentPassword = "pass"
     val newPassword     = "newPass"
 
@@ -95,15 +81,15 @@ class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithD
 
     // Then
     changePassResult should be('right)
-    userDao.findByLowerCasedLogin("admin").futureValue match {
-      case Some(cu) => cu.password should be(User.encryptPassword(newPassword, cu.salt))
+    userDao.findByEmail("admin@sml.com").futureValue match {
+      case Some(cu) => cu.passwordHash should be(User.encryptPassword(newPassword, cu.salt))
       case None     => fail("Something bad happened, maybe mocked Dao is broken?")
     }
   }
 
   "changePassword" should "not change password if current is incorrect" in {
     // Given
-    val user = userDao.findByLowerCasedLogin("admin").futureValue.get
+    val user = userDao.findByEmail("admin@sml.com").futureValue.get
 
     // When, Then
     userService.changePassword(user.id, "someillegalpass", "newpass").futureValue should be('left)

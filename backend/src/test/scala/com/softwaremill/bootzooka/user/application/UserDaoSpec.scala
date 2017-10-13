@@ -4,7 +4,8 @@ import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpers}
 import com.typesafe.scalalogging.StrictLogging
-import database.UserDao
+import database.cassandra.CassandraUserDao
+import database.dao.UserDao
 import models.User
 import org.scalatest.Matchers
 
@@ -15,53 +16,46 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-  val userDao        = new UserDao(sqlDatabase)
+  val userDao        = new CassandraUserDao(cqlDatabase)
   lazy val randomIds = List.fill(3)(UUID.randomUUID())
 
   override def beforeEach() {
     super.beforeEach()
     for (i <- 1 to randomIds.size) {
-      val login    = "user" + i
+      val first    = "first" + i
+      val last     = "last" + i
       val password = "pass" + i
       val salt     = "salt" + i
       userDao
-        .add(User(randomIds(i - 1), login, login.toLowerCase, i + "email@sml.com", password, salt, createdOn))
+        .add(User(randomIds(i - 1), first, last, i + "email@sml.com", password, salt))
         .futureValue
     }
   }
 
   it should "add new user" in {
     // Given
+    val first = "test1"
+    val last  = "test2"
     val login = "newuser"
     val email = "newemail@sml.com"
 
     // When
-    userDao.add(newUser(login, email, "pass", "salt")).futureValue
+    userDao.add(newUser(first, last, email, "pass", "salt")).futureValue
 
     // Then
     userDao.findByEmail(email).futureValue should be('defined)
   }
 
-  it should "fail with exception when trying to add user with existing login" in {
-    // Given
-    val login = "newuser"
-    val email = "anotherEmaill@sml.com"
-
-    userDao.add(newUser(login, "somePrefix" + email, "somePass", "someSalt")).futureValue
-
-    // When & then
-    userDao.add(newUser(login, email, "pass", "salt")).failed.futureValue
-  }
-
   it should "fail with exception when trying to add user with existing email" in {
     // Given
-    val login = "anotherUser"
-    val email = "newemail@sml.com"
+    val first = "test1"
+    val last  = "test2"
+    val email = "anotherEmaill@sml.com"
 
-    userDao.add(newUser("somePrefixed" + login, email, "somePass", "someSalt")).futureValue
+    userDao.add(newUser(first, last, email, "somePass", "someSalt")).futureValue
 
     // When & then
-    userDao.add(newUser(login, email, "pass", "salt")).failed.futureValue
+    userDao.add(newUser(first, last, email, "pass", "salt")).failed.futureValue
   }
 
   it should "find by email" in {
@@ -86,72 +80,6 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
     userOpt.map(_.email) should equal(Some(email.toLowerCase))
   }
 
-  it should "find by login" in {
-    // Given
-    val login = "user1"
-
-    // When
-    val userOpt = userDao.findByLowerCasedLogin(login).futureValue
-
-    // Then
-    userOpt.map(_.login) should equal(Some(login))
-  }
-
-  it should "find by uppercase login" in {
-    // Given
-    val login = "user1".toUpperCase
-
-    // When
-    val userOpt = userDao.findByLowerCasedLogin(login).futureValue
-
-    // Then
-    userOpt.map(_.login) should equal(Some(login.toLowerCase))
-  }
-
-  it should "find using login with findByLoginOrEmail" in {
-    // Given
-    val login = "user1"
-
-    // When
-    val userOpt = userDao.findByLoginOrEmail(login).futureValue
-
-    // Then
-    userOpt.map(_.login) should equal(Some(login.toLowerCase))
-  }
-
-  it should "find using uppercase login with findByLoginOrEmail" in {
-    // Given
-    val login = "user1".toUpperCase
-
-    // When
-    val userOpt = userDao.findByLoginOrEmail(login).futureValue
-
-    // Then
-    userOpt.map(_.login) should equal(Some(login.toLowerCase))
-  }
-
-  it should "find using email with findByLoginOrEmail" in {
-    // Given
-    val email = "1email@sml.com"
-
-    // When
-    val userOpt = userDao.findByLoginOrEmail(email).futureValue
-
-    // Then
-    userOpt.map(_.email) should equal(Some(email.toLowerCase))
-  }
-
-  it should "find using uppercase email with findByLoginOrEmail" in {
-    // Given
-    val email = "1email@sml.com".toUpperCase
-
-    // When
-    val userOpt = userDao.findByLoginOrEmail(email).futureValue
-
-    // Then
-    userOpt.map(_.email) should equal(Some(email.toLowerCase))
-  }
-
   it should "change password" in {
     // Given
     val login    = "user1"
@@ -164,21 +92,7 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
     val u                 = postModifyUserOpt.get
 
     // Then
-    u should be(user.copy(password = password))
-  }
-
-  it should "change login" in {
-    // Given
-    val user     = userDao.findByLowerCasedLogin("user1")
-    val u        = user.futureValue.get
-    val newLogin = "changedUser1"
-
-    // When
-    userDao.changeLogin(u.id, newLogin).futureValue
-    val postModifyUser = userDao.findByLowerCasedLogin(newLogin).futureValue
-
-    // Then
-    postModifyUser should equal(Some(u.copy(login = newLogin, loginLowerCased = newLogin.toLowerCase)))
+    u should be(user.copy(passwordHash = password))
   }
 
   it should "change email" in {
@@ -193,5 +107,4 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
     // Then
     userDao.findByEmail(newEmail).futureValue should equal(Some(u.copy(email = newEmail)))
   }
-
 }

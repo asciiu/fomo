@@ -14,12 +14,13 @@ trait TestHelpers {
   def randomString(length: Int = 10) =
     Stream.continually(random.nextInt(characters.length)).map(characters).take(length).mkString
 
-  def newUser(login: String, email: String, pass: String, salt: String): User =
-    User.withRandomUUID(login, email, pass, salt, createdOn)
+  def newUser(first: String, last: String, email: String, pass: String, salt: String): User =
+    User.withRandomUUID(first, last, email, pass, salt)
 
   def newRandomUser(password: Option[String] = None): User = {
-    val login = randomString()
+    val first = randomString()
+    val last = randomString()
     val pass  = password.getOrElse(randomString())
-    newUser(login, s"$login@example.com", pass, "someSalt")
+    newUser(first, last, s"$first.$last@example.com", pass, "someSalt")
   }
 }

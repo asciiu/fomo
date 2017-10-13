@@ -6,8 +6,8 @@ import scala.reflect.runtime.{universe => ua}
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.github.swagger.akka._
-import com.softwaremill.bootzooka.version.VersionRoutes
 import com.softwaremill.bootzooka.version.BuildInfo._
+import routes.VersionRoutes
 
 class SwaggerDocService(address: String, port: Int, system: ActorSystem) extends SwaggerHttpService with HasActorSystem {
   override implicit val actorSystem: ActorSystem = system

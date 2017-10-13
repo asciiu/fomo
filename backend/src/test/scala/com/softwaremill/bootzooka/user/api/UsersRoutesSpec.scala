@@ -13,8 +13,8 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }.usersRoutes)
 
   "POST /register" should "register new user" in {
-    Post("/users/register", Map("login" -> "newUser", "email" -> "newUser@sml.com", "password" -> "secret")) ~> routes ~> check {
-      userDao.findByLowerCasedLogin("newUser").futureValue should be('defined)
+    Post("/users/register", Map("first" -> "John", "last"-> "Doe", "email" -> "newUser@sml.com", "password" -> "secret")) ~> routes ~> check {
+      userDao.findByEmail("newUser@sml.com").futureValue should be('defined)
       status should be(StatusCodes.OK)
     }
   }
@@ -32,7 +32,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "POST /register with an existing login" should "return 409 with an error message" in {
-    userDao.add(newUser("user1", "user1@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user1", "1", "user1@sml.com", "pass", "salt")).futureValue
     Post("/users/register", Map("login" -> "user1", "email" -> "newUser@sml.com", "password" -> "secret")) ~> routes ~> check {
       status should be(StatusCodes.Conflict)
       entityAs[String] should be("Login already in use!")
@@ -40,7 +40,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "POST /register with an existing email" should "return 409 with an error message" in {
-    userDao.add(newUser("user2", "user2@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user2", "2", "user2@sml.com", "pass", "salt")).futureValue
     Post("/users/register", Map("login" -> "newUser", "email" -> "user2@sml.com", "password" -> "secret")) ~> routes ~> check {
       status should be(StatusCodes.Conflict)
       entityAs[String] should be("E-mail already in use!")
@@ -53,7 +53,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
       Map("login" -> "<script>alert('haxor');</script>", "email" -> "newUser@sml.com", "password" -> "secret")
     ) ~> routes ~> check {
       status should be(StatusCodes.OK)
-      userDao.findByEmail("newUser@sml.com").futureValue.map(_.login) should be(
+      userDao.findByEmail("newUser@sml.com").futureValue.map(_.firstName) should be(
         Some("&lt;script&gt;alert('haxor');&lt;/script&gt;")
       )
     }
@@ -68,38 +68,38 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
     }
 
   "POST /" should "log in given valid credentials" in {
-    userDao.add(newUser("user3", "user3@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user3", "3", "user3@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user3", "pass") { _ =>
       // ok
     }
   }
 
   "POST /" should "not log in given invalid credentials" in {
-    userDao.add(newUser("user4", "user4@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user4", "4", "user4@sml.com", "pass", "salt")).futureValue
     Post("/users", Map("login" -> "user4", "password" -> "hacker")) ~> routes ~> check {
       status should be(StatusCodes.Forbidden)
     }
   }
 
   "PATCH /" should "update email when email is given" in {
-    userDao.add(newUser("user5", "user5@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user5", "5", "user5@sml.com", "pass", "salt")).futureValue
     val email = "coolmail@awesome.rox"
 
     withLoggedInUser("user5", "pass") { transform =>
       Patch("/users", Map("email" -> email)) ~> transform ~> routes ~> check {
-        userDao.findByLowerCasedLogin("user5").futureValue.map(_.email) should be(Some(email))
+        userDao.findByEmail("user5@sml.com").futureValue.map(_.email) should be(Some(email))
         status should be(StatusCodes.OK)
       }
     }
   }
 
   "PATCH /" should "update login when login is given" in {
-    userDao.add(newUser("user6", "user6@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user6", "6", "user6@sml.com", "pass", "salt")).futureValue
     val login = "user6_changed"
 
     withLoggedInUser("user6", "pass") { transform =>
       Patch("/users", Map("login" -> login)) ~> transform ~> routes ~> check {
-        userDao.findByLowerCasedLogin(login).futureValue should be('defined)
+        userDao.findByEmail("user6@sml.com").futureValue should be('defined)
         status should be(StatusCodes.OK)
       }
     }
@@ -112,7 +112,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "PATCH /" should "result in an error in neither email nor login is given" in {
-    userDao.add(newUser("user7", "user7@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user7", "7", "user7@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user7", "pass") { transform =>
       Patch("/users", Map.empty[String, String]) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Conflict)
@@ -121,7 +121,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "POST /changepassword" should "update password if current is correct and new is present" in {
-    userDao.add(newUser("user8", "user8@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user8", "8", "user8@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user8", "pass") { transform =>
       Post("/users/changepassword", Map("currentPassword" -> "pass", "newPassword" -> "newPass")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.OK)
@@ -130,7 +130,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "POST /changepassword" should "not update password if current is wrong" in {
-    userDao.add(newUser("user9", "user9@sml.com", "pass", "salt")).futureValue
+    userDao.add(newUser("user9", "9", "user9@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user9", "pass") { transform =>
       Post("/users/changepassword", Map("currentPassword" -> "hacker", "newPassword" -> "newPass")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Forbidden)

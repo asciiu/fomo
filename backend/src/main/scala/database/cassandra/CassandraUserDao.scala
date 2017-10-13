@@ -3,15 +3,17 @@ package database.cassandra
 import java.util.UUID
 
 import com.softwaremill.bootzooka.user.UserId
-import database.{AppDatabase, UserDao}
+import database.CassandraDatabase
+import database.dao.UserDao
 import models.{BasicUserData, User}
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CassandraUserDao extends UserDao {
+class CassandraUserDao(val database: CassandraDatabase) extends UserDao {
 
-  val userIdDao = AppDatabase.UsersByIdDao
-  val userEmailDao = AppDatabase.UsersByEmailDao
+  val userIdDao = database.UsersByIdDao
+  val userEmailDao = database.UsersByEmailDao
 
   def add(user: User): Future[Unit] = {
     userIdDao.add(user)
@@ -25,9 +27,7 @@ class CassandraUserDao extends UserDao {
 
   def findByEmail(email: String): Future[Option[User]] = userEmailDao.findByEmail(email)
 
-  def findByLowerCasedLogin(login: String): Future[Option[User]] = ???
-
-  def findByLoginOrEmail(loginOrEmail: String): Future[Option[User]] = ???
+  def findByLoginOrEmail(loginOrEmail: String): Future[Option[User]] = findByEmail(loginOrEmail)
 
   def changePassword(userId: UserId, newPassword: String): Future[Unit] = {
     findById(userId).map { userOpt =>
@@ -39,8 +39,6 @@ class CassandraUserDao extends UserDao {
       }
     }
   }
-
-  def changeLogin(userId: UserId, newLogin: String): Future[Unit] = ???
 
   def changeEmail(userId: UserId, newEmail: String): Future[Unit] = {
     findById(userId).map { userOpt =>

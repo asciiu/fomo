@@ -6,15 +6,17 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
+import com.flow.utils.cassandra.ConfigConnector
 import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailConfig, EmailTemplatingEngine, SmtpEmailService}
-import com.softwaremill.bootzooka.passwordreset.application.{PasswordResetCodeDao, PasswordResetConfig, PasswordResetService}
+import com.softwaremill.bootzooka.passwordreset.application.{PasswordResetConfig, PasswordResetService}
 import com.softwaremill.bootzooka.user.application._
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import database.{AppDatabase, RememberMeTokenDao}
-import database.cassandra.{CassandraRememberMeTokenDao, CassandraUserDao}
+import database.CassandraDatabase
+import database.cassandra.{CassandraPasswordResetCodeDao, CassandraRememberMeTokenDao, CassandraUserDao}
+import routes.Routes
 import services.UserService
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,11 +29,12 @@ trait DependencyWiring extends StrictLogging {
     override def rootConfig = ConfigFactory.load()
   }
 
-  lazy val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
+  implicit val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
-  lazy val userDao = new CassandraUserDao
-  lazy val codeDao = AppDatabase.CodeDao
-  lazy val rememberMeTokenDao = new CassandraRememberMeTokenDao
+  lazy val database = new CassandraDatabase(ConfigConnector.connector)
+  lazy val userDao = new CassandraUserDao(database)
+  lazy val codeDao = new CassandraPasswordResetCodeDao(database)
+  lazy val rememberMeTokenDao = new CassandraRememberMeTokenDao(database)
 
   //lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
   //lazy val codeDao = new PasswordResetCodeDao(sqlDatabase)(daoExecutionContext)

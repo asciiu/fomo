@@ -7,7 +7,7 @@ import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplati
 import com.softwaremill.bootzooka.email.domain.EmailContentWithSubject
 import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
 import com.typesafe.scalalogging.StrictLogging
-import database.UserDao
+import database.dao.{PasswordResetCodeDao, UserDao}
 import models.User
 
 import scala.concurrent.{ExecutionContext, Future}
