@@ -8,6 +8,7 @@ import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
+import services.HttpService
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}

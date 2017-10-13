@@ -1,13 +1,16 @@
 -- USERS
 CREATE TABLE "users"(
     "id" UUID NOT NULL,
-    "login" VARCHAR NOT NULL,
-    "login_lowercase" VARCHAR NOT NULL,
+    "first_name" VARCHAR NOT NULL,
+    "last_name" VARCHAR NOT NULL,
     "email" VARCHAR NOT NULL NOT NULL,
     "password" VARCHAR NOT NULL NOT NULL,
     "salt" VARCHAR NOT NULL NOT NULL,
-    "created_on" TIMESTAMP NOT NULL
+    "created_on" TIMESTAMP DEFAULT now(),
+    "updated_on" TIMESTAMP default current_timestamp
 );
+
+CREATE UNIQUE INDEX "users_email" ON "users"("email");
 ALTER TABLE "users" ADD CONSTRAINT "users_id" PRIMARY KEY("id");
 
 -- PASSWORD RESET CODES
@@ -33,3 +36,13 @@ ALTER TABLE "remember_me_tokens" ADD CONSTRAINT "remember_me_tokens_id" PRIMARY 
 ALTER TABLE "remember_me_tokens" ADD CONSTRAINT "remember_me_tokens_user_fk"
   FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 CREATE UNIQUE INDEX "remember_me_tokens_selector" ON "remember_me_tokens"("selector");
+
+CREATE TABLE "user_api_keys"(
+  "id" UUID NOT NULL,
+  "user_id" UUID NOT NULL,
+  "api_key" VARCHAR NOT NULL,
+  "secret"  VARCHAR NOT NULL,
+  "description" VARCHAR NOT NULL,
+  "created_on" TIMESTAMP DEFAULT now(),
+  "updated_on" TIMESTAMP default current_timestamp
+)

@@ -20,8 +20,7 @@ case class User(
 
 object User {
 
-  def withRandomUUID(
-                     email: String,
+  def withRandomUUID(email: String,
                      firstName: String,
                      lastName: String,
                      password: String,

@@ -2,14 +2,14 @@ package com.softwaremill.bootzooka.passwordreset.api
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import com.softwaremill.bootzooka.passwordreset.application.{PasswordResetConfig, PasswordResetService}
-import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
+import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
 import database.cassandra.CassandraPasswordResetCodeDao
 import database.dao.PasswordResetCodeDao
-import models.User
+import models.{PasswordResetCode, User}
 import routes.PasswordResetRoutes
+import services.PasswordResetService
 
 class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
 

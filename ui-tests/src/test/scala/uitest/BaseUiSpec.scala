@@ -6,11 +6,12 @@ import akka.http.scaladsl.Http.ServerBinding
 import com.softwaremill.bootzooka.email.application.DummyEmailService
 import com.softwaremill.bootzooka.passwordreset.application.SqlPasswordResetCodeSchema
 import com.softwaremill.bootzooka.user.application.SqlUserSchema
-import com.softwaremill.bootzooka.{DependencyWiring, HttpService, Main}
+import com.softwaremill.bootzooka.{DependencyWiring, Main}
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.support.PageFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
+import services.{DependencyWiring, HttpService}
 import uitest.pages.{LoginPage, MainPage, MessagesPage, PasswordResetPage}
 
 import scala.util.Try

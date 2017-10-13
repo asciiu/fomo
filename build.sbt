@@ -6,7 +6,6 @@ import Keys._
 
 import scala.util.Try
 import complete.DefaultParsers._
-import io.ino.sbtpillar.Plugin.PillarKeys.{pillarConfigFile, pillarConfigKey, _}
 
 val slf4jVersion        = "1.7.21"
 val logBackVersion      = "1.1.7"
@@ -35,7 +34,7 @@ val slick       = "com.typesafe.slick" %% "slick" % slickVersion
 val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is beta
 val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
-val flyway      = "org.flywaydb" % "flyway-core" % "4.0"
+val flyway      = "org.flywaydb" % "flyway-core" % "4.2.0"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway)
 
 val scalatest        = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
@@ -58,11 +57,9 @@ val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % "10.0
 val playWS               = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.1"
 val playStack            = Seq(playWS)
 
-// Cassandra related
-val phantom              = "com.outworkers"  %% "phantom-dsl" % "2.14.5"
-val pillar               = "com.chrisomeara" % "pillar-core_2.12" % "3.0.0"
-
 val commonDependencies = unitTestingStack ++ loggingStack
+
+resolvers += "Flyway" at "https://flywaydb.org/repo"
 
 lazy val updateNpm = taskKey[Unit]("Update npm")
 lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
@@ -121,7 +118,7 @@ lazy val backend: Project = (project in file("backend"))
   .settings(Revolver.settings)
   .settings(
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ playStack ++
-      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, phantom, pillar),
+      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](
@@ -143,14 +140,7 @@ lazy val backend: Project = (project in file("backend"))
       )
     },
     assemblyJarName in assembly := "bootzooka.jar",
-    assembly := assembly.dependsOn(npmTask.toTask(" run build")).value,
-    pillarSettings,
-    pillarConfigFile := file("backend/src/main/resources/reference.conf"),
-    pillarConfigKey := "cassandra.url",
-    pillarReplicationStrategyConfigKey := "cassandra.replicationStrategy",
-    pillarReplicationFactorConfigKey := "cassandra.replicationFactor",
-    pillarDefaultConsistencyLevelConfigKey := "cassandra.defaultConsistencyLevel",
-    pillarMigrationsDir := file("backend/conf/pillar/migrations/fomo/")
+    assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
   )
 
 lazy val ui = (project in file("ui"))

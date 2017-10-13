@@ -1,14 +1,14 @@
-package com.softwaremill.bootzooka.passwordreset.application
+package services
 
 import java.time.Instant
 
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.email.domain.EmailContentWithSubject
-import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
+import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.typesafe.scalalogging.StrictLogging
 import database.dao.{PasswordResetCodeDao, UserDao}
-import models.User
+import models.{PasswordResetCode, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,16 +21,16 @@ class PasswordResetService(
 )(implicit ec: ExecutionContext)
     extends StrictLogging {
 
-  def sendResetCodeToUser(login: String): Future[Unit] = {
-    logger.debug(s"Preparing to generate and send reset code to user $login")
-    val userFut = userDao.findByLoginOrEmail(login)
+  def sendResetCodeToUser(email: String): Future[Unit] = {
+    logger.debug(s"Preparing to generate and send reset code to user $email")
+    val userFut = userDao.findByEmail(email)
     userFut.flatMap {
       case Some(user) =>
         logger.debug("User found")
         val code = randomPass(user)
         storeCode(code).flatMap(_ => sendCode(code))
       case None =>
-        logger.debug(s"User not found: $login")
+        logger.debug(s"User not found: $email")
         Future.successful((): Unit)
     }
   }
@@ -56,7 +56,7 @@ class PasswordResetService(
     logger.debug("Performing password reset")
     codeDao.findByCode(code).flatMap {
       case Some(c) =>
-        if (c.validTo.isAfter(Instant.now().getEpochSecond)) {
+        if (c.validTo.toInstant.isAfter(Instant.now())) {
           for {
             _ <- changePassword(c, newPassword)
             _ <- invalidateResetCode(c)

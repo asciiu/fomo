@@ -1,4 +1,4 @@
-package com.softwaremill.bootzooka
+package services
 
 import java.util.Locale
 
@@ -6,18 +6,16 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.flow.utils.cassandra.ConfigConnector
+import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailConfig, EmailTemplatingEngine, SmtpEmailService}
-import com.softwaremill.bootzooka.passwordreset.application.{PasswordResetConfig, PasswordResetService}
+import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.user.application._
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import database.CassandraDatabase
-import database.cassandra.{CassandraPasswordResetCodeDao, CassandraRememberMeTokenDao, CassandraUserDao}
+import database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao}
 import routes.Routes
-import services.UserService
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,17 +29,11 @@ trait DependencyWiring extends StrictLogging {
 
   implicit val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
-  lazy val database = new CassandraDatabase(ConfigConnector.connector)
-  lazy val userDao = new CassandraUserDao(database)
-  lazy val codeDao = new CassandraPasswordResetCodeDao(database)
-  lazy val rememberMeTokenDao = new CassandraRememberMeTokenDao(database)
-
-  //lazy val userDao = new UserDao(sqlDatabase)(daoExecutionContext)
-  //lazy val codeDao = new PasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
-  //lazy val rememberMeTokenDao = new RememberMeTokenDao(sqlDatabase)(daoExecutionContext)
-
-  //lazy val sqlDatabase = SqlDatabase.create(config)
-  lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
+  //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
+  lazy val sqlDatabase = SqlDatabase.create(config)
+  lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
+  lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
+  lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
 
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
 

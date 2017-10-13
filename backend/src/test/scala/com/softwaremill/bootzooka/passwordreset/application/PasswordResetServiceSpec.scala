@@ -4,13 +4,13 @@ import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
-import com.softwaremill.bootzooka.passwordreset.domain.PasswordResetCode
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
 import database.cassandra.CassandraPasswordResetCodeDao
 import database.dao.PasswordResetCodeDao
-import models.User
+import models.{PasswordResetCode, User}
 import org.joda.time.DateTime
+import services.PasswordResetService
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
 

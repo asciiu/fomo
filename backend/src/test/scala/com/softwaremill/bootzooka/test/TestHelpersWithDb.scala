@@ -2,8 +2,7 @@ package com.softwaremill.bootzooka.test
 
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailTemplatingEngine}
-import database.cassandra.CassandraUserDao
-import database.CassandraDatabase
+import database.cassandra.{CassandraDatabase, CassandraUserDao}
 import models.User
 import org.scalatest.concurrent.ScalaFutures
 import services.UserService
