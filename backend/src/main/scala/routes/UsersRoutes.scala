@@ -26,7 +26,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     path("logout") {
       get {
         userIdFromSession { _ =>
-          invalidateSession(oneOff, usingHeaders) {
+          invalidateSession(refreshable, usingHeaders) {
             completeOk
           }
         }

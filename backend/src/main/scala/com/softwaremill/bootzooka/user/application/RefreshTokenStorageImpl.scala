@@ -34,7 +34,6 @@ class RefreshTokenStorageImpl(dao: RememberMeTokenDao, system: ActorSystem)(impl
     )
 
   override def remove(selector: String) = {
-    println("REMOVE IT!")
     dao.remove(selector)
   }
 
