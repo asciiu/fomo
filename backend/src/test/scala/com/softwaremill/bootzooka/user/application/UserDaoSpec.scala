@@ -4,8 +4,7 @@ import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpers}
 import com.typesafe.scalalogging.StrictLogging
-import database.cassandra.CassandraUserDao
-import database.dao.UserDao
+import database.postgres.SqlUserDao
 import models.User
 import org.scalatest.Matchers
 
@@ -16,7 +15,7 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
 
   implicit val ec = scala.concurrent.ExecutionContext.Implicits.global
 
-  val userDao        = new CassandraUserDao(cqlDatabase)
+  val userDao        = new SqlUserDao(sqlDatabase)
   lazy val randomIds = List.fill(3)(UUID.randomUUID())
 
   override def beforeEach() {
@@ -82,13 +81,13 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
 
   it should "change password" in {
     // Given
-    val login    = "user1"
+    val email    = "1email@sml.com"
     val password = User.encryptPassword("pass11", "salt1")
-    val user     = userDao.findByLoginOrEmail(login).futureValue.get
+    val user     = userDao.findByEmail(email).futureValue.get
 
     // When
     userDao.changePassword(user.id, password).futureValue
-    val postModifyUserOpt = userDao.findByLoginOrEmail(login).futureValue
+    val postModifyUserOpt = userDao.findByEmail(email).futureValue
     val u                 = postModifyUserOpt.get
 
     // Then

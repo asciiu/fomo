@@ -5,8 +5,7 @@ import akka.http.scaladsl.server.Route
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
-import database.cassandra.CassandraPasswordResetCodeDao
-import database.dao.PasswordResetCodeDao
+import database.postgres.SqlPasswordResetCodeDao
 import models.{PasswordResetCode, User}
 import routes.PasswordResetRoutes
 import services.PasswordResetService
@@ -16,7 +15,7 @@ class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { sp
   lazy val config = new PasswordResetConfig {
     override def rootConfig = ConfigFactory.load()
   }
-  val passwordResetCodeDao = new CassandraPasswordResetCodeDao(cqlDatabase)
+  val passwordResetCodeDao = new SqlPasswordResetCodeDao(sqlDatabase)
   val passwordResetService =
     new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, config)
 

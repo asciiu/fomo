@@ -2,7 +2,7 @@ package com.softwaremill.bootzooka.test
 
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailTemplatingEngine}
-import database.cassandra.{CassandraDatabase, CassandraUserDao}
+import database.postgres.SqlUserDao
 import models.User
 import org.scalatest.concurrent.ScalaFutures
 import services.UserService
@@ -13,11 +13,10 @@ trait TestHelpersWithDb extends TestHelpers with ScalaFutures {
 
   lazy val emailService          = new DummyEmailService()
   lazy val emailTemplatingEngine = new EmailTemplatingEngine
-  lazy val userDao               = new CassandraUserDao(cqlDatabase)
+  lazy val userDao               = new SqlUserDao(sqlDatabase)
   lazy val userService           = new UserService(userDao, emailService, emailTemplatingEngine)
 
-  //def sqlDatabase: SqlDatabase
-  def cqlDatabase: CassandraDatabase
+  def sqlDatabase: SqlDatabase
 
   implicit lazy val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
