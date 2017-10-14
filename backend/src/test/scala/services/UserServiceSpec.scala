@@ -1,11 +1,13 @@
-package com.softwaremill.bootzooka.user.application
+package services
 
 import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import models.User
 import org.scalatest.Matchers
-import services.UserRegisterResult
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithDb {
 
@@ -41,25 +43,23 @@ class UserServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWithD
 
     // then
     resultInitial should be(UserRegisterResult.Success)
-    resultSameLogin should matchPattern { case UserRegisterResult.UserExists(_) => }
+    resultSameLogin should matchPattern { case UserRegisterResult.Success => }
     resultSameEmail should matchPattern { case UserRegisterResult.UserExists(_) => }
-
-    // TODO this test should return Some(user)
-    userDao.findByEmail("newUser2@sml.com").futureValue should be(None)
   }
 
   "registerNewUser" should "not schedule an email on existing login" in {
     // When
-    userService.registerNewUser("Admin", "One", "secondEmail@sml.com", "password").futureValue
+    userService.registerNewUser("Admin", "One", "admin3@sml.com", "password").futureValue
 
     // Then
-    emailService.wasEmailSentTo("secondEmail@sml.com") should be(false)
+    emailService.wasEmailSentTo("admin@sml.com") should be(false)
   }
 
   "changeEmail" should "change email for specified user" in {
-    val user     = userDao.findByEmail("secondEmail@sml.com").futureValue
+    val userFuture    = userDao.findByEmail("admin@sml.com")
+    val userValue     = Await.result(userFuture, 5 seconds)
     val newEmail = "new@email.com"
-    userService.changeEmail(user.get.id, newEmail).futureValue should be('right)
+    userService.changeEmail(userValue.get.id, newEmail).futureValue should be('right)
     userDao.findByEmail(newEmail).futureValue match {
       case Some(cu) => // ok
       case None     => fail("User not found. Maybe e-mail wasn't really changed?")

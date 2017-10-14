@@ -21,7 +21,7 @@ trait PasswordResetRoutes extends RoutesSupport with SessionSupport {
           }
         }
       } ~ entity(as[ForgotPasswordInput]) { in =>
-        onSuccess(passwordResetService.sendResetCodeToUser(in.login)) {
+        onSuccess(passwordResetService.sendResetCodeToUser(in.email)) {
           complete("success")
         }
       }
@@ -31,4 +31,4 @@ trait PasswordResetRoutes extends RoutesSupport with SessionSupport {
 
 case class PasswordResetInput(password: String)
 
-case class ForgotPasswordInput(login: String)
+case class ForgotPasswordInput(email: String)

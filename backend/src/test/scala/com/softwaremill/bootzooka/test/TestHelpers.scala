@@ -15,7 +15,7 @@ trait TestHelpers {
     Stream.continually(random.nextInt(characters.length)).map(characters).take(length).mkString
 
   def newUser(first: String, last: String, email: String, pass: String, salt: String): User =
-    User.withRandomUUID(first, last, email, pass, salt)
+    User.withRandomUUID(email, first, last, pass, salt)
 
   def newRandomUser(password: Option[String] = None): User = {
     val first = randomString()

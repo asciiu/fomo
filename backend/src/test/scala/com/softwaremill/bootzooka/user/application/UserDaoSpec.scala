@@ -26,7 +26,7 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
       val password = "pass" + i
       val salt     = "salt" + i
       userDao
-        .add(User(randomIds(i - 1), first, last, i + "email@sml.com", password, salt))
+        .add(User(randomIds(i - 1), i + "email@sml.com", first, last, password, salt))
         .futureValue
     }
   }
