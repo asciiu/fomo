@@ -50,7 +50,7 @@ val akkaHttpTestkit      = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttp
 val akkaHttpSession      = "com.softwaremill.akka-http-session" %% "core" % "0.5.0"
 val jwtSession           = "com.softwaremill.akka-http-session" %% "jwt"  % "0.5.1"
 val akkaStack            = Seq(akkaHttpCore, akkaHttpExperimental, akkaHttpTestkit, akkaHttpSession)
-val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http" % "0.9.1"
+val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http" % "0.11.0"
 val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % "10.0.10"
 
 val commonDependencies = unitTestingStack ++ loggingStack
@@ -112,6 +112,7 @@ lazy val rootProject = (project in file("."))
   ***************************************************************/
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
+  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
@@ -137,7 +138,7 @@ lazy val backend: Project = (project in file("backend"))
         baseDirectory.value.getParentFile / ui.base.getName / "dist"
       )
     },
-    assemblyJarName in assembly := "bootzooka.jar",
+    assemblyJarName in assembly := "fomo.jar",
     assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
   )
 

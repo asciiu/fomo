@@ -2,9 +2,10 @@ package routes
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 
-class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
+class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>
 
   val routes = Route.seal(new UsersRoutes with TestRoutesSupport {
     override val userService = spec.userService
@@ -33,7 +34,9 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
     userDao.add(newUser("user2", "2", "user2@sml.com", "pass", "salt")).futureValue
     Post("/users/register", Map("first" -> "Random", "last" -> "Person", "email" -> "user2@sml.com", "password" -> "secret")) ~> routes ~> check {
       status should be(StatusCodes.Conflict)
-      entityAs[String] should be("E-mail already in use!")
+      val response = entityAs[JSendResponse]
+      response.message should be("E-mail already in use!")
+      response.status should be(JsonStatus.Fail)
     }
   }
 
@@ -53,14 +56,14 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   def withLoggedInUser(email: String, password: String)(body: RequestTransformer => Unit) =
-    Post("/users", Map("email" -> email, "password" -> password)) ~> routes ~> check {
+    Post("/users/login", Map("email" -> email, "password" -> password)) ~> routes ~> check {
       status should be(StatusCodes.OK)
 
       val Some(sessionHeader) = header("Set-Authorization")
       body(addHeader("Authorization", sessionHeader.value()))
     }
 
-  "POST /" should "log in given valid credentials" in {
+  "POST /users/login" should "log in given valid credentials" in {
     userDao.add(newUser("user3", "3", "user3@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user3@sml.com", "pass") { _ =>
       // ok
@@ -69,17 +72,17 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
 
   "POST /users" should "not log in given invalid credentials" in {
     userDao.add(newUser("user4", "4", "user4@sml.com", "pass", "salt")).futureValue
-    Post("/users", Map("email" -> "user4@sml.com", "password" -> "hacker")) ~> routes ~> check {
+    Post("/users/login", Map("email" -> "user4@sml.com", "password" -> "hacker")) ~> routes ~> check {
       status should be(StatusCodes.Forbidden)
     }
   }
 
-  "PATCH /users" should "update email when email is given" in {
+  "PATCH /users/changeemail" should "update email when email is given" in {
     userDao.add(newUser("user5", "5", "user5@sml.com", "pass", "salt")).futureValue
     val email = "coolmail@awesome.rox"
 
     withLoggedInUser("user5@sml.com", "pass") { transform =>
-      Patch("/users", Map("email" -> email)) ~> transform ~> routes ~> check {
+      Patch("/users/changeemail", Map("email" -> email)) ~> transform ~> routes ~> check {
         userDao.findByEmail(email).futureValue.map(_.email) should be(Some(email))
         status should be(StatusCodes.OK)
       }
@@ -87,7 +90,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   }
 
   "PATCH /users" should "result in an error when user is not authenticated" in {
-    Patch("/users", Map("email" -> "?")) ~> routes ~> check {
+    Patch("/users/changeemail", Map("email" -> "?")) ~> routes ~> check {
       status should be(StatusCodes.Forbidden)
     }
   }
@@ -95,7 +98,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
   "PATCH /users" should "result in an error in neither email nor login is given" in {
     userDao.add(newUser("user7", "7", "user7@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user7@sml.com", "pass") { transform =>
-      Patch("/users", Map.empty[String, String]) ~> transform ~> routes ~> check {
+      Patch("/users/changeemail", Map.empty[String, String]) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Conflict)
       }
     }

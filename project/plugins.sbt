@@ -11,3 +11,5 @@ addSbtPlugin("com.updateimpact" % "updateimpact-sbt-plugin" % "2.1.1")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "0.6.8")
 
 addSbtPlugin("org.flywaydb" % "flyway-sbt" % "4.2.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.2.0")

@@ -7,15 +7,14 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.github.swagger.akka._
 import com.softwaremill.bootzooka.version.BuildInfo._
-import routes.VersionRoutes
+import routes.{UsersRoutes, VersionRoutes}
+import services.UserService
 
-class SwaggerDocService(address: String, port: Int, system: ActorSystem) extends SwaggerHttpService with HasActorSystem {
-  override implicit val actorSystem: ActorSystem = system
-  override implicit val materializer: ActorMaterializer = ActorMaterializer()
-  override val apiTypes = Seq( // add here routes in order to add to swagger
-    ua.typeOf[VersionRoutes]
-  )
+class SwaggerDocService(address: String, port: Int, system: ActorSystem) extends SwaggerHttpService {
+  override val apiClasses: Set[Class[_]] = Set(classOf[VersionRoutes], classOf[UsersRoutes])
+
   override val host = address + ":" + port
-  override val info = Info(version = buildDate, title = "Bootzooka")
+  override val info = Info(version = buildDate, title = "Fomo")
   override val apiDocsPath = "api-docs"
+  override val basePath = "/"
 }

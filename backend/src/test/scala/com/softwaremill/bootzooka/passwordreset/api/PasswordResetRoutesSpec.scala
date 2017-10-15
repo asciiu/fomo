@@ -2,6 +2,7 @@ package com.softwaremill.bootzooka.passwordreset.api
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
@@ -10,7 +11,7 @@ import models.{PasswordResetCode, User}
 import routes.PasswordResetRoutes
 import services.PasswordResetService
 
-class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { spec =>
+class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>
 
   lazy val config = new PasswordResetConfig {
     override def rootConfig = ConfigFactory.load()
@@ -44,7 +45,8 @@ class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb { sp
 
     // when
     Post(s"/passwordreset/${code.code}", Map("password" -> newPassword)) ~> routes ~> check {
-      responseAs[String] should be("ok")
+      val reponse = responseAs[JSendResponse]
+      reponse.status should be(JsonStatus.Success)
       User.passwordsMatch(newPassword, userDao.findById(user.id).futureValue.get) should be(true)
     }
   }

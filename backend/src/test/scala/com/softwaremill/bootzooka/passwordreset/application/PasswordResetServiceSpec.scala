@@ -8,7 +8,6 @@ import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
 import database.postgres.SqlPasswordResetCodeDao
 import models.{PasswordResetCode, User}
-import org.joda.time.DateTime
 import services.PasswordResetService
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {

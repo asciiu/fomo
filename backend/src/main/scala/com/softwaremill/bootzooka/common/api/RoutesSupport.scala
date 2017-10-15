@@ -16,7 +16,7 @@ import io.circe.jawn.decode
 import models.BasicUserData
 
 trait RoutesSupport extends JsonSupport {
-  def completeOk = complete("ok")
+  //def completeOk = complete("ok")
 
   object JsonStatus extends Enumeration {
     val Success = Value("success")
@@ -43,6 +43,14 @@ trait RoutesSupport extends JsonSupport {
     )
   }
 
+  implicit val decodeJSVal: Decoder[JsonStatus.Value] =
+      Decoder.decodeString.map(JsonStatus.withName)
+
+  implicit val decodeJSSend: Decoder[JSendResponse] =
+    Decoder.forProduct3("status", "message", "data")(JSendResponse.apply)
+
+  //def completeOk = complete("ok")
+  def completeOk = complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
 }
 
 trait JsonSupport extends CirceEncoders {
