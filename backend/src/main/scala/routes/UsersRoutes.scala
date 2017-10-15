@@ -10,8 +10,10 @@ import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
+import io.circe.{Json, KeyEncoder}
 import io.circe.generic.auto._
-import models.BasicUserData
+import io.circe.syntax._
+import models.{BasicUserData, User}
 import services.{UserRegisterResult, UserService}
 
 import scala.concurrent.Future
@@ -74,7 +76,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         } ~
           get {
             userFromSession { user =>
-              complete(user)
+              complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
             }
           } ~
           patch {

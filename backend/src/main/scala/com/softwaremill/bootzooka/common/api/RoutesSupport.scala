@@ -13,10 +13,36 @@ import com.softwaremill.bootzooka.common.api.`X-Frame-Options`.`DENY`
 import com.softwaremill.bootzooka.common.api.`X-XSS-Protection`.`1; mode=block`
 import io.circe._
 import io.circe.jawn.decode
-import cats.implicits._
+import models.BasicUserData
 
 trait RoutesSupport extends JsonSupport {
   def completeOk = complete("ok")
+
+  object JsonStatus extends Enumeration {
+    val Success = Value("success")
+    val Fail    = Value("fail")
+    val Error   = Value("error")
+  }
+
+  case class JsonKey(value: String)
+  case class JSendResponse(status: JsonStatus.Value, message: String, data: Json)
+
+  // required by circe
+  implicit val jsonStanardReponse = CanBeSerialized[JSendResponse]
+  implicit val jsonStatus = CanBeSerialized[JsonStatus.Value]
+
+  implicit val JsonKeyEncoder = new KeyEncoder[JsonKey] {
+    override def apply(key: JsonKey): String = key.value
+  }
+
+  implicit val encodeJSend: Encoder[JSendResponse] = new Encoder[JSendResponse] {
+    final def apply(a: JSendResponse): Json = Json.obj(
+      ("status", Json.fromString(a.status.toString)),
+      ("message", Json.fromString(a.message)),
+      ("data", a.data)
+    )
+  }
+
 }
 
 trait JsonSupport extends CirceEncoders {

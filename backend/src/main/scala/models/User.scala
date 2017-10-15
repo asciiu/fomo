@@ -1,13 +1,11 @@
 package models
 
-import java.time.OffsetDateTime
 import java.util.UUID
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 import com.softwaremill.bootzooka.common.Utils
 import com.softwaremill.bootzooka.user._
-import org.joda.time.DateTime
 
 case class User(
                  id: UUID,

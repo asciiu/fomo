@@ -7,7 +7,6 @@ import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplati
 import com.softwaremill.bootzooka.user._
 import database.dao.UserDao
 import models.{BasicUserData, User}
-import org.joda.time.DateTime
 
 import scala.concurrent.{ExecutionContext, Future}
 
