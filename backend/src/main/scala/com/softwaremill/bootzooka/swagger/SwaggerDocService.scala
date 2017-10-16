@@ -14,7 +14,11 @@ class SwaggerDocService(address: String, port: Int, system: ActorSystem) extends
   override val apiClasses: Set[Class[_]] = Set(classOf[VersionRoutes], classOf[UsersRoutes])
 
   override val host = address + ":" + port
-  override val info = Info(version = buildDate, title = "Fomo")
   override val apiDocsPath = "api-docs"
   override val basePath = "/"
+  override val info = Info(
+    version = buildDate,
+    title = "Fomo",
+    description = "All JSON responses will be formatted as: {status: string, message: string, data: { modelName: { ... }}}"
+  )
 }

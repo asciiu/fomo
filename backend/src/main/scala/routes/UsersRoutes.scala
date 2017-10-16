@@ -1,6 +1,6 @@
 package routes
 
-import javax.ws.rs.Path
+import javax.ws.rs.{GET, POST, Path}
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
@@ -22,15 +22,15 @@ import services.{UserRegisterResult, UserService}
 import scala.concurrent.Future
 
 
-@Api(value = "/users", produces = "application/json")
-@Path("/users")
+@Api(value = "/user", produces = "application/json")
+@Path("/api/user")
 trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def userService: UserService
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 
-  val usersRoutes = pathPrefix("users") {
+  val usersRoutes = pathPrefix("user") {
     loginUser ~
     logoutUser ~
     registerUser ~
@@ -39,9 +39,17 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     basicUserInfo
   }
 
-  @ApiOperation(value = "User Login", nickname = "login", httpMethod = "POST", response = classOf[JSendResponse])
+  @POST
+  @Path("/login")
+  @ApiOperation(value = "Login for user",
+    notes = "Returns set-authoriation and optional set-refresh-token headers. Subsequent requests will need these headers set for authentication.",
+    response = classOf[BasicUserData])
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "body", value = "login credentials", required = true,
+      dataTypeClass = classOf[LoginInput], paramType = "body")
+  ))
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "ok")
+    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
   ))
   def loginUser =
     path("login") {
@@ -51,21 +59,24 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
             case None => reject(AuthorizationFailedRejection)
             case Some(user) =>
               val session = Session(user.id)
-              (if (in.rememberMe.getOrElse(false)) {
+              (if (in.rememberMe) {
                 setSession(refreshable, usingHeaders, session)
               } else {
                 setSession(oneOff, usingHeaders, session)
               }) {
-                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("basicUserData") -> user).asJson))
               }
           }
         }
       }
     }
 
-  @ApiOperation(httpMethod = "GET", response = classOf[String], value = "Logs the user out")
+  @GET
+  @Path("/logout")
+  @ApiOperation(value = "User logout",
+    response = classOf[JSendResponse])
   @ApiResponses(Array(
-    new ApiResponse(code = 500, message = "Internal server error")
+    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
   ))
   def logoutUser =
     path("logout") {
@@ -78,6 +89,18 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  @GET
+  @Path("/register")
+  @ApiOperation(value = "Registers a new user",
+    response = classOf[JSendResponse])
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "body", value = "registration deets", required = true,
+      dataTypeClass = classOf[RegistrationInput], paramType = "body")
+  ))
+  @ApiResponses(Array(
+    new ApiResponse(code = 400, message = "The request contains bad syntax or cannot be fulfilled."),
+    new ApiResponse(code = 409, message = "Email already taken")
+  ))
   def registerUser =
     path("register") {
       post {
@@ -94,6 +117,17 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  @GET
+  @Path("/changepassword")
+  @ApiOperation(value = "Changes a user's password",
+    response = classOf[JSendResponse])
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "body", value = "new password", required = true,
+      dataTypeClass = classOf[ChangePasswordInput], paramType = "body")
+  ))
+  @ApiResponses(Array(
+    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
+  ))
   def changePassword =
     path("changepassword") {
       post {
@@ -131,15 +165,21 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  @GET
+  @Path("/")
+  @ApiOperation(value = "Returns basic user info",
+    response = classOf[JSendResponse])
+  @ApiResponses(Array(
+    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
+  ))
   def basicUserInfo =
-    path("/") {
-      get {
-        userFromSession { user =>
-          complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
-        }
+    get {
+      userFromSession { user =>
+        complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
       }
     }
 }
+
 
 case class RegistrationInput(first: String, last: String, email: String, password: String) {
   def firstEscaped = Utils.escapeHtml(first)
@@ -148,6 +188,6 @@ case class RegistrationInput(first: String, last: String, email: String, passwor
 
 case class ChangePasswordInput(currentPassword: String, newPassword: String)
 
-case class LoginInput(email: String, password: String, rememberMe: Option[Boolean])
+case class LoginInput(email: String, password: String, rememberMe: Boolean)
 
 case class PatchUserInput(email: Option[String])

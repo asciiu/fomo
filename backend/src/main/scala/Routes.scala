@@ -17,10 +17,12 @@ trait Routes extends RoutesRequestWrapper with UsersRoutes with PasswordResetRou
         usersRoutes ~
         versionRoutes
     } ~
-      getFromResourceDirectory("webapp") ~
-      new SwaggerDocService(config.serverHost, config.serverPort, system).routes ~
-      path("") {
-        getFromResource("webapp/index.html")
-      }
+    swaggerDocs
   }
+
+  // swagger for api docs
+  def swaggerDocs = path("docs") {
+    getFromResource("swagger/index.html") } ~
+    new SwaggerDocService(config.serverHost, config.serverPort, system).routes ~
+    getFromResourceDirectory("swagger")
 }
