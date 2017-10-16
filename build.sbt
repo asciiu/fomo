@@ -34,7 +34,7 @@ val slick       = "com.typesafe.slick" %% "slick" % slickVersion
 val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is beta
 val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
-val flyway      = "org.flywaydb" % "flyway-core" % "4.2.0"
+val flyway      = "org.flywaydb" % "flyway-sbt" % "4.2.0"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway)
 
 val scalatest        = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
