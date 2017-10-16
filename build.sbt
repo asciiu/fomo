@@ -112,7 +112,7 @@ lazy val rootProject = (project in file("."))
   ***************************************************************/
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
-  .enablePlugins(JavaAppPackaging)
+  .enablePlugins(JavaServerAppPackaging)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
