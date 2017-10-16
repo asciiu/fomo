@@ -112,10 +112,11 @@ lazy val rootProject = (project in file("."))
   ***************************************************************/
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
-  .enablePlugins(JavaServerAppPackaging)
+  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
+    herokuAppName in Compile := "infinite-garden-24119",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
       Seq(javaxMailSun, typesafeConfig, swagger, sprayJson),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
@@ -153,6 +154,7 @@ lazy val uiTests = (project in file("ui-tests"))
     libraryDependencies ++= seleniumStack,
     test in Test := (test in Test).dependsOn(npmTask.toTask(" run build")).value
   ) dependsOn backend
+
 
 RenameProject.settings
 

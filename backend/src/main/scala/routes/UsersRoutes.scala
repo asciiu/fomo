@@ -59,7 +59,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
             case None => reject(AuthorizationFailedRejection)
             case Some(user) =>
               val session = Session(user.id)
-              (if (in.rememberMe) {
+              (if (in.rememberMe.getOrElse(false)) {
                 setSession(refreshable, usingHeaders, session)
               } else {
                 setSession(oneOff, usingHeaders, session)
@@ -166,16 +166,18 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
 
   @GET
-  @Path("/")
+  @Path("/info")
   @ApiOperation(value = "Returns basic user info",
     response = classOf[JSendResponse])
   @ApiResponses(Array(
     new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
   ))
   def basicUserInfo =
-    get {
-      userFromSession { user =>
-        complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+    path("info") {
+      get {
+        userFromSession { user =>
+          complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+        }
       }
     }
 }
@@ -188,6 +190,6 @@ case class RegistrationInput(first: String, last: String, email: String, passwor
 
 case class ChangePasswordInput(currentPassword: String, newPassword: String)
 
-case class LoginInput(email: String, password: String, rememberMe: Boolean)
+case class LoginInput(email: String, password: String, rememberMe: Option[Boolean])
 
 case class PatchUserInput(email: Option[String])

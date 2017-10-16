@@ -24,7 +24,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     }
   }
 
-  "POST /user/whatever" should "not be bound to /users login - reject unmatchedPath request" in {
+  "POST /user/whatever" should "not be bound to /user login - reject unmatchedPath request" in {
     Post("/user/whatever") ~> routes ~> check {
       status should be(StatusCodes.NotFound)
     }

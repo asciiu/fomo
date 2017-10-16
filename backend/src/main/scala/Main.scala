@@ -20,9 +20,9 @@ object Main extends App with StrictLogging {
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexFeed = actorSystem.actorOf(BittrexWebsocketActor.props(bittrexEventBus, ConfigFactory.load()), name = "bittrex.websocket")
-  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus))
+  //val bittrexEventBus = new MarketEventBus("bittrex")
+  //val bittrexFeed = actorSystem.actorOf(BittrexWebsocketActor.props(bittrexEventBus, ConfigFactory.load()), name = "bittrex.websocket")
+  //val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus))
 
   val (startFuture, bl) = new HttpService().start()
 
