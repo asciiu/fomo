@@ -1,6 +1,7 @@
 package com.flow.bittrex
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.{MarketEvent, MarketEventBus}
 
 import scala.concurrent.ExecutionContext
@@ -12,6 +13,7 @@ object BittrexMarketEventPublisher {
     Props(new BittrexMarketEventPublisher(eventBus))
 
   case class MarketSummaries(summaries: List[BittrexNonce])
+  case class MarketDeltas(deltas: List[MarketUpdate])
 }
 
 class BittrexMarketEventPublisher(eventBus: MarketEventBus)
@@ -24,6 +26,9 @@ class BittrexMarketEventPublisher(eventBus: MarketEventBus)
     case MarketSummaries(summaries) =>
       publishSummary(summaries)
 
+    case MarketDeltas(deltas) =>
+      publishDeltas(deltas)
+
     case x =>
       log.warning(s"received unknown $x")
   }
@@ -33,6 +38,12 @@ class BittrexMarketEventPublisher(eventBus: MarketEventBus)
       s.Deltas.foreach{ bittrexMarketUpdate =>
         eventBus.publish(MarketEvent("updates", bittrexMarketUpdate))
       }
+    }
+  }
+
+  def publishDeltas(deltas: List[MarketUpdate]) = {
+    deltas.foreach{ bittrexMarketUpdate =>
+      eventBus.publish(MarketEvent("updates", bittrexMarketUpdate))
     }
   }
 }
