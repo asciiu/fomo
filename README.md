@@ -1,12 +1,14 @@
-# Bootzooka
+# Fomo
 
-[![Build Status](https://travis-ci.org/softwaremill/bootzooka.svg?branch=master)](https://travis-ci.org/softwaremill/bootzooka)
-[![Dependencies](https://app.updateimpact.com/badge/634276070333485056/bootzooka.svg?config=compile)](https://app.updateimpact.com/latest/634276070333485056/bootzooka)
+The Fear of Missing Out on something great! This shall be the new hotness for the Fomo market api. This project leverages the
+following tech:
 
-Bootzooka is a simple application scaffolding project to allow quick start of development for modern web based
-applications.
+* akka-http
+* slick
+* flyway
+* scala 2.12
 
-[See the docs](http://softwaremill.github.io/bootzooka/) for more information.
+
 
 
 
