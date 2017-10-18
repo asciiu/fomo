@@ -53,7 +53,7 @@ class MarketService(val marketName: String) extends Actor
 
   def receive: Receive = {
     case update: MarketUpdate =>
-      if (marketName == "BTC-BAT") {
+      if (marketName == "BTC-XLM") {
         println(s"$update")
       }
       //println(marketName)

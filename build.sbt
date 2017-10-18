@@ -94,7 +94,7 @@ def haltOnCmdResultError(result: Int) {
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
-    name := "bootzooka",
+    name := "fomo",
     herokuFatJar in Compile := Some((assemblyOutputPath in backend in assembly).value),
     deployHeroku in Compile := ((deployHeroku in Compile) dependsOn (assembly in backend)).value
   )
