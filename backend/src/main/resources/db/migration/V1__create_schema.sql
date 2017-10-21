@@ -47,4 +47,5 @@ CREATE TABLE "user_api_keys"(
   "updated_on" TIMESTAMP default current_timestamp
 );
 
-CREATE UNIQUE INDEX "user_api_keys" ON "user_api_keys" ("api_key", "secret");
+ALTER TABLE "user_api_keys" ADD CONSTRAINT "user_api_keys_unique" UNIQUE ("api_key", "secret");
+
