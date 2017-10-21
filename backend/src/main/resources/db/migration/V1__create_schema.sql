@@ -45,4 +45,6 @@ CREATE TABLE "user_api_keys"(
   "description" VARCHAR NOT NULL,
   "created_on" TIMESTAMP DEFAULT now(),
   "updated_on" TIMESTAMP default current_timestamp
-)
+);
+
+CREATE UNIQUE INDEX "user_api_keys" ON "user_api_keys" ("api_key", "secret");

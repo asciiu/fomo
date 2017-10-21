@@ -17,7 +17,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import io.swagger.annotations._
 import models.BasicUserData
-import services.{UserRegisterResult, UserService}
+import services.{UserKeyService, UserRegisterResult, UserService}
 
 import scala.concurrent.Future
 
@@ -27,16 +27,18 @@ import scala.concurrent.Future
 trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def userService: UserService
+  def userKeyService: UserKeyService
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 
   val usersRoutes = pathPrefix("user") {
-    loginUser ~
-    logoutUser ~
-    registerUser ~
+    addApiKey ~
+    basicUserInfo ~
     changePassword ~
     changeuUserEmail ~
-    basicUserInfo
+    loginUser ~
+    logoutUser ~
+    registerUser
   }
 
   @POST
@@ -144,6 +146,22 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  def addApiKey =
+    path("apikey"){
+      post {
+        userFromSession{ user =>
+          entity(as[ApiKey]) { key =>
+            onSuccess(userKeyService.addUserKey(user.id, key.key, key.secret, key.description)) {
+              case Left(msg) =>
+                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
+              case Right(_)  =>
+                completeOk
+          }
+        }
+      }
+    }
+  }
+
   def changeuUserEmail =
     path("changeemail") {
       patch {
@@ -183,6 +201,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 }
 
 
+case class ApiKey(key: String, secret: String, description: String)
 case class RegistrationInput(first: String, last: String, email: String, password: String) {
   def firstEscaped = Utils.escapeHtml(first)
   def lastEscaped = Utils.escapeHtml(last)

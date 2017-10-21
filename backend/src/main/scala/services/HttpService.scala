@@ -14,7 +14,7 @@ import com.softwaremill.bootzooka.user.application._
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao}
+import database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao, SqlUserKeyDao}
 import routes.Routes
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,9 +30,11 @@ trait DependencyWiring extends StrictLogging {
   implicit val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
   //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
+
   lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
   lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
+  lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
 
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
@@ -59,6 +61,8 @@ trait DependencyWiring extends StrictLogging {
     emailTemplatingEngine,
     config
   )(serviceExecutionContext)
+
+  lazy val userKeyService = new UserKeyService(userKeyDao)
 
   lazy val refreshTokenStorage = new RefreshTokenStorageImpl(rememberMeTokenDao, system)(serviceExecutionContext)
 }

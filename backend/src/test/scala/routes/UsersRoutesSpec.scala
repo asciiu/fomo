@@ -4,11 +4,15 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
+import models.UserKey
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>
 
   val routes = Route.seal(new UsersRoutes with TestRoutesSupport {
     override val userService = spec.userService
+    override val userKeyService = spec.userKeyService
   }.usersRoutes)
 
   "POST /register" should "register new user" in {
@@ -66,7 +70,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
   "POST /user/login" should "log in given valid credentials" in {
     userDao.add(newUser("user3", "3", "user3@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user3@sml.com", "pass") { _ =>
-      // ok
+      status should be(StatusCodes.OK)
     }
   }
 
@@ -118,6 +122,33 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     withLoggedInUser("user9@sml.com", "pass") { transform =>
       Post("/user/changepassword", Map("currentPassword" -> "hacker", "newPassword" -> "newPass")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Forbidden)
+      }
+    }
+  }
+
+  "POST /apikey" should "add a new user key" in {
+    userDao.add(newUser("user10", "10", "user10@sml.com", "pass", "salt")).futureValue
+    withLoggedInUser("user10@sml.com", "pass") { transform =>
+      Post("/user/apikey", Map("key" -> "key", "secret" -> "sssh", "description" -> "testy key")) ~> transform ~> routes ~> check {
+        status should be(StatusCodes.OK)
+      }
+    }
+  }
+
+  "POST /apikey" should "not add a dupe key" in {
+    val key = "key"
+    val secret = "secret_key"
+    val email = "user11@sml.com"
+    val user = newUser("user11", "11", email, "pass", "salt")
+    val userKey = UserKey.withRandomUUID(user.id, key, secret, "testy")
+
+    userDao.add(user)
+    val future = userKeyDao.add(userKey)
+    Await.ready(future, 5.second)
+
+    withLoggedInUser(email, "pass") { transform =>
+      Post("/user/apikey", Map("key" -> key, "secret" -> secret, "description" -> "testy key")) ~> transform ~> routes ~> check {
+        status should be(StatusCodes.Conflict)
       }
     }
   }
