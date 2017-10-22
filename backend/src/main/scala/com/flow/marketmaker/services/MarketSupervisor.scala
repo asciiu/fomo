@@ -5,6 +5,7 @@ package services.actors
 // external
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.database.MarketUpdateDao
 import com.flow.marketmaker.models.MarketStructures.{MarketMessage, MarketUpdate}
 
 import scala.concurrent.ExecutionContext
@@ -12,8 +13,9 @@ import scala.language.postfixOps
 
 
 object MarketSupervisor {
-  def props(eventBus: MarketEventBus)(implicit executionContext: ExecutionContext,
-                                      system: ActorSystem) = Props(new MarketSupervisor(eventBus))
+  def props(eventBus: MarketEventBus)
+           (implicit executionContext: ExecutionContext,
+            system: ActorSystem) = Props(new MarketSupervisor(eventBus))
 }
 
 /**

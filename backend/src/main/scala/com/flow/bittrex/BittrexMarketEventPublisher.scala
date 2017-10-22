@@ -1,6 +1,7 @@
 package com.flow.bittrex
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import com.flow.marketmaker.database.MarketUpdateDao
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.{MarketEvent, MarketEventBus}
 

@@ -30,19 +30,20 @@ object MarketStructures {
                            low24hr: BigDecimal)
 
   // new struct used for bittrex
-  case class MarketUpdate(MarketName: String,
-                         High: Float,
-                         Low: Float,
-                         Volume: Float,
-                         Last: Float,
-                         BaseVolume: Float,
-                         TimeStamp: String,
-                         Bid: Float,
-                         Ask: Float,
+  case class MarketUpdate(id: Option[Int],
+                         MarketName: String,
+                         High: Double,
+                         Low: Double,
+                         Volume: Double,
+                         Last: Double,
+                         BaseVolume: Double,
+                         TimeStamp: OffsetDateTime,
+                         Bid: Double,
+                         Ask: Double,
                          OpenBuyOrders: Int,
                          OpenSellOrders: Int,
-                         PrevDay: Float,
-                         Created: String)
+                         PrevDay: Double,
+                         Created: OffsetDateTime)
 
 
    case class PriceUpdateBTC(time: OffsetDateTime, last: BigDecimal)

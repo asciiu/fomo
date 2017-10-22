@@ -6,6 +6,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
+import com.flow.bittrex.BittrexSignalrActor
+import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
+import com.flow.marketmaker.services.services.actors.MarketSupervisor
+import com.softwaremill.bootzooka.Main.actorSystem
 import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailConfig, EmailTemplatingEngine, SmtpEmailService}
@@ -20,7 +25,7 @@ import routes.Routes
 import scala.concurrent.{ExecutionContext, Future}
 
 
-trait DependencyWiring extends StrictLogging {
+abstract class DependencyWiring()(implicit materializer: ActorMaterializer) extends StrictLogging {
   def system: ActorSystem
 
   lazy val config = new PasswordResetConfig with EmailConfig with DatabaseConfig with ServerConfig {
@@ -36,6 +41,11 @@ trait DependencyWiring extends StrictLogging {
   lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
   lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
+  lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)(daoExecutionContext)
+
+  val bittrexEventBus = new MarketEventBus("bittrex")
+  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus))
+  val bittrexFeed = actorSystem.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
 

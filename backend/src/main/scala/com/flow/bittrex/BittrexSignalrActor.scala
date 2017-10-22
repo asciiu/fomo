@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.database.MarketUpdateDao
 import com.google.gson.JsonElement
 import microsoft.aspnet.signalr.client.Action
 
@@ -12,15 +13,16 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object BittrexSignalrActor {
 
-  def props(eventBus: MarketEventBus)(implicit context: ExecutionContext,
+  def props(eventBus: MarketEventBus, marketUpdateDao: MarketUpdateDao)(implicit context: ExecutionContext,
                                                 system: ActorSystem, materializer: ActorMaterializer): Props =
-    Props(new BittrexSignalrActor(eventBus))
+    Props(new BittrexSignalrActor(eventBus, marketUpdateDao))
 }
 
-class BittrexSignalrActor(eventBus: MarketEventBus)
-                           (implicit executionContext: ExecutionContext,
-                            system: ActorSystem,
-                            materializer: ActorMaterializer) extends Directives
+class BittrexSignalrActor(eventBus: MarketEventBus,
+                          marketUpdateDao: MarketUpdateDao)
+                         (implicit executionContext: ExecutionContext,
+                          system: ActorSystem,
+                          materializer: ActorMaterializer) extends Directives
   with BittrexJsonSupport with Actor with ActorLogging with SignalRSupport {
 
   import BittrexMarketEventPublisher._
@@ -57,6 +59,7 @@ class BittrexSignalrActor(eventBus: MarketEventBus)
 
   private def publishSummary(json: String): Unit = {
     Unmarshal(json).to[BittrexNonce].map { nonce =>
+      marketUpdateDao.insert(nonce.Deltas)
       // send the summary to our publisher to process
       publisher ! MarketDeltas(nonce.Deltas)
     }
