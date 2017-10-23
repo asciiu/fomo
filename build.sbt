@@ -13,8 +13,8 @@ val scalaLoggingVersion = "3.5.0"
 val slickVersion        = "3.2.0"
 val seleniumVersion     = "2.53.0"
 val circeVersion        = "0.7.0"
-val akkaVersion         = "2.5.0"
-val akkaHttpVersion     = "10.0.4"
+val akkaVersion         = "2.5.3"
+val akkaHttpVersion     = "10.0.10"
 
 val slf4jApi       = "org.slf4j" % "slf4j-api" % slf4jVersion
 val logBackClassic = "ch.qos.logback" % "logback-classic" % logBackVersion
@@ -51,7 +51,10 @@ val akkaHttpSession      = "com.softwaremill.akka-http-session" %% "core" % "0.5
 val jwtSession           = "com.softwaremill.akka-http-session" %% "jwt"  % "0.5.1"
 val akkaStack            = Seq(akkaHttpCore, akkaHttpExperimental, akkaHttpTestkit, akkaHttpSession)
 val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http" % "0.11.0"
-val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % "10.0.10"
+val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+
+// scalatrex
+val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
 
 val commonDependencies = unitTestingStack ++ loggingStack
 
@@ -65,7 +68,7 @@ lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
 lazy val commonSettings = Seq(
   organization := "com.softwaremill",
   version := "0.0.1-SNAPSHOT",
-  scalaVersion := "2.12.1",
+  scalaVersion := "2.12.3",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
@@ -118,7 +121,7 @@ lazy val backend: Project = (project in file("backend"))
   .settings(
     herokuAppName in Compile := "infinite-garden-24119",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
-      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson),
+      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, ws),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](

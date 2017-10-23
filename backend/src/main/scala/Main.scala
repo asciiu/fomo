@@ -3,15 +3,10 @@ package com.softwaremill.bootzooka
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.stream.ActorMaterializer
-import com.flow.bittrex.{BittrexSignalrActor}
-import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.typesafe.scalalogging.StrictLogging
 import services.HttpService
-
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-
 
 object Main extends App with StrictLogging {
   implicit val actorSystem = ActorSystem("main")
@@ -19,14 +14,13 @@ object Main extends App with StrictLogging {
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-
-
   val (startFuture, bl) = new HttpService().start()
 
   val host = bl.config.serverHost
   val port = bl.config.serverPort
 
   val system = bl.system
+
 
   startFuture.onComplete {
     case Success(b) =>

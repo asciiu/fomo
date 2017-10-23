@@ -83,8 +83,6 @@ class HttpService()
                   implicit val materializer: ActorMaterializer) extends StrictLogging {
   def start(): (Future[ServerBinding], DependencyWiring) = {
     Locale.setDefault(Locale.US) // set default locale to prevent from sending cookie expiration date in polish format
-    //import _system.dispatcher
-    //import actorSystem.dispatcher
 
     val modules = new DependencyWiring with Routes {
 
