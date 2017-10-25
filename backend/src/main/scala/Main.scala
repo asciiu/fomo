@@ -21,7 +21,6 @@ object Main extends App with StrictLogging {
 
   val system = bl.system
 
-
   startFuture.onComplete {
     case Success(b) =>
       logger.info(s"Server started on $host:$port")

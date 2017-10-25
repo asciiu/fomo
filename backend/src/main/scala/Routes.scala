@@ -6,7 +6,11 @@ import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.api.RoutesRequestWrapper
 import com.softwaremill.bootzooka.swagger.SwaggerDocService
 
-trait Routes extends RoutesRequestWrapper with UsersRoutes with PasswordResetRoutes with VersionRoutes {
+trait Routes extends RoutesRequestWrapper
+  with UsersRoutes
+  with PasswordResetRoutes
+  with VersionRoutes
+  with MarketRoutes {
 
   def system: ActorSystem
   def config: ServerConfig
@@ -14,8 +18,9 @@ trait Routes extends RoutesRequestWrapper with UsersRoutes with PasswordResetRou
   lazy val routes = requestWrapper {
     pathPrefix("api") {
       passwordResetRoutes ~
-        usersRoutes ~
-        versionRoutes
+      usersRoutes ~
+      versionRoutes ~
+      marketRoutes
     } ~
     swaggerDocs
   }
