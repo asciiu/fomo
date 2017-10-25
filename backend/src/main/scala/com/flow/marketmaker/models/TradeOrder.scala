@@ -50,3 +50,12 @@ case class LessThanEq(basePrice: Double) extends TradeCondition {
 
   override def toString = s">= $basePrice"
 }
+
+object SimpleConditionalFactory {
+  def makeCondition(str: String, value: Double) = {
+    str match {
+      case "<=" => LessThanEq(value)
+      case ">=" => GreaterThanEq(value)
+    }
+  }
+}
