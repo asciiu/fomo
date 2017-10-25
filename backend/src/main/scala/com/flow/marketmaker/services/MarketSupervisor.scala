@@ -5,8 +5,7 @@ package services.actors
 // external
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.MarketUpdateDao
-import com.flow.marketmaker.models.MarketStructures.{MarketMessage, MarketUpdate}
+import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -16,6 +15,8 @@ object MarketSupervisor {
   def props(eventBus: MarketEventBus)
            (implicit executionContext: ExecutionContext,
             system: ActorSystem) = Props(new MarketSupervisor(eventBus))
+
+  case class GetMarketActorRef(marketName: String)
 }
 
 /**
@@ -26,6 +27,8 @@ class MarketSupervisor (eventBus: MarketEventBus)
                        (implicit ctx: ExecutionContext, system: ActorSystem)
   extends Actor
     with ActorLogging {
+
+  import MarketSupervisor._
 
   //import PoloniexCandleRetrieverService._
 
@@ -51,9 +54,17 @@ class MarketSupervisor (eventBus: MarketEventBus)
     eventBus.unsubscribe(self, "updates")
   }
 
-  def receive = myReceive
+  def receive = {
 
-  def myReceive: Receive = {
+    /**
+      * Send back an optional actor ref for the market name
+      */
+    case GetMarketActorRef(marketName) =>
+      sender() ! markets.get(marketName)
+
+    /**
+      * ship market update to correct market actor
+      */
     case update: MarketUpdate =>
       val marketName = update.MarketName
       //if (marketName.contains("USDT_BTC")) {

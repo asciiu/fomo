@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, Props}
 import com.flow.marketmaker.database.MarketUpdateDao
 import com.flow.marketmaker.models.MarketStructures.{MarketMessage, MarketUpdate}
+import com.flow.marketmaker.models.TradeOrder
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,7 +39,7 @@ object MarketService {
   buyConditions: [{id: 1, type: "simpleConditional", indicator: "price", operator: "<=", value: 0.000045}],
   sellConditions: [{id: 1, type: "simpleConditional", indicator: "price", operator: ">=", value: 0.00005}]
   */
-  case class Order(exchange: String, marketName: String, userId: UUID, price: Double)
+  case class PlaceOrder(tradeOrder: TradeOrder)
 }
 
 class MarketService(val marketName: String) extends Actor
@@ -47,7 +48,7 @@ class MarketService(val marketName: String) extends Actor
   import MarketService._
 
   // TODO need a better collection here
-  val orders = collection.mutable.ListBuffer[Order]()
+  val orders = collection.mutable.ListBuffer[TradeOrder]()
 
   override def preStart() = {
     //eventBus.subscribe(self, PoloniexEventBus.BTCPrice)
@@ -59,17 +60,22 @@ class MarketService(val marketName: String) extends Actor
 
   def receive: Receive = {
     case update: MarketUpdate =>
+      val lastPrice = update.Last
 
-      orders.foreach{ o =>
-        if (o.price <= update.Last) {
-          println("execute the order")
-          // fill the order
-          // remove the order from the orders collection
-        }
+      val executeOrders = orders.filter(_.evaluate(lastPrice))
+
+      executeOrders.foreach{ to =>
+
+        println(s"Last Price: ${lastPrice}")
+        println(to.toString())
+        println(s"Buy ${to.currencyName}")
+        println(s"qty ${to.quantity}")
+        println(s"userId ${to.userId}")
+        println(s"side ${to.side}")
       }
 
-    case order: Order =>
-      orders.append(order)
+    case PlaceOrder(tradeOrder) =>
+      orders.append(tradeOrder)
   }
 }
 

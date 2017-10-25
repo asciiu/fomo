@@ -11,12 +11,12 @@ object TradeType extends Enumeration {
   val Sell    = Value("sell")
 }
 
-class TradeOrder(userId: UUID,
-                 exchangeName: String,
-                 marketName: String,
-                 currencyName: String,
-                 side: TradeType.Value,
-                 quantity: Double,
+class TradeOrder(val userId: UUID,
+                 val exchangeName: String,
+                 val marketName: String,
+                 val currencyName: String,
+                 val side: TradeType.Value,
+                 val quantity: Double,
                  orConditions: List[TradeCondition]
                 ) {
 
@@ -39,6 +39,7 @@ case class GreaterThanEq(basePrice: Double) extends TradeCondition {
   lazy val indicator = Indicator.Price
 
   def evaluate(testPrice: Any) = testPrice.asInstanceOf[Double] >= basePrice
+  override def toString = s">= $basePrice"
 }
 
 case class LessThanEq(basePrice: Double) extends TradeCondition {
@@ -46,4 +47,6 @@ case class LessThanEq(basePrice: Double) extends TradeCondition {
   lazy val indicator = Indicator.Price
 
   def evaluate(testPrice: Any) = testPrice.asInstanceOf[Double] <= basePrice
+
+  override def toString = s">= $basePrice"
 }
