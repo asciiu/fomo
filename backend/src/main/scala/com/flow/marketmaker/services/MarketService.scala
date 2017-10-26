@@ -45,6 +45,9 @@ class MarketService(val marketName: String) extends Actor
       executeOrders.foreach{ to =>
         println(s"Last Price: ${lastPrice}")
         println(s"Execute ${to.side} ${to.quantity} ${to.currencyName} for user: ${to.userId}")
+
+        // TODO save to the dao a record of this trades close
+        //
       }
 
       // remove the executed orders

@@ -9,6 +9,8 @@ import akka.pattern.ask
 import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
+import com.flow.bittrex.database.TradeDao
+import com.flow.bittrex.models.BittrexTrade
 import com.flow.marketmaker.models.{SimpleConditionalFactory, TradeOrder, TradeType}
 import com.flow.marketmaker.services.MarketService.PlaceOrder
 import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
@@ -23,12 +25,12 @@ import scala.concurrent.duration._
 trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def bittrexMarketSuper: ActorRef
+  def tradeDao: TradeDao
 
   val marketRoutes = pathPrefix("market") {
     setBuy ~
     setSell
   }
-
 
   /**
     * {
@@ -55,6 +57,27 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
             val marketName = in.marketName
             val conditions = in.buyConditions.map{ c => SimpleConditionalFactory.makeCondition(c.operator, c.value) }
 
+            // TODO a trade order has a created at time
+            // it also contains isOpen
+            // closed_at timestamp
+//            exchange: "bittrex",
+//            exchangeName: "bittrex",
+//            marketName: "BAT-BTC",
+//            marketCurrency: "BAT",
+//            marketCurrencyLong: "Basic Attention Token",
+//            baseCurrency: "BTC",
+//            baseCurrencyLong: "Bitcoin",
+//            createdTime: "2014-07-12T03:41:25.323",
+//            //boughtTime:"2014-07-12T04:42:25.323",
+//            quantity: 1000,
+//            //boughtPriceAsked: 0.000045,
+//            //boughtPriceActual: 0.000044,
+//            //soldTime: "",
+//            //soldPriceAsked: 0.00005,
+//            //soldPriceActual: 0.000051,
+//            status: "set",
+
+
             val order = new TradeOrder(userId = user.id,
               exchangeName = in.exchangeName,
               marketName = in.marketName,
@@ -63,6 +86,9 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
               quantity = in.quantity,
               orConditions = conditions
             )
+
+            // TODO this needs to be merged with the TradeOrder concept
+            tradeDao.insert(BittrexTrade.withRandomUUID(in.marketName, true, in.quantity, 0.0))
 
             implicit val timeout = Timeout(1.second)
 
