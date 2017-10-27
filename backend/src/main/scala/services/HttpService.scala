@@ -38,7 +38,6 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
 
   lazy val sqlDatabase = SqlDatabase.create(config)
-  lazy val tradeDao = new SqlTradeDao(sqlDatabase)
   lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
   lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
   lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)
@@ -46,7 +45,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)(daoExecutionContext)
 
   val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus))
+  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus, sqlDatabase))
   val bittrexFeed = actorSystem.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")

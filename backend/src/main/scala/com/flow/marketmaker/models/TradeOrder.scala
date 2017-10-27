@@ -1,12 +1,14 @@
 package com.flow.marketmaker.models
 
 import java.time.{Instant, ZoneOffset}
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-import com.flow.marketmaker.models.TradeType.Value
+case class BuyCondition(conditionType: String, indicator: String, operator: String, value: Double)
 
-
+case class BuyOrder(exchangeName: String,
+                    marketName: String,
+                    quantity: Double,
+                    buyConditions: List[BuyCondition])
 
 object TradeType extends Enumeration {
   val Buy = Value("buy")
@@ -14,14 +16,15 @@ object TradeType extends Enumeration {
 }
 
 
-class TradeOrder(val userId: UUID,
-                 val exchangeName: String,
-                 val marketName: String,
-                 val currencyName: String,
-                 val side: TradeType.Value,
-                 val quantity: Double,
-                 orConditions: List[TradeCondition]
-                ) {
+case class TradeOrder(val id: UUID,
+                      val userId: UUID,
+                      val exchangeName: String,
+                      val marketName: String,
+                      val currencyName: String,
+                      val side: TradeType.Value,
+                      val quantity: Double,
+                      orConditions: List[TradeCondition]
+                     ) {
 
   val createdAt = Instant.now().atOffset(ZoneOffset.UTC)
 
@@ -36,6 +39,14 @@ class TradeOrder(val userId: UUID,
 
   // evaluates all conditions and returns true if any of the conditions are true
   def evaluate(test: Any): Boolean = orConditions.exists( _.evaluate(test) )
+}
+
+object TradeOrder {
+
+  def apply(userId: UUID, exchangeName: String, marketName: String, currencyName: String,
+            side: TradeType.Value, quantity: Double, orConditions: List[TradeCondition]): TradeOrder =
+    TradeOrder(UUID.randomUUID(), userId, exchangeName, marketName,
+      currencyName, side, quantity, orConditions)
 }
 
 abstract class TradeCondition() {

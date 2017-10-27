@@ -1,6 +1,6 @@
 package com.flow.bittrex.database.postgres.schema
 
-import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import java.time.OffsetDateTime
 import java.util.UUID
 
 import com.flow.bittrex.models.BittrexTrade

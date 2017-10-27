@@ -6,15 +6,16 @@ package services.actors
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
+import com.softwaremill.bootzooka.common.sql.SqlDatabase
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 
 
 object MarketSupervisor {
-  def props(eventBus: MarketEventBus)
-           (implicit executionContext: ExecutionContext,
-            system: ActorSystem) = Props(new MarketSupervisor(eventBus))
+  def props(eventBus: MarketEventBus, sqlDatabase: SqlDatabase)
+           (implicit executionContext: ExecutionContext, system: ActorSystem) =
+    Props(new MarketSupervisor(eventBus, sqlDatabase))
 
   case class GetMarketActorRef(marketName: String)
 }
@@ -23,7 +24,7 @@ object MarketSupervisor {
   * This actor is reponsible for managing all poloniex markets. New
   * actors for each market are created here.
   */
-class MarketSupervisor (eventBus: MarketEventBus)
+class MarketSupervisor (eventBus: MarketEventBus, sqlDatabase: SqlDatabase)
                        (implicit ctx: ExecutionContext, system: ActorSystem)
   extends Actor
     with ActorLogging {
@@ -74,7 +75,7 @@ class MarketSupervisor (eventBus: MarketEventBus)
       if (!markets.contains(marketName)) {
 
         // fire up a new actor for this market
-        markets += marketName -> context.actorOf(MarketService.props(marketName), marketName)
+        markets += marketName -> context.actorOf(MarketService.props(marketName, sqlDatabase), marketName)
 
         // send a message to the retriever to get the candle data from Poloniex
         // if the 24 hour baseVolume from this update is greater than our threshold

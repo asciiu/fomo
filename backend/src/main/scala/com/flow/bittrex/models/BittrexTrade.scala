@@ -4,7 +4,8 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
 
 case class BittrexTrade(id: UUID,
-                         marketName: String,
+                        user_id: String,
+
                          isOpen: Boolean,
                          quantity: Double,
                          bidPrice: Double,
@@ -21,4 +22,6 @@ object BittrexTrade {
     BittrexTrade(UUID.randomUUID(), marketName, true, quantity,bidPrice,
       Instant.now().atOffset(ZoneOffset.UTC), None, None)
   }
+
+
 }
