@@ -7,7 +7,6 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import com.flow.bittrex.BittrexSignalrActor
-import com.flow.bittrex.database.postgres.SqlTradeDao
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
 import com.flow.marketmaker.services.services.actors.MarketSupervisor
@@ -21,6 +20,7 @@ import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao, SqlUserKeyDao}
+import redis.RedisClient
 import routes.Routes
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,6 +36,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   implicit val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
   //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
+  val redis = new RedisClient()
 
   lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
@@ -45,7 +46,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)(daoExecutionContext)
 
   val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus, sqlDatabase))
+  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus, sqlDatabase, redis))
   val bittrexFeed = actorSystem.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")

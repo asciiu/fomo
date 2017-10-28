@@ -31,14 +31,16 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 
-  val usersRoutes = pathPrefix("user") {
-    addApiKey ~
-    basicUserInfo ~
-    changePassword ~
-    changeuUserEmail ~
-    loginUser ~
-    logoutUser ~
-    registerUser
+  val usersRoutes = logRequestResult("UserRoutes") {
+    pathPrefix("user") {
+      addApiKey ~
+        basicUserInfo ~
+        changePassword ~
+        changeuUserEmail ~
+        loginUser ~
+        logoutUser ~
+        registerUser
+    }
   }
 
   @POST

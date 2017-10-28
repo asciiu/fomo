@@ -12,7 +12,7 @@ val logBackVersion      = "1.1.7"
 val scalaLoggingVersion = "3.5.0"
 val slickVersion        = "3.2.0"
 val seleniumVersion     = "2.53.0"
-val circeVersion        = "0.7.0"
+val circeVersion        = "0.8.0"
 val akkaVersion         = "2.5.3"
 val akkaHttpVersion     = "10.0.10"
 
@@ -26,16 +26,20 @@ val typesafeConfig = "com.typesafe" % "config" % "1.3.1"
 val circeCore    = "io.circe" %% "circe-core" % circeVersion
 val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
 val circeJawn    = "io.circe" %% "circe-jawn" % circeVersion
-val circe        = Seq(circeCore, circeGeneric, circeJawn)
+val circeParse   = "io.circe" %% "circe-parser" % circeVersion
+val circe        = Seq(circeCore, circeGeneric, circeJawn, circeParse)
 
 val javaxMailSun = "com.sun.mail" % "javax.mail" % "1.5.5"
 
+// database
 val slick       = "com.typesafe.slick" %% "slick" % slickVersion
 val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is beta
 val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
 val flyway      = "org.flywaydb" % "flyway-core" % "4.0"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway)
+//val redisScala  = "net.debasishg" %% "redisclient" % "3.4"
+val redisScala  = "com.github.etaty" %% "rediscala" % "1.8.0"
 
 val scalatest        = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 val unitTestingStack = Seq(scalatest)
@@ -121,7 +125,7 @@ lazy val backend: Project = (project in file("backend"))
   .settings(
     herokuAppName in Compile := "infinite-garden-24119",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
-      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, ws),
+      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, ws, redisScala),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](

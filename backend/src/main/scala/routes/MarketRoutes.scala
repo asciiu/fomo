@@ -21,9 +21,11 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   def bittrexMarketSuper: ActorRef
 
-  val marketRoutes = pathPrefix("market") {
-    setBuy ~
-    setSell
+  val marketRoutes = logRequestResult("MarketRoutes") {
+    pathPrefix("market") {
+      setBuy ~
+      setSell
+    }
   }
 
   /**

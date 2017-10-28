@@ -13,10 +13,8 @@ import com.softwaremill.bootzooka.common.api.`X-Frame-Options`.`DENY`
 import com.softwaremill.bootzooka.common.api.`X-XSS-Protection`.`1; mode=block`
 import io.circe._
 import io.circe.jawn.decode
-import models.BasicUserData
 
 trait RoutesSupport extends JsonSupport {
-  //def completeOk = complete("ok")
 
   object JsonStatus extends Enumeration {
     val Success = Value("success")

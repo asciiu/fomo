@@ -1,20 +1,24 @@
 package com.flow.marketmaker.services
 
+import java.time.{Instant, ZoneOffset}
+
 import akka.actor.{Actor, ActorLogging, Props}
 import com.flow.bittrex.database.postgres.SqlTradeDao
 import com.flow.bittrex.models.BittrexTrade
+import com.flow.marketmaker.database.redis.OrderRepository
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
-import com.flow.marketmaker.models.{BuyOrder, SimpleConditionalFactory, TradeOrder, TradeType}
+import com.flow.marketmaker.models._
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import models.BasicUserData
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import spray.json.DefaultJsonProtocol._
+import redis.RedisClient
 
 object MarketService {
-  def props(marketName: String, sqlDatabase: SqlDatabase)(implicit context: ExecutionContext) =
-    Props(new MarketService(marketName, sqlDatabase))
+  def props(marketName: String, sqlDatabase: SqlDatabase, redis: RedisClient)(implicit context: ExecutionContext) =
+    Props(new MarketService(marketName, sqlDatabase, redis))
 
   case object ReturnAllData
   case object ReturnLatestMessage
@@ -23,26 +27,19 @@ object MarketService {
 }
 
 
-class MarketService(val marketName: String, sqlDatabase: SqlDatabase) extends Actor
+class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: RedisClient) extends Actor
   with ActorLogging {
 
   import MarketService._
   lazy val tradeDao = new SqlTradeDao(sqlDatabase)
+  implicit val akkaSystem = context.system
 
+  implicit val cond  = jsonFormat4(BuyCondition)
+  //implicit val order = jsonFormat5(BuyOrder)
+
+  val orderRepo = new OrderRepository(redis)
   // TODO need a better collection here
-  val orders = collection.mutable.ListBuffer[TradeOrder]()
-
-
-  override def preStart() = {
-    //eventBus.subscribe(self, PoloniexEventBus.BTCPrice)
-  }
-
-
-  override def postStop() = {
-    //eventBus.unsubscribe(self, PoloniexEventBus.BTCPrice)
-    //log.info(s"Shutdown $marketName service")
-  }
-
+  val orders = collection.mutable.ListBuffer[Order]()
 
   def receive: Receive = {
     case update: MarketUpdate =>
@@ -56,14 +53,20 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase) extends Ac
   private def updateState(update: MarketUpdate) = {
     val lastPrice = update.Last
 
-    val executeOrders = orders.filter(_.evaluate(lastPrice))
+    val executeOrders = orders.filter(_.isCondition(lastPrice))
 
-    executeOrders.foreach{ to =>
+    executeOrders.foreach{ order =>
       println(s"Last Price: ${lastPrice}")
-      println(s"Execute ${to.side} ${to.quantity} ${to.currencyName} for user: ${to.userId}")
+      println(s"Execute ${order.orderType} ${order.quantity} ${order.marketCurrency} for user: ${order.userId}")
+      val completedCondition = order.getCondition(lastPrice).getOrElse("null")
+      val updatedOrder = order.copy(
+        priceActual = Some(lastPrice),
+        completedTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
+        completedCondition = Some(completedCondition),
+        status = OrderStatus.Completed
+      )
 
-      // TODO save to the dao a record of this trades close
-      //
+      orderRepo.update(updatedOrder)
     }
 
     // remove the executed orders
@@ -72,24 +75,7 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase) extends Ac
 
 
   private def createOrder(user: BasicUserData, newOrder: BuyOrder) = {
-
-    val conditions = newOrder.buyConditions.map{ c => SimpleConditionalFactory.makeCondition(c.operator, c.value) }
-
-    val order = TradeOrder(
-      userId = user.id,
-      exchangeName = newOrder.exchangeName,
-      marketName = newOrder.marketName,
-      currencyName = newOrder.marketName.split("-")(1),
-      side = TradeType.Buy,
-      quantity = newOrder.quantity,
-      orConditions = conditions
-    )
-
-    orders.append(order)
-
-
-    // TODO this needs to be merged with the TradeOrder concept
-    tradeDao.insert(BittrexTrade.withRandomUUID(order.marketName, true, order.quantity, 0.0))
+    orderRepo.add(Order.fromBuyOrder(newOrder, user.id)).map (order => orders.append(order))
   }
 }
 
