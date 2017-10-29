@@ -42,8 +42,6 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
             "userId" -> order.userId.toString,
             "exchangeName" -> order.exchangeName,
             "marketName" -> order.marketName,
-            "marketCurrency" -> order.marketCurrency,
-            "marketCurrencyLongName" -> order.marketCurrencyLongName,
             "createdTime" -> createdTime.toString,
             "completedTime" -> "",
             "completedCondition" -> "",
@@ -109,8 +107,6 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
       UUID.fromString(keysAndValues("userId").utf8String),
       keysAndValues("exchangeName").utf8String,
       keysAndValues("marketName").utf8String,
-      keysAndValues("marketCurrency").utf8String,
-      keysAndValues("marketCurrencyLongName").utf8String,
       OffsetDateTime.parse(keysAndValues("createdTime").utf8String),
       completedTime,
       condition,
@@ -118,7 +114,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
       keysAndValues("quantity").utf8String.toDouble,
       OrderType.withName(keysAndValues("orderType").utf8String),
       OrderStatus.withName(keysAndValues("status").utf8String),
-      List[TradeCondition]()
+      List[Conditional]()
     )
   }
 

@@ -10,7 +10,7 @@ import complete.DefaultParsers._
 val slf4jVersion        = "1.7.21"
 val logBackVersion      = "1.1.7"
 val scalaLoggingVersion = "3.5.0"
-val slickVersion        = "3.2.0"
+val slickVersion        = "3.2.1"
 val seleniumVersion     = "2.53.0"
 val circeVersion        = "0.8.0"
 val akkaVersion         = "2.5.3"
@@ -38,7 +38,6 @@ val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is be
 val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
 val flyway      = "org.flywaydb" % "flyway-core" % "4.0"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway)
-//val redisScala  = "net.debasishg" %% "redisclient" % "3.4"
 val redisScala  = "com.github.etaty" %% "rediscala" % "1.8.0"
 
 val scalatest        = "org.scalatest" %% "scalatest" % "3.0.1" % "test"

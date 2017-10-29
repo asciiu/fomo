@@ -1,10 +1,11 @@
 package com.flow.marketmaker.models
 
+import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class TradeOrderSpec extends FlatSpec with Matchers {
+class OrderSpec extends FlatSpec with Matchers {
 
   "GreaterThanEq" should "evaluate to false" in {
     // given
@@ -46,35 +47,39 @@ class TradeOrderSpec extends FlatSpec with Matchers {
     result should be(false)
   }
 
-  "TradeOrder" should "evaulate to true" in {
+  "Order" should "evaulate to true" in {
     val condition = LessThanEq(0.00069999)
     val userId = UUID.randomUUID()
 
-    val trade = new TradeOrder(
+    val order = new Order(
+      id = None,
       userId = userId,
       exchangeName = "random",
       marketName = "BTC-HOT",
-      currencyName = "HOT",
-      side = TradeType.Buy,
+      createdTime = Instant.now().atOffset(ZoneOffset.UTC),
+      orderType = OrderType.Buy,
       quantity = 1000,
+      status = OrderStatus.Pending,
       orConditions = List(condition))
 
-    trade.evaluate(0.00069999) should be(true)
+    order.isCondition(0.00069999) should be(true)
   }
 
-  "TradeOrder" should "evaulate to false" in {
+  "Order" should "evaulate to false" in {
     val condition = LessThanEq(0.00069999)
     val userId = UUID.randomUUID()
 
-    val trade = new TradeOrder(
+    val order = new Order(
+      id = None,
       userId = userId,
       exchangeName = "random",
       marketName = "BTC-HOT",
-      currencyName = "HOT",
-      side = TradeType.Buy,
+      createdTime = Instant.now().atOffset(ZoneOffset.UTC),
+      orderType = OrderType.Buy,
       quantity = 1000,
+      status = OrderStatus.Pending,
       orConditions = List(condition))
 
-    trade.evaluate(0.00070000) should be(false)
+    order.isCondition(0.00070000) should be(false)
   }
 }

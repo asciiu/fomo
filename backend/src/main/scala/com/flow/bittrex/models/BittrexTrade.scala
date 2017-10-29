@@ -5,7 +5,6 @@ import java.util.UUID
 
 case class BittrexTrade(id: UUID,
                         user_id: String,
-
                          isOpen: Boolean,
                          quantity: Double,
                          bidPrice: Double,

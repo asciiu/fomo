@@ -3,8 +3,7 @@ package com.flow.marketmaker.services
 import java.time.{Instant, ZoneOffset}
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.flow.bittrex.database.postgres.SqlTradeDao
-import com.flow.bittrex.models.BittrexTrade
+import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.database.redis.OrderRepository
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.models._
@@ -31,7 +30,7 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
   with ActorLogging {
 
   import MarketService._
-  lazy val tradeDao = new SqlTradeDao(sqlDatabase)
+  lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   implicit val akkaSystem = context.system
 
   implicit val cond  = jsonFormat4(BuyCondition)
@@ -57,7 +56,7 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
 
     executeOrders.foreach{ order =>
       println(s"Last Price: ${lastPrice}")
-      println(s"Execute ${order.orderType} ${order.quantity} ${order.marketCurrency} for user: ${order.userId}")
+      println(s"Execute ${order.orderType} ${order.quantity} ${order.marketName} for user: ${order.userId}")
       val completedCondition = order.getCondition(lastPrice).getOrElse("null")
       val updatedOrder = order.copy(
         priceActual = Some(lastPrice),
@@ -66,7 +65,8 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
         status = OrderStatus.Completed
       )
 
-      orderRepo.update(updatedOrder)
+      //orderRepo.update(updatedOrder)
+      bagel.update(updatedOrder)
     }
 
     // remove the executed orders
@@ -75,7 +75,8 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
 
 
   private def createOrder(user: BasicUserData, newOrder: BuyOrder) = {
-    orderRepo.add(Order.fromBuyOrder(newOrder, user.id)).map (order => orders.append(order))
+    bagel.insert(Order.fromBuyOrder(newOrder, user.id)).map (o => orders.append(o))
+    //orderRepo.add(Order.fromBuyOrder(newOrder, user.id)).map (order => orders.append(order))
   }
 }
 
