@@ -1,6 +1,5 @@
 package com.flow.marketmaker.services
 
-import java.time.{Instant, ZoneOffset}
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
@@ -9,7 +8,6 @@ import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.models._
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import models.BasicUserData
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import spray.json.DefaultJsonProtocol._

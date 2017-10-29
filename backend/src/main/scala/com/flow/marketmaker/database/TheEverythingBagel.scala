@@ -1,10 +1,7 @@
 package com.flow.marketmaker.database
 
-import java.util.UUID
-
-import com.flow.bittrex.models.BittrexTrade
 import com.flow.marketmaker.models.Order
-
+import java.util.UUID
 import scala.concurrent.Future
 
 trait TheEverythingBagelDao {

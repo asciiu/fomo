@@ -1,8 +1,6 @@
 package slick
 
-import com.flow.marketmaker.models.{OrderStatus, OrderType}
 import com.github.tminglei.slickpg._
-import spray.json.JsValue
 
 trait MyPostgresDriver extends ExPostgresProfile
   with PgArraySupport

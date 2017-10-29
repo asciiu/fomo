@@ -1,12 +1,10 @@
 package com.flow.marketmaker.database.postgres.schema
 
+import com.flow.marketmaker.models.{Order, OrderStatus, OrderType}
+import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
-
-import com.flow.marketmaker.models.{Order, OrderStatus, OrderType}
-import com.github.tminglei.slickpg.utils
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
-import spray.json.{JsArray, JsValue}
+import spray.json.JsValue
 
 
 trait SqlOrder {
