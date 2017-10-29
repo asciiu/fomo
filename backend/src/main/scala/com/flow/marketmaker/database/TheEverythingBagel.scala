@@ -12,5 +12,5 @@ trait TheEverythingBagelDao {
   // orders
   def insert(order: Order): Future[Order]
   def update(order: Order): Future[Order]
-  //def findAllByUserId(userId: UUID): Future[List[Order]]
+  def findAllByUserId(userId: UUID): Future[Seq[Order]]
 }

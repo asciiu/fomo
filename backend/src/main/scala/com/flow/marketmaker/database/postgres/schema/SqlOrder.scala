@@ -1,0 +1,59 @@
+package com.flow.marketmaker.database.postgres.schema
+
+import java.time.OffsetDateTime
+import java.util.UUID
+
+import com.flow.marketmaker.models.{Order, OrderStatus, OrderType}
+import com.github.tminglei.slickpg.utils
+import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import spray.json.{JsArray, JsValue}
+
+
+trait SqlOrder {
+  protected val database: SqlDatabase
+
+  import database._
+  import slick.MyPostgresDriver.api._
+
+  implicit val resourceTypeTypeMapper = MappedColumnType.base[OrderType.Value, String] (
+    { ot => ot.toString },
+    { str => OrderType.withName(str) }
+  )
+
+  implicit val resourceTypeStatusMapper = MappedColumnType.base[OrderStatus.Value, String](
+    { os => os.toString },
+    { str => OrderStatus.withName(str) }
+  )
+
+  protected val orders = TableQuery[Orders]
+
+  class Orders(tag: Tag) extends Table[Order](tag, "orders") {
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def userId = column[UUID]("user_id")
+    def exchangeName = column[String]("exchange_name")
+    def marketName = column[String]("market_name")
+    def createdTime = column[OffsetDateTime]("created_time")
+    def completedTime = column[OffsetDateTime]("completed_time")
+    def completedCondition = column[String]("completed_condition")
+    def priceActual = column[Double]("price_actual")
+    def quantity = column[Double]("quantity")
+    def orderType = column[OrderType.Value]("order_type")
+    def status = column[OrderStatus.Value]("status")
+    def json = column[JsValue]("conditions")
+
+    def * = (id.?,
+      userId,
+      exchangeName,
+      marketName,
+      createdTime,
+      completedTime.?,
+      completedCondition.?,
+      priceActual.?,
+      quantity,
+      orderType,
+      status,
+      json) <>
+        ((Order.apply _).tupled, Order.unapply)
+  }
+}
+

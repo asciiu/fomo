@@ -7,6 +7,7 @@ import java.util.UUID
 
 import com.flow.marketmaker.models._
 import redis.RedisClient
+import spray.json.JsNull
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -114,7 +115,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
       keysAndValues("quantity").utf8String.toDouble,
       OrderType.withName(keysAndValues("orderType").utf8String),
       OrderStatus.withName(keysAndValues("status").utf8String),
-      List[Conditional]()
+      JsNull
     )
   }
 

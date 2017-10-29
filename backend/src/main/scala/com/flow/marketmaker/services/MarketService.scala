@@ -52,32 +52,32 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
   private def updateState(update: MarketUpdate) = {
     val lastPrice = update.Last
 
-    val executeOrders = orders.filter(_.isCondition(lastPrice))
-
-    executeOrders.foreach{ order =>
-      println(s"Last Price: ${lastPrice}")
-      println(s"Execute ${order.orderType} ${order.quantity} ${order.marketName} for user: ${order.userId}")
-      val completedCondition = order.getCondition(lastPrice).getOrElse("null")
-      val updatedOrder = order.copy(
-        priceActual = Some(lastPrice),
-        completedTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
-        completedCondition = Some(completedCondition),
-        status = OrderStatus.Completed
-      )
-
-      //orderRepo.update(updatedOrder)
-      bagel.update(updatedOrder)
-    }
-
-    // remove the executed orders
-    orders --= executeOrders
+//    val executeOrders = orders.filter(_.isCondition(lastPrice))
+//
+//    executeOrders.foreach{ order =>
+//      println(s"Last Price: ${lastPrice}")
+//      println(s"Execute ${order.orderType} ${order.quantity} ${order.marketName} for user: ${order.userId}")
+//      val completedCondition = order.getCondition(lastPrice).getOrElse("null")
+//      val updatedOrder = order.copy(
+//        priceActual = Some(lastPrice),
+//        completedTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
+//        completedCondition = Some(completedCondition),
+//        status = OrderStatus.Completed
+//      )
+//
+//      //orderRepo.update(updatedOrder)
+//      bagel.update(updatedOrder)
+//    }
+//
+//    // remove the executed orders
+//    orders --= executeOrders
   }
 
 
   private def createOrder(user: BasicUserData, newOrder: BuyOrder) = {
     bagel.insert(Order.fromBuyOrder(newOrder, user.id)).map (o => orders.append(o))
 
-    //bagel.findAllByUserId(user.id).map { orders => println(orders) }
+    bagel.findAllByUserId(user.id).map { orders => orders.foreach(println) }
     //orderRepo.add(Order.fromBuyOrder(newOrder, user.id)).map (order => orders.append(order))
   }
 }

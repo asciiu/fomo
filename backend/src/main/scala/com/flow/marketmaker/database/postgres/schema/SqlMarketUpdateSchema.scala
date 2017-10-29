@@ -1,11 +1,8 @@
 package com.flow.marketmaker.database.postgres.schema
 
 import java.time.OffsetDateTime
-import java.util.UUID
-
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
-import models.{BasicUserData, User}
 
 
 /**

@@ -34,10 +34,15 @@ val javaxMailSun = "com.sun.mail" % "javax.mail" % "1.5.5"
 // database
 val slick       = "com.typesafe.slick" %% "slick" % slickVersion
 val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
+val slickpg     = "com.github.tminglei" %% "slick-pg" % "0.15.4"
+val slickpgc    = "com.github.tminglei" %% "slick-pg_circe-json" % "0.15.4"
+val slickpgd    = "com.github.tminglei" %% "slick-pg_joda-time" % "0.15.4"
+val slickspray  = "com.github.tminglei" %% "slick-pg_spray-json" % "0.15.4"
+val slickgen    = "com.typesafe.slick" %% "slick-codegen" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is beta
 val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
 val flyway      = "org.flywaydb" % "flyway-core" % "4.0"
-val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway)
+val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway, slickpg, slickpgc, slickpgd, slickgen, slickspray)
 val redisScala  = "com.github.etaty" %% "rediscala" % "1.8.0"
 
 val scalatest        = "org.scalatest" %% "scalatest" % "3.0.1" % "test"
@@ -119,6 +124,7 @@ lazy val rootProject = (project in file("."))
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
   .enablePlugins(JavaAppPackaging)
+  .settings(slickTask := slickCodeGenTask.value)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
@@ -166,3 +172,17 @@ RenameProject.settings
 
 fork := true
 
+
+lazy val slickTask = taskKey[Seq[File]]("gen-tables")
+lazy val slickCodeGenTask = Def.task {
+  val dir = sourceManaged.value
+  val cp = (dependencyClasspath in Compile).value
+  val r = (runner in Compile).value
+  val s = streams.value
+  val outputDir = (dir / "slick").getPath // place generated files in sbt's managed sources folder
+  toError(r.run("slick.CustomizedCodeGenerator", cp.files, Array(outputDir), s.log))
+  val fname = outputDir + "/demo/Tables.scala"
+  Seq(file(fname))
+}
+
+addCommandAlias("gen-tables", "run-main slick.CustomizedCodeGenerator")
