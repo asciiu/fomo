@@ -76,6 +76,8 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
 
   private def createOrder(user: BasicUserData, newOrder: BuyOrder) = {
     bagel.insert(Order.fromBuyOrder(newOrder, user.id)).map (o => orders.append(o))
+
+    //bagel.findAllByUserId(user.id).map { orders => println(orders) }
     //orderRepo.add(Order.fromBuyOrder(newOrder, user.id)).map (order => orders.append(order))
   }
 }

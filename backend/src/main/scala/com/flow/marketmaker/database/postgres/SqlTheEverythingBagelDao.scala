@@ -48,7 +48,47 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * @return
     */
   def update(order: Order): Future[Order] = {
-    println(s"update order $order")
-    Future.successful(order)
+
+    order.id match {
+      case Some(id) =>
+
+        val completedTime = order.completedTime match {
+          case Some(t) => s""", completed_time='$t'::timestamp"""
+          case None => ""
+        }
+
+        val priceActual = order.priceActual match {
+          case Some(p) => s", price_actual=$p"
+          case None => ""
+        }
+
+        val completedCondition = order.completedCondition match {
+          case Some(c) => s""", completed_condition='$c'"""
+          case None => ""
+        }
+
+        val updateQuery = sqlu"""update orders set status='#${order.status.toString}'#$completedTime#$completedCondition#${priceActual} where id = $id"""
+
+        db.run(updateQuery).map{ res => order}.recover {
+          case e:  java.sql.SQLException =>
+            println("Caught exception: " + e.getMessage)
+            order
+        }
+
+      case None =>
+        Future.successful(order)
+    }
   }
+
+//  def findAllByUserId(userId: UUID): Future[List[Order]] = {
+//    val selectQuery = sql"""select * from orders where id = $userId""".as[(Long, UUID, String, String, OffsetDateTime, Option[OffsetDateTime], Option[String])]
+//
+//    db.run(selectQuery).map{ res => userId}.recover {
+//      case e:  java.sql.SQLException =>
+//        println("Caught exception: " + e.getMessage)
+//        List[Order]()
+//    }
+//
+//
+//  }
 }
