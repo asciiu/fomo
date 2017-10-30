@@ -110,6 +110,7 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
     * @return
     */
   private def createOrder(user: BasicUserData, newOrder: BuyOrder) = {
+    // TODO make a new order if there is not enough balance to do so
     bagel.insert(Order.fromBuyOrder(newOrder, user.id)).map { o =>
       // the : _* is the splat operator
       conditions.append(JsonConditionTranslator.fromOrder(o): _*)
