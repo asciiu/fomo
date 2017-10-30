@@ -41,6 +41,7 @@ case class Order(id: Option[Long] = None,
                  status: OrderStatus.Value,
                  conditions: JsValue) {
 
+  def conditionsToArray: JsArray = conditions.asInstanceOf[JsArray]
   // evaluates all conditions and returns true if any of the conditions are true
   //def isCondition(test: Any): Boolean = conditions.exists( _.evaluate(test) )
   //def getCondition(test: Any): Option[String] = conditions.find( _.evaluate(test) ).map (_.toString)
@@ -68,18 +69,4 @@ object Order {
       Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
       OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.toJson)
   }
-
-  //def apply(id: Option[Long] = None,
-  //                 userId: UUID,
-  //                 exchangeName: String,
-  //                 marketName: String,
-  //                 createdTime: OffsetDateTime,
-  //                 completedTime: Option[OffsetDateTime] = None,
-  //                 completedCondition: Option[String] = None,
-  //                 priceActual: Option[Double] = None,
-  //                 quantity: Double,
-  //                 orderType: String,
-  //                 status: String,
-  //                 conditions: JsValue): Order = Order(id, userId, exchangeName, marketName, createdTime, completedTime,
-  //  completedCondition, priceActual, quantity, OrderType.withName(orderType), OrderStatus.withName(status), conditions)
 }
