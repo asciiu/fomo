@@ -19,7 +19,8 @@ import scala.concurrent.duration._
 
 trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
-  def bittrexMarketSuper: ActorRef
+  //def bittrexMarketSuper: ActorRef
+  def bittrexService: ActorRef
 
   val marketRoutes = logRequestResult("MarketRoutes") {
     pathPrefix("market") {
@@ -50,19 +51,8 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
       post {
         userFromSession { user =>
           entity(as[BuyOrder]) { buyOrder =>
-            implicit val timeout = Timeout(1.second)
-
-            onSuccess((bittrexMarketSuper ? GetMarketActorRef(buyOrder.marketName)).mapTo[Option[ActorRef]]) { opt =>
-              opt match {
-                case Some(marketActor) =>
-                  marketActor ! CreateOrder(user, buyOrder)
-                  completeOk
-                case None =>
-                  val msg = s"market not found! ${buyOrder.marketName}"
-                  logger.warn(msg)
-                  complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, msg, Json.Null))
-              }
-            }
+            bittrexService ! CreateOrder(user, buyOrder)
+            completeOk
           }
         }
       }

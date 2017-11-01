@@ -13,8 +13,9 @@ import models.BasicUserData
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
-import spray.json.DefaultJsonProtocol._
 import redis.RedisClient
+import scala.concurrent.duration._
+
 
 object MarketService {
   def props(marketName: String, sqlDatabase: SqlDatabase, redis: RedisClient)(implicit context: ExecutionContext) =
@@ -39,6 +40,7 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
   with ActorLogging {
 
   import MarketService._
+
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   implicit val akkaSystem = context.system
 

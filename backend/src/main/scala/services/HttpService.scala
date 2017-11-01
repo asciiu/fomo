@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.flow.bittrex.BittrexSignalrActor
+import com.flow.bittrex.{BittrexService, BittrexSignalrActor}
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
 import com.flow.marketmaker.services.services.actors.MarketSupervisor
@@ -36,19 +36,12 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   implicit val daoExecutionContext = system.dispatchers.lookup("dao-dispatcher")
 
   //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
-  val redis = new RedisClient()
-
+  lazy val redis = new RedisClient()
   lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
   lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
   lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
-  lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)(daoExecutionContext)
-
-  val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexMarketSuper = actorSystem.actorOf(MarketSupervisor.props(bittrexEventBus, sqlDatabase, redis))
-  val bittrexFeed = actorSystem.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
-
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
 
   lazy val emailService = if (config.emailEnabled) {
@@ -77,6 +70,8 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val userKeyService = new UserKeyService(userKeyDao)
 
   lazy val refreshTokenStorage = new RefreshTokenStorageImpl(rememberMeTokenDao, system)(serviceExecutionContext)
+
+  val bittrexService = actorSystem.actorOf(BittrexService.props(sqlDatabase, redis), name = "bittrex")
 }
 
 class HttpService()
