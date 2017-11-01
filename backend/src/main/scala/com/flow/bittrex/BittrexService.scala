@@ -62,12 +62,18 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
       * Get market info based on a filter term
       */
     case GetMarkets(filter) =>
-      val mrks = marketList.filter( m =>
-        m.MarketCurrency.contains(filter) ||
-        m.MarketCurrencyLong.contains(filter) ||
-        m.MarketName.contains(filter)
-      )
-      sender ! mrks
+      filter match {
+        case Some(filter) =>
+          val mrks = marketList.filter( m =>
+            m.MarketCurrency.toLowerCase().contains(filter.toLowerCase()) ||
+            m.MarketCurrencyLong.toLowerCase().contains(filter.toLowerCase()) ||
+            m.MarketName.toLowerCase().contains(filter.toLowerCase())
+          )
+          sender ! mrks
+
+        case None =>
+          sender ! marketList
+      }
 
 
     /**
