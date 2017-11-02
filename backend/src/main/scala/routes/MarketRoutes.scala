@@ -1,5 +1,8 @@
 package routes
 
+import java.time.OffsetDateTime
+import java.util.UUID
+
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.ask
@@ -8,7 +11,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
 import com.flow.bittrex.BittrexService.GetMarkets
 import com.flow.bittrex.api.Bittrex.MarketResult
-import com.flow.marketmaker.models.BuyOrder
+import com.flow.marketmaker.models.{BuyOrder, TradeRequest}
 import com.flow.marketmaker.services.MarketService.CreateOrder
 import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
 import com.softwaremill.bootzooka.common.api.RoutesSupport
@@ -16,8 +19,10 @@ import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.Json
 import io.circe.generic.auto._
-import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
-
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+import io.circe.syntax._
 
 import scala.concurrent.duration._
 
@@ -28,6 +33,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   val marketRoutes = logRequestResult("MarketRoutes") {
     pathPrefix("market") {
       directory ~
+      postTrade ~
       setBuy ~
       setSell
     }
@@ -71,7 +77,10 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     path("trade") {
       post {
         userFromSession { user =>
-          completeOk
+          entity(as[TradeRequest]) { tradeRequest =>
+            println(tradeRequest)
+            completeOk
+          }
         }
       }
     }

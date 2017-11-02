@@ -26,9 +26,10 @@ CREATE TABLE trades(
  market_currency_short_name text,
  market_currency_long_name text,
  bought_price decimal,
- bought_time timestamp
+ bought_time timestamp,
  sold_price decimal,
- sold_time timestamp NOT NULL,
+ sold_time timestamp,
+ created_time TIMESTAMP DEFAULT now()
 );
 
 

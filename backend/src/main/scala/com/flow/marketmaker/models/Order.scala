@@ -27,6 +27,38 @@ case class BuyOrder(exchangeName: String,
                     quantity: Double,
                     buyConditions: List[BuyCondition])
 
+object TradeStatus extends Enumeration {
+  val Pending    = Value("pending")
+  val Bought     = Value("bought")
+  val Sold       = Value("sold")
+}
+
+case class Condition(conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
+case class ConditionArray(collectionType: String, conditions: List[Condition])
+case class TradeRequest(
+                 exchangeName: String,
+                 marketName: String,
+                 quantity: Double,
+                 buyConditions: ConditionArray,
+                 sellConditions: ConditionArray)
+
+case class TradeResponse(id: UUID,
+                        exchangeName: String,
+                        marketName: String,
+                        marketCurrency: String,
+                        marketCurrencyLong: String,
+                        baseCurrency: String,
+                        baseCurrencyLong: String,
+                        createdTime: OffsetDateTime,
+                        quantity: Double,
+                        boughtTime: Option[OffsetDateTime],
+                        boughtPrice: Option[Double],
+                        soldTime: Option[OffsetDateTime],
+                        soldPrice: Option[Double],
+                        status: TradeStatus.Value,
+                        buyConditions: String,
+                        sellConditions: String)
+
 
 case class Order(id: UUID,
                  userId: UUID,
