@@ -70,3 +70,6 @@ object Order {
       OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.toJson)
   }
 }
+
+
+case class Trade()

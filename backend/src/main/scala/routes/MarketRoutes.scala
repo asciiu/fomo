@@ -33,7 +33,12 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
   }
 
-  case class MarketBasicInfo(marketName: String, marketFullName: String, exchangeName: String)
+  case class MarketBasicInfo(marketName: String,
+                             currency: String,
+                             currencyLong: String,
+                             baseCurrency: String,
+                             baseCurrencyLong: String,
+                             exchangeName: String)
 
   def directory = {
     path("directory") {
@@ -44,13 +49,29 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
             val marketResults = (bittrexService ? GetMarkets(name)).mapTo[List[MarketResult]]
             onSuccess(marketResults) {
               case list: List[MarketResult] =>
-                val info = list.map(x => MarketBasicInfo(x.MarketName, x.MarketCurrencyLong, "Bittrex"))
+                val info = list.map(x =>
+                  MarketBasicInfo(x.MarketName,
+                    x.MarketCurrency,
+                    x.MarketCurrencyLong,
+                    x.BaseCurrency,
+                    x.BaseCurrencyLong,
+                    "Bittrex"))
 
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", info.asJson))
               case _ =>
                 complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "resource not available", Json.Null))
             }
           }
+        }
+      }
+    }
+  }
+
+  def postTrade = {
+    path("trade") {
+      post {
+        userFromSession { user =>
+          completeOk
         }
       }
     }
