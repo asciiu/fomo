@@ -21,7 +21,7 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   implicit object SetUUID extends SetParameter[UUID] { def apply(v: UUID, pp: PositionedParameters) { pp.setObject(v, JDBCType.BINARY.getVendorTypeNumber) } }
 
   def insert(order: Order): Future[Order] = {
-    val query = orders returning orders.map(_.id) into ((o, id) => o.copy(id = Some(id)))
+    val query = orders returning orders.map(_.id) into ((o, id) => o.copy(id = id))
     db.run(query += order)
   }
 
@@ -39,7 +39,7 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(orders.filter(_.userId === userId).result)
   }
 
-  def findByOrderId(id: Long): Future[Option[Order]] = {
+  def findByOrderId(id: UUID): Future[Option[Order]] = {
     db.run(orders.filter(_.id === id).result.headOption)
   }
 

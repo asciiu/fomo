@@ -28,7 +28,7 @@ case class BuyOrder(exchangeName: String,
                     buyConditions: List[BuyCondition])
 
 
-case class Order(id: Option[Long] = None,
+case class Order(id: UUID,
                  userId: UUID,
                  exchangeName: String,
                  marketName: String,
@@ -65,11 +65,21 @@ object Order {
     //  Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
     //  OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions)
 
-    Order(None, forUserId, buyOrder.exchangeName, buyOrder.marketName,
+    Order(UUID.randomUUID(), forUserId, buyOrder.exchangeName, buyOrder.marketName,
       Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
       OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.toJson)
   }
 }
 
 
-case class Trade()
+case class Trade(id: UUID,
+                 userId: UUID,
+                 openOrderId: UUID,
+                 closeOrderId: Option[UUID],
+                 exchangeName: String,
+                 marketCurrency: String,
+                 marketCurrencyLong: String,
+                 boughtPrice: Option[Double],
+                 boughtTime: Option[OffsetDateTime],
+                 soldPrice: Option[Double],
+                 soldTime: Option[OffsetDateTime])

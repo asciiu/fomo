@@ -1,9 +1,11 @@
 package com.flow.marketmaker.models
 
+import java.util.UUID
+
 import spray.json.{JsNumber, JsObject, JsString, JsValue}
 
 
-abstract class SimpleConditional(val orderId: Long) {
+abstract class SimpleConditional(val orderId: UUID) {
   def symbol: String
 
   def evaluate(test: Any): Boolean
@@ -15,13 +17,13 @@ object Indicator extends Enumeration {
 }
 
 
-case class NullCondition(oid: Long, val basePrice: Double = 0.0) extends SimpleConditional(oid) {
+case class NullCondition(oid: UUID, val basePrice: Double = 0.0) extends SimpleConditional(oid) {
   lazy val symbol = "null"
   def evaluate(testPrice: Any) = false
 }
 
 
-case class GreaterThanEq(oid: Long, basePrice: Double, description: String) extends SimpleConditional(oid) {
+case class GreaterThanEq(oid: UUID, basePrice: Double, description: String) extends SimpleConditional(oid) {
   lazy val symbol = ">="
   lazy val indicator = Indicator.Price
   lazy val conditionType = "simpleConditional"
@@ -31,7 +33,7 @@ case class GreaterThanEq(oid: Long, basePrice: Double, description: String) exte
 }
 
 
-case class LessThanEq(oid: Long, basePrice: Double, description: String) extends SimpleConditional(oid) {
+case class LessThanEq(oid: UUID, basePrice: Double, description: String) extends SimpleConditional(oid) {
   lazy val symbol = "<="
   lazy val indicator = Indicator.Price
   lazy val conditionType = "simpleConditional"
@@ -43,7 +45,7 @@ case class LessThanEq(oid: Long, basePrice: Double, description: String) extends
 
 
 object SimpleConditionalFactory {
-  def createCondition(orderId: Long, operator: String, price: Double, description: String): SimpleConditional = {
+  def createCondition(orderId: UUID, operator: String, price: Double, description: String): SimpleConditional = {
     operator match {
       case "<=" => LessThanEq(orderId, price, description)
       case ">=" => GreaterThanEq(orderId, price, description)
@@ -62,7 +64,7 @@ object JsonConditionTranslator {
     }
   }
 
-  private def convertToSimple(condition: JsObject, forOrderId: Long): SimpleConditional = {
+  private def convertToSimple(condition: JsObject, forOrderId: UUID): SimpleConditional = {
     val operator = extract("operator", condition).getOrElse(JsString("")).asInstanceOf[JsString].value
     val spotPrice = extract("value", condition).getOrElse(JsNumber(0)).asInstanceOf[JsNumber].value.toDouble
     val desc = extract("description", condition).getOrElse(JsString("")).asInstanceOf[JsString].value
@@ -75,7 +77,7 @@ object JsonConditionTranslator {
     * @param forOrderId is the id of the Order that this condition belongs to
     * @return list of SimpleConditionals
     */
-  private def translate(conditions: Vector[JsValue], forOrderId: Long): List[SimpleConditional] = {
+  private def translate(conditions: Vector[JsValue], forOrderId: UUID): List[SimpleConditional] = {
     conditions.filter { cond =>
       // filter by conditionType where simpleConditional
       extract("conditionType", cond.asJsObject()) match {
@@ -90,11 +92,6 @@ object JsonConditionTranslator {
   }
 
   def fromOrder(order: Order): List[SimpleConditional] = {
-    order.id match {
-      case Some(id) =>
-        translate(order.conditionsToArray.elements, id)
-      case None =>
-        List[SimpleConditional]()
-    }
+    translate(order.conditionsToArray.elements, order.id)
   }
 }

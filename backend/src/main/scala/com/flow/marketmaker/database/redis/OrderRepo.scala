@@ -32,28 +32,26 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
     * @return A [[Future]] with the Order persisted, including his ID.
     */
   def add(order: Order): Future[Order] = {
-    getNextId flatMap { id =>
-      val createdTime = Instant.now().atOffset(ZoneOffset.UTC)
-      val status = OrderStatus.Pending
-      val newOrder = order.copy(id = Some(id), createdTime = createdTime, status = status)
-      val key = getOrderKey(id)
-      val futureAdded =
-        redis.hmset(key,
-          Map("id" -> id.toString,
-            "userId" -> order.userId.toString,
-            "exchangeName" -> order.exchangeName,
-            "marketName" -> order.marketName,
-            "createdTime" -> createdTime.toString,
-            "completedTime" -> "",
-            "completedCondition" -> "",
-            "priceActual" -> "",
-            "quantity" -> order.quantity.toString,
-            "orderType" -> order.orderType.toString,
-            "status" -> status.toString
-          ))
+    val createdTime = Instant.now().atOffset(ZoneOffset.UTC)
+    val status = OrderStatus.Pending
+    val newOrder = order.copy(createdTime = createdTime, status = status)
+    val key = getOrderKey(order.id)
+    val futureAdded =
+      redis.hmset(key,
+        Map("id" -> order.id.toString,
+          "userId" -> order.userId.toString,
+          "exchangeName" -> order.exchangeName,
+          "marketName" -> order.marketName,
+          "createdTime" -> createdTime.toString,
+          "completedTime" -> "",
+          "completedCondition" -> "",
+          "priceActual" -> "",
+          "quantity" -> order.quantity.toString,
+          "orderType" -> order.orderType.toString,
+          "status" -> status.toString
+        ))
 
-      futureAdded map { res => newOrder }
-    }
+    futureAdded map { res => newOrder }
   }
 
 
@@ -64,7 +62,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
     * @return
     */
   def update(order: Order): Future[Order] = {
-    val key = getOrderKey(order.id.get)
+    val key = getOrderKey(order.id)
     val futureAdded =
       redis.hmset(key,
         Map(
@@ -82,13 +80,13 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
     * @param id The ID of the Order to be found.
     * @return A [[Future]] with an [[Option]] holding the Order found or None.
     */
-  def find(id: Long): Future[Option[Order]] = {
+  def find(id: UUID): Future[Option[Order]] = {
     redis.hgetall(getOrderKey(id)) map { keysAndValues =>
       if (keysAndValues.isEmpty) None else Some(mapToOrder(keysAndValues))
     }
   }
 
-  def remove(id: Long): Future[Boolean] = {
+  def remove(id: UUID): Future[Boolean] = {
     redis.del(getOrderKey(id)) map { rowsDeleted =>
       rowsDeleted == 1
     }
@@ -104,7 +102,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
     val condition = if (keysAndValues("completedCondition") == "") None else Some(keysAndValues("completedCondition").utf8String )
 
     Order(
-      Some(keysAndValues("id").utf8String.toLong),
+      UUID.fromString(keysAndValues("id").utf8String),
       UUID.fromString(keysAndValues("userId").utf8String),
       keysAndValues("exchangeName").utf8String,
       keysAndValues("marketName").utf8String,
@@ -119,7 +117,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
     )
   }
 
-  private def getOrderKey(id: Long): String = s"Order:$id"
+  private def getOrderKey(id: UUID): String = s"Order:$id"
 
 }
 

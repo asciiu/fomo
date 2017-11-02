@@ -1,7 +1,5 @@
-DROP TABLE If EXISTS bittrex_trades;
-
 CREATE TABLE orders(
- id SERIAL PRIMARY KEY,
+ id UUID PRIMARY KEY NOT NULL,
  user_id UUID NOT NULL,
  exchange_name text NOT NULL,
  market_name text NOT NULL,
@@ -20,17 +18,17 @@ CREATE TABLE orders(
 -- there may or may not be a close order on
 -- a trade
 CREATE TABLE trades(
- id SERIAL PRIMARY KEY,
+ id UUID PRIMARY KEY NOT NULL,
  user_id UUID NOT NULL,
- open_order_id integer REFERENCES orders (id),
- close_order_id integer REFERENCES orders (id),
+ open_order_id UUID REFERENCES orders (id),
+ close_order_id UUID REFERENCES orders (id),
  exchange_name text NOT NULL,
  market_currency_short_name text,
  market_currency_long_name text,
  bought_price decimal,
+ bought_time timestamp
  sold_price decimal,
- open_time timestamp NOT NULL,
- closed_time timestamp
+ sold_time timestamp NOT NULL,
 );
 
 

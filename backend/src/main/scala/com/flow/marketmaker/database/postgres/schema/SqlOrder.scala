@@ -26,7 +26,7 @@ trait SqlOrder {
   protected val orders = TableQuery[Orders]
 
   class Orders(tag: Tag) extends Table[Order](tag, "orders") {
-    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def id = column[UUID]("id", O.PrimaryKey)
     def userId = column[UUID]("user_id")
     def exchangeName = column[String]("exchange_name")
     def marketName = column[String]("market_name")
@@ -39,7 +39,7 @@ trait SqlOrder {
     def status = column[OrderStatus.Value]("status")
     def json = column[JsValue]("conditions")
 
-    def * = (id.?,
+    def * = (id,
       userId,
       exchangeName,
       marketName,
