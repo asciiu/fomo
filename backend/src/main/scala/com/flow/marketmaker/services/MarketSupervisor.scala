@@ -5,8 +5,8 @@ package services.actors
 // external
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import redis.RedisClient
 
 import scala.concurrent.ExecutionContext
@@ -14,9 +14,9 @@ import scala.language.postfixOps
 
 
 object MarketSupervisor {
-  def props(eventBus: MarketEventBus, sqlDatabase: SqlDatabase, redis: RedisClient)
+  def props(eventBus: MarketEventBus, bagel: SqlTheEverythingBagelDao, redis: RedisClient)
            (implicit executionContext: ExecutionContext, system: ActorSystem) =
-    Props(new MarketSupervisor(eventBus, sqlDatabase, redis))
+    Props(new MarketSupervisor(eventBus, bagel, redis))
 
   case class GetMarketActorRef(marketName: String)
 }
@@ -25,7 +25,7 @@ object MarketSupervisor {
   * This actor is reponsible for managing all poloniex markets. New
   * actors for each market are created here.
   */
-class MarketSupervisor (eventBus: MarketEventBus, sqlDatabase: SqlDatabase, redis: RedisClient)
+class MarketSupervisor (eventBus: MarketEventBus, bagel: SqlTheEverythingBagelDao, redis: RedisClient)
                        (implicit ctx: ExecutionContext, system: ActorSystem)
   extends Actor
     with ActorLogging {
@@ -69,14 +69,13 @@ class MarketSupervisor (eventBus: MarketEventBus, sqlDatabase: SqlDatabase, redi
       */
     case update: MarketUpdate =>
       val marketName = update.MarketName
-      //if (marketName.contains("USDT_BTC")) {
-        //eventBus.publish(MarketEvent(PoloniexEventBus.BTCPrice, PriceUpdateBTC(msg.time, msg.last)))
-      //}
         // first time seeing this market name?
       if (!markets.contains(marketName)) {
 
+        log.info(s"$marketName open")
+
         // fire up a new actor for this market
-        markets += marketName -> context.actorOf(MarketService.props(marketName, sqlDatabase, redis), marketName)
+        markets += marketName -> context.actorOf(MarketService.props(marketName, bagel, redis), marketName)
 
         // send a message to the retriever to get the candle data from Poloniex
         // if the 24 hour baseVolume from this update is greater than our threshold

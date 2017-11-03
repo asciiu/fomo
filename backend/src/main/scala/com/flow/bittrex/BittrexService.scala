@@ -7,8 +7,8 @@ import akka.util.Timeout
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
 import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
-import com.flow.marketmaker.services.MarketService.CreateOrder
+import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flow.marketmaker.services.MarketService.{CreateOrder, PostTrade}
 import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
@@ -36,9 +36,10 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
   import BittrexService._
 
+  lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
   val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexMarketSuper = system.actorOf(MarketSupervisor.props(bittrexEventBus, sqlDatabase, redis))
+  val bittrexMarketSuper = system.actorOf(MarketSupervisor.props(bittrexEventBus, bagel, redis))
   val bittrexFeed = system.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   val bittrexClient = new BittrexClient()
@@ -88,9 +89,23 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
           case Some(marketActor) =>
             marketActor ! CreateOrder(user, buyOrder)
           case None =>
-            val msg = s"market not found! ${buyOrder.marketName}"
-            log.warning(msg)
+            log.warning(s"CreateOrder - market not found! ${buyOrder.marketName}")
         }
       }
+
+    case PostTrade(user, request, _) =>
+      implicit val timeout = Timeout(1.second)
+      val newTrade = PostTrade(user, request, Some(sender))
+
+      (bittrexMarketSuper ? GetMarketActorRef(request.marketName)).mapTo[Option[ActorRef]].map { opt =>
+        opt match {
+          case Some(marketActor) =>
+            marketActor ! newTrade
+          case None =>
+            log.warning(s"PostTrade - market not found! ${request.marketName}")
+            newTrade.sender.get ! false
+        }
+      }
+
   }
 }

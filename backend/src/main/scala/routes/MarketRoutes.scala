@@ -1,7 +1,5 @@
 package routes
 
-import java.time.OffsetDateTime
-import java.util.UUID
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
@@ -9,26 +7,23 @@ import akka.pattern.ask
 import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
-import com.flow.bittrex.BittrexService.GetMarkets
 import com.flow.bittrex.api.Bittrex.MarketResult
 import com.flow.marketmaker.models.{BuyOrder, TradeRequest}
-import com.flow.marketmaker.services.MarketService.CreateOrder
-import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
+import com.flow.marketmaker.services.MarketService.{CreateOrder, PostTrade}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.Json
 import io.circe.generic.auto._
-import io.circe._
-import io.circe.generic.auto._
-import io.circe.parser._
 import io.circe.syntax._
 
 import scala.concurrent.duration._
+import scala.util.Success
 
 trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def bittrexService: ActorRef
+  import com.flow.bittrex.BittrexService._
 
   val marketRoutes = logRequestResult("MarketRoutes") {
     pathPrefix("market") {
@@ -78,8 +73,15 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
       post {
         userFromSession { user =>
           entity(as[TradeRequest]) { tradeRequest =>
-            println(tradeRequest)
-            completeOk
+            implicit val timeout = Timeout(1.second)
+
+            onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
+              case true =>
+                println(tradeRequest)
+                completeOk
+              case _ =>
+                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+            }
           }
         }
       }

@@ -3,28 +3,28 @@ package com.flow.marketmaker.services
 
 import java.time.{Instant, ZoneOffset}
 
-import akka.actor.{Actor, ActorLogging, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.database.redis.OrderRepository
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.models._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import models.BasicUserData
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import redis.RedisClient
-import scala.concurrent.duration._
 
 
 object MarketService {
-  def props(marketName: String, sqlDatabase: SqlDatabase, redis: RedisClient)(implicit context: ExecutionContext) =
-    Props(new MarketService(marketName, sqlDatabase, redis))
+  def props(marketName: String, bagel: SqlTheEverythingBagelDao, redis: RedisClient)(implicit context: ExecutionContext) =
+    Props(new MarketService(marketName, bagel, redis))
 
   case object ReturnAllData
   case object ReturnLatestMessage
 
   case class CreateOrder(forUser: BasicUserData, buyOrder: BuyOrder)
+  case class PostTrade(forUser: BasicUserData, request: TradeRequest, sender: Option[ActorRef] = None)
+
 }
 
 
@@ -33,15 +33,14 @@ object MarketService {
   * note: This service shall be started when the system starts
   * currently it is started when an update in the supervisor gets a market update
   * @param marketName
-  * @param sqlDatabase
+  * @param bagel
   * @param redis
   */
-class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: RedisClient) extends Actor
+class MarketService(val marketName: String, bagel: SqlTheEverythingBagelDao, redis: RedisClient) extends Actor
   with ActorLogging {
 
   import MarketService._
 
-  lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   implicit val akkaSystem = context.system
 
   val orderRepo = new OrderRepository(redis)
@@ -66,6 +65,9 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
 
     case CreateOrder(user, buyOrder) =>
       createOrder(user, buyOrder)
+
+    case PostTrade(user, request, Some(sender)) =>
+      postTrade(user, request, sender)
   }
 
   /**
@@ -117,6 +119,13 @@ class MarketService(val marketName: String, sqlDatabase: SqlDatabase, redis: Red
       // the : _* is the splat operator
       conditions.append(JsonConditionTranslator.fromOrder(o): _*)
     }
+  }
+
+  private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
+    println(user)
+    println(request)
+
+    sender ! true
   }
 }
 
