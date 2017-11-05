@@ -8,6 +8,8 @@ import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flow.marketmaker.models.MarketStructures.MarketUpdate
+import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.{CreateOrder, PostTrade}
 import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
@@ -39,13 +41,16 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
   val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexMarketSuper = system.actorOf(MarketSupervisor.props(bittrexEventBus, bagel, redis))
   val bittrexFeed = system.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   val bittrexClient = new BittrexClient()
 
   // a list of open and available trading markets on Bittrex
   var marketList: List[MarketResult] = List[MarketResult]()
+
+  // map of marketName (BTC-ANT) to actor ref for MarketService
+  val marketServices = scala.collection.mutable.Map[String, ActorRef]()
+
 
   override def preStart = {
     bittrexClient.publicGetMarkets().map { response: MarketResponse =>
@@ -56,12 +61,22 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
           log.warning("could not receive market list from bittrex")
       }
     }
+
+    log info "subscribed to bittrex socket updates"
+    bittrexEventBus.subscribe(self, "updates")
+  }
+
+  override def postStop = {
+    bittrexEventBus.unsubscribe(self, "updates")
   }
 
   def receive = {
-    /**
+    /*********************************************************************
       * Get market info based on a filter term
-      */
+      * example filter term can be "btc-neo" or
+      * full market name
+      * Response with List[MarketResult]
+      ********************************************************************/
     case GetMarkets(filter) =>
       filter match {
         case Some(filter) =>
@@ -70,45 +85,76 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
             m.MarketCurrencyLong.toLowerCase().contains(filter.toLowerCase()) ||
             m.MarketName.toLowerCase().contains(filter.toLowerCase())
           )
-          sender ! mrks
+          // only send markets that we have market actors for
+          sender ! mrks.filter( m => marketServices.contains(m.MarketName))
 
         case None =>
           sender ! marketList
       }
 
 
-    /**
+    /*********************************************************************
       * Create an order for a user
-      */
-    case CreateOrder(user, buyOrder) =>
-      implicit val timeout = Timeout(1.second)
+      ********************************************************************/
+    case CreateOrder(user, buyOrder) => ???
+      //implicit val timeout = Timeout(1.second)
 
-      (bittrexMarketSuper ? GetMarketActorRef(buyOrder.marketName)).mapTo[Option[ActorRef]].map { opt =>
+//      (bittrexMarketSuper ? GetMarketActorRef(buyOrder.marketName)).mapTo[Option[ActorRef]].map { opt =>
+//
+//        opt match {
+//          case Some(marketActor) =>
+//            marketActor ! CreateOrder(user, buyOrder)
+//          case None =>
+//            log.warning(s"CreateOrder - market not found! ${buyOrder.marketName}")
+//        }
+//      }
 
-        opt match {
-          case Some(marketActor) =>
-            marketActor ! CreateOrder(user, buyOrder)
-          case None =>
-            log.warning(s"CreateOrder - market not found! ${buyOrder.marketName}")
-        }
-      }
-
-    /**
+    /*********************************************************************
       * Post a trade to the market.
-      */
+      ********************************************************************/
     case PostTrade(user, request, _) =>
-      implicit val timeout = Timeout(1.second)
-      val newTrade = PostTrade(user, request, Some(sender))
 
-      (bittrexMarketSuper ? GetMarketActorRef(request.marketName)).mapTo[Option[ActorRef]].map { opt =>
-        opt match {
-          case Some(marketActor) =>
-            marketActor ! newTrade
-          case None =>
-            log.warning(s"PostTrade - market not found! ${request.marketName}")
-            newTrade.sender.get ! false
-        }
+      marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()) match {
+        case Some(m) =>
+          val newTrade = PostTrade(user,
+            request.copy(baseCurrencyAbbrev = Some(m.BaseCurrency),
+              baseCurrencyName = Some(m.BaseCurrencyLong),
+              marketCurrencyAbbrev = Some(m.MarketCurrency),
+              marketCurrencyName = Some(m.MarketCurrencyLong)),
+            Some(sender()))
+
+          marketServices.get(request.marketName) match {
+            case Some(marketActor) =>
+              marketActor ! newTrade
+            case None =>
+              log.warning(s"PostTrade - market actor not found! ${request.marketName}")
+              newTrade.sender.get ! false
+          }
+
+        case None =>
+          log.warning(s"PostTrade - market not found! ${request.marketName}")
+          sender ! false
       }
 
+    /*********************************************************************
+      * ship market update to correct market actor
+      ********************************************************************/
+    case update: MarketUpdate =>
+      val marketName = update.MarketName
+
+      // first time seeing this market name?
+      if (!marketServices.contains(marketName)) {
+
+        // fire up a new actor for this market
+        marketServices += marketName -> context.actorOf(MarketService.props(marketName, bagel, redis), marketName)
+
+        // send a message to the retriever to get the candle data from Poloniex
+        // if the 24 hour baseVolume from this update is greater than our threshold
+        //eventBus.publish(MarketEvent(NewMarket, QueueMarket(marketName)))
+        //candleService ! QueueMarket(marketName)
+      }
+
+      //forward message to market service actor
+      marketServices(marketName) ! update
   }
 }

@@ -39,6 +39,7 @@ object TradeStatus extends Enumeration {
   val Pending    = Value("pending")
   val Bought     = Value("bought")
   val Sold       = Value("sold")
+  val Cancelled  = Value("cancelled")
 }
 
 case class Condition(conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
@@ -46,6 +47,10 @@ case class ConditionArray(collectionType: String, conditions: List[Condition])
 case class TradeRequest(
                  exchangeName: String,
                  marketName: String,
+                 marketCurrencyAbbrev: Option[String],
+                 marketCurrencyName: Option[String],
+                 baseCurrencyAbbrev: Option[String],
+                 baseCurrencyName: Option[String],
                  quantity: Double,
                  buyConditions: ConditionArray,
                  sellConditions: Option[ConditionArray]) {
@@ -53,22 +58,22 @@ case class TradeRequest(
   implicit val condFormat = jsonFormat5(Condition)
   implicit val orderFormat = jsonFormat2(ConditionArray)
 
-  def buyOrder(userId: UUID): Order = {
-    Order(UUID.randomUUID(), userId, exchangeName, marketName,
-      Instant.now().atOffset(ZoneOffset.UTC), None, None, None, quantity,
-      OrderType.Buy, OrderStatus.Pending, buyConditions.toJson)
-  }
-
-  def sellOrder(userId: UUID): Option[Order] = {
-    sellConditions match {
-      case Some(cond) =>
-        Some( Order (UUID.randomUUID (), userId, exchangeName, marketName,
-          Instant.now ().atOffset (ZoneOffset.UTC), None, None, None, quantity,
-          OrderType.Sell, OrderStatus.Pending, cond.toJson) )
-      case None =>
-        None
-    }
-  }
+//  def buyOrder(userId: UUID): Order = {
+//    Order(UUID.randomUUID(), userId, exchangeName, marketName,
+//      Instant.now().atOffset(ZoneOffset.UTC), None, None, None, quantity,
+//      OrderType.Buy, OrderStatus.Pending, buyConditions.toJson)
+//  }
+//
+//  def sellOrder(userId: UUID): Option[Order] = {
+//    sellConditions match {
+//      case Some(cond) =>
+//        Some( Order (UUID.randomUUID (), userId, exchangeName, marketName,
+//          Instant.now ().atOffset (ZoneOffset.UTC), None, None, None, quantity,
+//          OrderType.Sell, OrderStatus.Pending, cond.toJson) )
+//      case None =>
+//        None
+//    }
+//  }
 }
 
 case class TradeResponse(id: UUID,
@@ -135,20 +140,58 @@ object Order {
 
 case class Trade(id: UUID,
                  userId: UUID,
-                 openOrderId: UUID,
-                 closeOrderId: Option[UUID],
                  exchangeName: String,
-                 marketCurrency: String,
-                 marketCurrencyLong: String,
-                 boughtPrice: Option[Double],
-                 boughtTime: Option[OffsetDateTime],
-                 soldPrice: Option[Double],
-                 soldTime: Option[OffsetDateTime])
+                 marketName: String,
+                 marketCurrencyAbbrev: String,
+                 marketCurrencyName: String,
+                 baseCurrencyAbbrev: String,
+                 baseCurrencyName: String,
+                 quantity: Double,
+                 status: TradeStatus.Value,
+                 createdOn: OffsetDateTime,
+                 updatedOn: OffsetDateTime,
+                 buyTime: Option[OffsetDateTime],
+                 buyPrice: Option[Double],
+                 buyCondition: Option[String],
+                 buyConditions: JsValue,
+                 sellTime: Option[OffsetDateTime],
+                 sellPrice: Option[Double],
+                 sellCondition: Option[String],
+                 sellConditions: Option[JsValue])
 
 object Trade {
 
-//  def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
-//    Trade(UUID.randomUUID(), forUserId, )
-//
-//  }
+  implicit val condFormat = jsonFormat5(Condition)
+  implicit val orderFormat = jsonFormat2(ConditionArray)
+
+  def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
+    val uuid = UUID.randomUUID()
+    val now = Instant.now().atOffset(ZoneOffset.UTC)
+    val sellConditions = tradeRequest.sellConditions match {
+      case Some(conditions) => conditions.toJson
+      case None => JsNull
+    }
+
+    Trade(uuid,
+      forUserId,
+      tradeRequest.exchangeName,
+      tradeRequest.marketName,
+      tradeRequest.marketCurrencyAbbrev.getOrElse(""),
+      tradeRequest.marketCurrencyName.getOrElse(""),
+      tradeRequest.baseCurrencyAbbrev.getOrElse(""),
+      tradeRequest.baseCurrencyName.getOrElse(""),
+      tradeRequest.quantity,
+      TradeStatus.Pending,
+      now,
+      now,
+      None,
+      None,
+      None,
+      tradeRequest.buyConditions.toJson,
+      None,
+      None,
+      None,
+      Some(sellConditions)
+    )
+  }
 }

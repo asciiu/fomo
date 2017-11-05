@@ -4,16 +4,17 @@ import java.sql.JDBCType
 import java.util.UUID
 
 import com.flow.marketmaker.database.TheEverythingBagelDao
-import com.flow.marketmaker.database.postgres.schema.SqlOrder
+import com.flow.marketmaker.database.postgres.schema.{SqlOrder, SqlTrade}
 import com.flow.marketmaker.models.{Order, OrderStatus, Trade}
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import slick.jdbc.{PositionedParameters, SetParameter}
 
 
 class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
-  extends TheEverythingBagelDao with SqlOrder {
+  extends TheEverythingBagelDao with SqlOrder with SqlTrade {
 
   import database._
   import database.driver.api._
@@ -21,7 +22,6 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   implicit object SetUUID extends SetParameter[UUID] { def apply(v: UUID, pp: PositionedParameters) { pp.setObject(v, JDBCType.BINARY.getVendorTypeNumber) } }
 
   def insert(order: Order): Future[Order] = {
-    println(order)
     val query = orders returning orders.map(_.id) into ((o, id) => o.copy(id = id))
     db.run(query += order)
   }
@@ -44,14 +44,18 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(orders.filter(_.id === id).result.headOption)
   }
 
-  def findAllByOrderStatus(marketName: String, status: OrderStatus.Value): Future[Seq[Order]] = {
-    db.run(orders.filter(o => o.status === status && o.marketName === marketName).result)
+  def findAllByOrderStatus(marketName: String, orderStatus: OrderStatus.Value): Future[Seq[Order]] = {
+    db.run(orders.filter(o => o.status === orderStatus && o.marketName === marketName).result)
   }
 
   /**
     * Insert trade
     */
-  def insert(trade: Trade): Future[Boolean] = {
-    Future.successful(true)
+  def insert(trade: Trade): Future[Int] = {
+
+    db.run(trades += trade).recover {
+      case e:Exception => println("Caught exception: "+e.getMessage)
+        1
+    }
   }
 }

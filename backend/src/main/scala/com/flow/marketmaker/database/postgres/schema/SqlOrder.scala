@@ -13,12 +13,12 @@ trait SqlOrder {
   import database._
   import slick.MyPostgresDriver.api._
 
-  implicit val resourceTypeTypeMapper = MappedColumnType.base[OrderType.Value, String] (
+  implicit val orderTypeMapper = MappedColumnType.base[OrderType.Value, String] (
     { ot => ot.toString },
     { str => OrderType.withName(str) }
   )
 
-  implicit val resourceTypeStatusMapper = MappedColumnType.base[OrderStatus.Value, String](
+  implicit val orderStatusMapper = MappedColumnType.base[OrderStatus.Value, String](
     { os => os.toString },
     { str => OrderStatus.withName(str) }
   )

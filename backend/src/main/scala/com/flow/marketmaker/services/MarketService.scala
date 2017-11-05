@@ -126,16 +126,15 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   }
 
   private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
-    val buyOrder = request.buyOrder(user.id)
+    val trade = Trade.fromRequest(request, user.id)
 
-    bagel.insert(buyOrder)
-
-    val sellOrder = request.sellOrder(user.id)
-    if (sellOrder.isDefined) {
-      bagel.insert(sellOrder.get)
+    bagel.insert(trade).map { result =>
+      if (result > 0) {
+        sender ! true
+      } else {
+        sender ! false
+      }
     }
-
-    sender ! true
   }
 }
 

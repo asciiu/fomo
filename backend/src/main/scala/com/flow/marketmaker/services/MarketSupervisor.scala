@@ -6,7 +6,6 @@ package services.actors
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.TheEverythingBagelDao
-import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import redis.RedisClient
 
@@ -14,6 +13,7 @@ import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 
 
+// TODO you need to remove this
 object MarketSupervisor {
   def props(eventBus: MarketEventBus, bagel: TheEverythingBagelDao, redis: RedisClient)
            (implicit executionContext: ExecutionContext, system: ActorSystem) =

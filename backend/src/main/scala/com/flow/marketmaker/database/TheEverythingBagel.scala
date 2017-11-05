@@ -14,5 +14,5 @@ trait TheEverythingBagelDao {
   def findAllByOrderStatus(marketName: String, status: OrderStatus.Value): Future[Seq[Order]]
 
   // trades
-  def insert(trade: Trade): Future[Boolean]
+  def insert(trade: Trade): Future[Int]
 }
