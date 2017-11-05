@@ -1,9 +1,7 @@
 package com.flow.bittrex
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
-import akka.pattern.ask
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
 import com.flow.marketmaker.MarketEventBus
@@ -11,13 +9,9 @@ import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEveryth
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.{CreateOrder, PostTrade}
-import com.flow.marketmaker.services.services.actors.MarketSupervisor
-import com.flow.marketmaker.services.services.actors.MarketSupervisor.GetMarketActorRef
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import redis.RedisClient
-
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 
 
 object BittrexService {
@@ -96,42 +90,29 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
     /*********************************************************************
       * Create an order for a user
       ********************************************************************/
-    case CreateOrder(user, buyOrder) => ???
-      //implicit val timeout = Timeout(1.second)
-
-//      (bittrexMarketSuper ? GetMarketActorRef(buyOrder.marketName)).mapTo[Option[ActorRef]].map { opt =>
-//
-//        opt match {
-//          case Some(marketActor) =>
-//            marketActor ! CreateOrder(user, buyOrder)
-//          case None =>
-//            log.warning(s"CreateOrder - market not found! ${buyOrder.marketName}")
-//        }
-//      }
+    case CreateOrder(user, buyOrder) =>
+      marketServices.get(buyOrder.marketName) match {
+      case Some(actor) => actor ! CreateOrder(user, buyOrder)
+      case None => log.warning(s"CreateOrder - market actor not found! ${buyOrder.marketName}")
+    }
 
     /*********************************************************************
       * Post a trade to the market.
       ********************************************************************/
     case PostTrade(user, request, _) =>
 
-      marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()) match {
-        case Some(m) =>
-          val newTrade = PostTrade(user,
-            request.copy(baseCurrencyAbbrev = Some(m.BaseCurrency),
-              baseCurrencyName = Some(m.BaseCurrencyLong),
-              marketCurrencyAbbrev = Some(m.MarketCurrency),
-              marketCurrencyName = Some(m.MarketCurrencyLong)),
-            Some(sender()))
+      (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()),
+        marketServices.get(request.marketName)) match {
+        case (Some(mResult), Some(actor)) =>
+          val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.BaseCurrency),
+            baseCurrencyName = Some(mResult.BaseCurrencyLong),
+            marketCurrencyAbbrev = Some(mResult.MarketCurrency),
+            marketCurrencyName = Some(mResult.MarketCurrencyLong))
 
-          marketServices.get(request.marketName) match {
-            case Some(marketActor) =>
-              marketActor ! newTrade
-            case None =>
-              log.warning(s"PostTrade - market actor not found! ${request.marketName}")
-              newTrade.sender.get ! false
-          }
+          val newTrade = PostTrade(user, newRequest, Some(sender()))
+          actor ! newTrade
 
-        case None =>
+        case _ =>
           log.warning(s"PostTrade - market not found! ${request.marketName}")
           sender ! false
       }

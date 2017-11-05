@@ -9,7 +9,6 @@ import akka.stream.ActorMaterializer
 import com.flow.bittrex.{BittrexService, BittrexSignalrActor}
 import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
-import com.flow.marketmaker.services.services.actors.MarketSupervisor
 import com.softwaremill.bootzooka.Main.actorSystem
 import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
