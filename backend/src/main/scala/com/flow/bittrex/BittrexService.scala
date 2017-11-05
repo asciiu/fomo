@@ -83,7 +83,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
           sender ! mrks.filter( m => marketServices.contains(m.MarketName))
 
         case None =>
-          sender ! marketList
+          sender ! marketList.filter( m => marketServices.contains(m.MarketName))
       }
 
 
