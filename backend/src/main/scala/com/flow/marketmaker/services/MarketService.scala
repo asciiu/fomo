@@ -2,8 +2,10 @@ package com.flow.marketmaker.services
 
 
 import java.time.{Instant, ZoneOffset}
+import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.database.redis.OrderRepository
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
@@ -16,7 +18,7 @@ import redis.RedisClient
 
 
 object MarketService {
-  def props(marketName: String, bagel: SqlTheEverythingBagelDao, redis: RedisClient)(implicit context: ExecutionContext) =
+  def props(marketName: String, bagel: TheEverythingBagelDao, redis: RedisClient)(implicit context: ExecutionContext) =
     Props(new MarketService(marketName, bagel, redis))
 
   case object ReturnAllData
@@ -36,7 +38,7 @@ object MarketService {
   * @param bagel
   * @param redis
   */
-class MarketService(val marketName: String, bagel: SqlTheEverythingBagelDao, redis: RedisClient) extends Actor
+class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis: RedisClient) extends Actor
   with ActorLogging {
 
   import MarketService._
@@ -57,6 +59,8 @@ class MarketService(val marketName: String, bagel: SqlTheEverythingBagelDao, red
         conditions.append(pendingConditions: _*)
       }
     }
+
+    log.info(s"$marketName actor started")
   }
 
   def receive: Receive = {
@@ -122,8 +126,14 @@ class MarketService(val marketName: String, bagel: SqlTheEverythingBagelDao, red
   }
 
   private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
-    println(user)
-    println(request)
+    val buyOrder = request.buyOrder(user.id)
+
+    bagel.insert(buyOrder)
+
+    val sellOrder = request.sellOrder(user.id)
+    if (sellOrder.isDefined) {
+      bagel.insert(sellOrder.get)
+    }
 
     sender ! true
   }

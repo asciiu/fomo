@@ -5,6 +5,7 @@ package services.actors
 // external
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import com.flow.marketmaker.MarketEventBus
+import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import redis.RedisClient
@@ -14,7 +15,7 @@ import scala.language.postfixOps
 
 
 object MarketSupervisor {
-  def props(eventBus: MarketEventBus, bagel: SqlTheEverythingBagelDao, redis: RedisClient)
+  def props(eventBus: MarketEventBus, bagel: TheEverythingBagelDao, redis: RedisClient)
            (implicit executionContext: ExecutionContext, system: ActorSystem) =
     Props(new MarketSupervisor(eventBus, bagel, redis))
 
@@ -25,7 +26,7 @@ object MarketSupervisor {
   * This actor is reponsible for managing all poloniex markets. New
   * actors for each market are created here.
   */
-class MarketSupervisor (eventBus: MarketEventBus, bagel: SqlTheEverythingBagelDao, redis: RedisClient)
+class MarketSupervisor (eventBus: MarketEventBus, bagel: TheEverythingBagelDao, redis: RedisClient)
                        (implicit ctx: ExecutionContext, system: ActorSystem)
   extends Actor
     with ActorLogging {
@@ -69,10 +70,9 @@ class MarketSupervisor (eventBus: MarketEventBus, bagel: SqlTheEverythingBagelDa
       */
     case update: MarketUpdate =>
       val marketName = update.MarketName
-        // first time seeing this market name?
-      if (!markets.contains(marketName)) {
 
-        log.info(s"$marketName open")
+       // first time seeing this market name?
+      if (!markets.contains(marketName)) {
 
         // fire up a new actor for this market
         markets += marketName -> context.actorOf(MarketService.props(marketName, bagel, redis), marketName)

@@ -27,6 +27,14 @@ case class BuyOrder(exchangeName: String,
                     quantity: Double,
                     buyConditions: List[BuyCondition])
 
+
+// TODO you need to remove the classes above
+//case class Condition(conditionType: String, indicator: String, operator: String, value: Double)
+//case class Order(exchangeName: String,
+//                 marketName: String,
+//                 quantity: Double,
+//                 conditions: List[BuyCondition])
+
 object TradeStatus extends Enumeration {
   val Pending    = Value("pending")
   val Bought     = Value("bought")
@@ -40,7 +48,28 @@ case class TradeRequest(
                  marketName: String,
                  quantity: Double,
                  buyConditions: ConditionArray,
-                 sellConditions: ConditionArray)
+                 sellConditions: Option[ConditionArray]) {
+
+  implicit val condFormat = jsonFormat5(Condition)
+  implicit val orderFormat = jsonFormat2(ConditionArray)
+
+  def buyOrder(userId: UUID): Order = {
+    Order(UUID.randomUUID(), userId, exchangeName, marketName,
+      Instant.now().atOffset(ZoneOffset.UTC), None, None, None, quantity,
+      OrderType.Buy, OrderStatus.Pending, buyConditions.toJson)
+  }
+
+  def sellOrder(userId: UUID): Option[Order] = {
+    sellConditions match {
+      case Some(cond) =>
+        Some( Order (UUID.randomUUID (), userId, exchangeName, marketName,
+          Instant.now ().atOffset (ZoneOffset.UTC), None, None, None, quantity,
+          OrderType.Sell, OrderStatus.Pending, cond.toJson) )
+      case None =>
+        None
+    }
+  }
+}
 
 case class TradeResponse(id: UUID,
                         exchangeName: String,
@@ -115,3 +144,11 @@ case class Trade(id: UUID,
                  boughtTime: Option[OffsetDateTime],
                  soldPrice: Option[Double],
                  soldTime: Option[OffsetDateTime])
+
+object Trade {
+
+//  def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
+//    Trade(UUID.randomUUID(), forUserId, )
+//
+//  }
+}

@@ -93,6 +93,9 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
         }
       }
 
+    /**
+      * Post a trade to the market.
+      */
     case PostTrade(user, request, _) =>
       implicit val timeout = Timeout(1.second)
       val newTrade = PostTrade(user, request, Some(sender))

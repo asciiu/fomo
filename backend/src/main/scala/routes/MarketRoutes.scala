@@ -77,7 +77,6 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
             onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
               case true =>
-                println(tradeRequest)
                 completeOk
               case _ =>
                 complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
