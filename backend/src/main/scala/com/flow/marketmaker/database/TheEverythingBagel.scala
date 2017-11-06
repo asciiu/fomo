@@ -15,4 +15,5 @@ trait TheEverythingBagelDao {
 
   // trades
   def insert(trade: Trade): Future[Int]
+  def findTradesByUserId(userId: UUID): Future[Seq[Trade]]
 }

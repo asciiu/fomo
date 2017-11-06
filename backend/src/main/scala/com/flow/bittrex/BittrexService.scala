@@ -32,6 +32,8 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
   import BittrexService._
 
+  // TODO this is probably bad practice we should only need one instance
+  // of the bagel - maybe the marketupdatedao should be merged into the everythingbagel?
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
   val bittrexEventBus = new MarketEventBus("bittrex")

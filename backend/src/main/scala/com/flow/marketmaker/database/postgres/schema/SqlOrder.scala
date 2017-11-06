@@ -4,6 +4,8 @@ import com.flow.marketmaker.models.{Order, OrderStatus, OrderType}
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
+
+import io.circe.Json
 import spray.json.JsValue
 
 
@@ -37,7 +39,7 @@ trait SqlOrder {
     def quantity = column[Double]("quantity")
     def orderType = column[OrderType.Value]("order_type")
     def status = column[OrderStatus.Value]("status")
-    def json = column[JsValue]("conditions")
+    def json = column[Json]("conditions")
 
     def * = (id,
       userId,

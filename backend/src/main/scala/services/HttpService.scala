@@ -8,7 +8,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import com.flow.bittrex.{BittrexService, BittrexSignalrActor}
 import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.postgres.SqlMarketUpdateDao
+import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
 import com.softwaremill.bootzooka.Main.actorSystem
 import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
@@ -37,6 +37,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   //lazy val sqlDatabase = SqlDatabase.createPostgresFromConfig(config)
   lazy val redis = new RedisClient()
   lazy val sqlDatabase = SqlDatabase.create(config)
+  lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   lazy val userDao = new SqlUserDao(sqlDatabase)(daoExecutionContext)
   lazy val codeDao = new SqlPasswordResetCodeDao(sqlDatabase)(daoExecutionContext)
   lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)

@@ -8,7 +8,7 @@ trait MyPostgresDriver extends ExPostgresProfile
   with PgRangeSupport
   with PgHStoreSupport
   with PgSearchSupport
-  with PgSprayJsonSupport {
+  with PgCirceJsonSupport {
 
   override val api = new MyAPI {}
 
@@ -20,7 +20,6 @@ trait MyPostgresDriver extends ExPostgresProfile
     with HStoreImplicits
     with SearchImplicits
     with SearchAssistants
-    with SprayJsonPlainImplicits
     with JsonImplicits
 }
 

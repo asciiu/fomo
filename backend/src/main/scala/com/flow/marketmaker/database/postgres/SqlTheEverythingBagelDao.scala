@@ -7,9 +7,7 @@ import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.database.postgres.schema.{SqlOrder, SqlTrade}
 import com.flow.marketmaker.models.{Order, OrderStatus, Trade}
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
-
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 import slick.jdbc.{PositionedParameters, SetParameter}
 
 
@@ -52,10 +50,10 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * Insert trade
     */
   def insert(trade: Trade): Future[Int] = {
+    db.run(trades += trade)
+  }
 
-    db.run(trades += trade).recover {
-      case e:Exception => println("Caught exception: "+e.getMessage)
-        1
-    }
+  def findTradesByUserId(userId: UUID): Future[Seq[Trade]] = {
+    db.run(trades.filter(_.userId === userId).result)
   }
 }

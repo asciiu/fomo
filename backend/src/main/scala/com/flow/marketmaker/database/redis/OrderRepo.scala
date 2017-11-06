@@ -6,6 +6,7 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
 
 import com.flow.marketmaker.models._
+import io.circe.Json
 import redis.RedisClient
 import spray.json.JsNull
 
@@ -113,7 +114,7 @@ class OrderRepository(redis: RedisClient)(implicit actorSystem: ActorSystem) {
       keysAndValues("quantity").utf8String.toDouble,
       OrderType.withName(keysAndValues("orderType").utf8String),
       OrderStatus.withName(keysAndValues("status").utf8String),
-      JsNull
+      Json.Null
     )
   }
 

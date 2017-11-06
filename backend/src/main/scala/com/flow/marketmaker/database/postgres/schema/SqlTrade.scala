@@ -5,6 +5,7 @@ import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
 
+import io.circe.Json
 import spray.json.JsValue
 
 
@@ -36,11 +37,11 @@ trait SqlTrade {
     def buyTime = column[OffsetDateTime]("buy_time")
     def buyPrice = column[Double]("buy_price")
     def buyCondition = column[String]("buy_condition")
-    def buyConditions = column[JsValue]("buy_conditions")
+    def buyConditions = column[Json]("buy_conditions")
     def sellTime = column[OffsetDateTime]("sell_time")
     def sellPrice = column[Double]("sell_price")
     def sellCondition = column[String]("sell_condition")
-    def sellConditions = column[JsValue]("sell_conditions")
+    def sellConditions = column[Json]("sell_conditions")
 
     def * = (id,
       userId,

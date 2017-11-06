@@ -4,6 +4,10 @@ import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
 
 import spray.json._
+import io.circe.{Encoder, Json}
+import io.circe.syntax._
+import io.circe.generic.semiauto._
+
 import DefaultJsonProtocol._
 
 
@@ -40,6 +44,7 @@ object TradeStatus extends Enumeration {
   val Bought     = Value("bought")
   val Sold       = Value("sold")
   val Cancelled  = Value("cancelled")
+  val Pause      = Value("paused")
 }
 
 case class Condition(conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
@@ -105,7 +110,7 @@ case class Order(id: UUID,
                  quantity: Double,
                  orderType: OrderType.Value,
                  status: OrderStatus.Value,
-                 conditions: JsValue) {
+                 conditions: Json) {
 
   def conditionsToArray: JsArray = conditions.asInstanceOf[JsArray]
   // evaluates all conditions and returns true if any of the conditions are true
@@ -115,7 +120,7 @@ case class Order(id: UUID,
 
 object Order {
 
-  implicit val buyFormat = jsonFormat4(BuyCondition)
+  implicit val condEcoder: Encoder[BuyCondition] = deriveEncoder[BuyCondition]
 
   def fromBuyOrder(buyOrder: BuyOrder, forUserId: UUID): Order = {
 
@@ -133,10 +138,9 @@ object Order {
 
     Order(UUID.randomUUID(), forUserId, buyOrder.exchangeName, buyOrder.marketName,
       Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
-      OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.toJson)
+      OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.asJson)
   }
 }
-
 
 case class Trade(id: UUID,
                  userId: UUID,
@@ -153,23 +157,25 @@ case class Trade(id: UUID,
                  buyTime: Option[OffsetDateTime],
                  buyPrice: Option[Double],
                  buyCondition: Option[String],
-                 buyConditions: JsValue,
+                 buyConditions: Json,
                  sellTime: Option[OffsetDateTime],
                  sellPrice: Option[Double],
                  sellCondition: Option[String],
-                 sellConditions: Option[JsValue])
+                 sellConditions: Option[Json])
 
 object Trade {
 
-  implicit val condFormat = jsonFormat5(Condition)
-  implicit val orderFormat = jsonFormat2(ConditionArray)
+  //implicit val condFormat = jsonFormat5(Condition)
+  //implicit val orderFormat = jsonFormat2(ConditionArray)
+  implicit val condEcoder: Encoder[Condition] = deriveEncoder[Condition]
+  implicit val condAEcoder: Encoder[ConditionArray] = deriveEncoder[ConditionArray]
 
   def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
     val uuid = UUID.randomUUID()
     val now = Instant.now().atOffset(ZoneOffset.UTC)
     val sellConditions = tradeRequest.sellConditions match {
-      case Some(conditions) => conditions.toJson
-      case None => JsNull
+      case Some(conditions) => conditions.asJson
+      case None => Json.Null
     }
 
     Trade(uuid,
@@ -187,7 +193,7 @@ object Trade {
       None,
       None,
       None,
-      tradeRequest.buyConditions.toJson,
+      tradeRequest.buyConditions.asJson,
       None,
       None,
       None,
