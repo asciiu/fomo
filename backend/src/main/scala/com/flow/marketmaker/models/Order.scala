@@ -17,7 +17,7 @@ object TradeStatus extends Enumeration {
   val Pause      = Value("paused")
 }
 
-case class Condition(conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
+case class Condition(id: Option[UUID], conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
 case class ConditionArray(collectionType: String, conditions: List[Condition])
 case class TradeRequest(
                  exchangeName: String,
@@ -29,9 +29,6 @@ case class TradeRequest(
                  quantity: Double,
                  buyConditions: ConditionArray,
                  sellConditions: Option[ConditionArray]) {
-
-  implicit val condFormat = jsonFormat5(Condition)
-  implicit val orderFormat = jsonFormat2(ConditionArray)
 }
 
 case class Trade(id: UUID,
@@ -48,11 +45,11 @@ case class Trade(id: UUID,
                  updatedOn: OffsetDateTime,
                  buyTime: Option[OffsetDateTime],
                  buyPrice: Option[Double],
-                 buyCondition: Option[String],
+                 buyConditionId: Option[UUID],
                  buyConditions: Json,
                  sellTime: Option[OffsetDateTime],
                  sellPrice: Option[Double],
-                 sellCondition: Option[String],
+                 sellConditionId: Option[UUID],
                  sellConditions: Option[Json])
 
 object Trade {

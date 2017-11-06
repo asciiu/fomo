@@ -1,5 +1,7 @@
 package com.flow.bittrex
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
@@ -11,6 +13,7 @@ import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.PostTrade
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import redis.RedisClient
+
 import scala.concurrent.ExecutionContext
 
 
@@ -96,10 +99,25 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
       (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()),
         marketServices.get(request.marketName)) match {
         case (Some(mResult), Some(actor)) =>
+          // gen uuids for all buy conditions
+          val bconditions = request.buyConditions.copy(conditions =
+            request.buyConditions.conditions.map( c => c.copy(id = Some(UUID.randomUUID()))))
+
+          // gen uuids for all sell conditions
+          val sconditions = request.sellConditions match {
+            case Some(condArray) =>
+              Some(condArray.copy(conditions =
+                condArray.conditions.map( c => c.copy(id = Some(UUID.randomUUID())))))
+            case None => None
+          }
+
           val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.BaseCurrency),
             baseCurrencyName = Some(mResult.BaseCurrencyLong),
             marketCurrencyAbbrev = Some(mResult.MarketCurrency),
-            marketCurrencyName = Some(mResult.MarketCurrencyLong))
+            marketCurrencyName = Some(mResult.MarketCurrencyLong),
+            buyConditions = bconditions,
+            sellConditions = sconditions
+          )
 
           val newTrade = PostTrade(user, newRequest, Some(sender()))
           actor ! newTrade

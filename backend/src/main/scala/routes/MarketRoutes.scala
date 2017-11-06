@@ -52,8 +52,8 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val buyCond = trade.buyCondition match {
-        case Some(cond) => Json.fromString(cond)
+      val buyConditionId = trade.buyConditionId match {
+        case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
       val sellPrice = trade.sellPrice match {
@@ -64,8 +64,8 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val sellCondition = trade.sellCondition match {
-        case Some(cond) => Json.fromString(cond)
+      val sellConditionId = trade.sellConditionId match {
+        case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
       val sellConditions = trade.sellConditions match {
@@ -87,11 +87,11 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),
         ("buyTime", buyTime),
         ("buyPrice", buyPrice),
-        ("buyCondition", buyCond),
+        ("buyConditionId", buyConditionId),
         ("buyCondition", trade.buyConditions),
         ("sellTime", sellTime),
         ("sellPrice", sellPrice),
-        ("sellCondition", sellCondition),
+        ("sellConditionId", sellConditionId),
         ("sellCondition", sellConditions)
       )
     }

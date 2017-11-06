@@ -18,11 +18,11 @@ CREATE TABLE trades(
  updated_on TIMESTAMP DEFAULT now(),
  buy_time timestamp,
  buy_price decimal,
- buy_condition text,
+ buy_condition_id UUID,
  buy_conditions jsonb,
  sell_time timestamp,
  sell_price decimal,
- sell_condition text,
+ sell_condition_id UUID,
  sell_conditions jsonb
 );
 

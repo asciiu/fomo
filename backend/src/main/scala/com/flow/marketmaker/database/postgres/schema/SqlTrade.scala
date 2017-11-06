@@ -36,11 +36,11 @@ trait SqlTrade {
     def updatedOn = column[OffsetDateTime]("updated_on")
     def buyTime = column[OffsetDateTime]("buy_time")
     def buyPrice = column[Double]("buy_price")
-    def buyCondition = column[String]("buy_condition")
+    def buyConditionId = column[UUID]("buy_condition_id")
     def buyConditions = column[Json]("buy_conditions")
     def sellTime = column[OffsetDateTime]("sell_time")
     def sellPrice = column[Double]("sell_price")
-    def sellCondition = column[String]("sell_condition")
+    def sellConditionId = column[UUID]("sell_condition_id")
     def sellConditions = column[Json]("sell_conditions")
 
     def * = (id,
@@ -57,11 +57,11 @@ trait SqlTrade {
       updatedOn,
       buyTime.?,
       buyPrice.?,
-      buyCondition.?,
+      buyConditionId.?,
       buyConditions,
       sellTime.?,
       sellPrice.?,
-      sellCondition.?,
+      sellConditionId.?,
       sellConditions.?) <>
       ((Trade.apply _).tupled, Trade.unapply)
    }
