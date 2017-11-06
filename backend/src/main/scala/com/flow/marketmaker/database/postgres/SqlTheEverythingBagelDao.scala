@@ -56,4 +56,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   def findTradesByUserId(userId: UUID): Future[Seq[Trade]] = {
     db.run(trades.filter(_.userId === userId).result)
   }
+
+  def findTradeById(tradeId: UUID): Future[Option[Trade]] = {
+    db.run(trades.filter(_.id === tradeId).result.headOption)
+  }
 }

@@ -7,6 +7,7 @@ import akka.pattern.ask
 import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
+import cats.instances.uuid
 import com.flow.bittrex.api.Bittrex.MarketResult
 import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.models.{BuyOrder, Trade, TradeRequest}
@@ -17,7 +18,6 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
-
 
 import scala.concurrent.duration._
 
@@ -37,6 +37,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   val marketRoutes = logRequestResult("MarketRoutes") {
     pathPrefix("market") {
       directory ~
+      getTrade ~
       listTrades ~
       postTrade ~
       setBuy ~
@@ -140,10 +141,24 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         userFromSession { user =>
           onSuccess( bagel.findTradesByUserId(user.id).mapTo[Seq[Trade]] ) {
             case trades: Seq[Trade] =>
-              println(trades)
               complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
             case _ =>
               complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
+          }
+        }
+      }
+    }
+  }
+
+  def getTrade = {
+    path("trade" / JavaUUID) { tradeId =>
+      get {
+        userFromSession { user =>
+          onSuccess( bagel.findTradeById(tradeId).mapTo[Option[Trade]] ) {
+            case Some(trade) =>
+              complete(JSendResponse(JsonStatus.Success, "", trade.asJson))
+            case _ =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
           }
         }
       }
