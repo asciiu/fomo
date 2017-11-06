@@ -8,7 +8,7 @@ import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.services.MarketService
-import com.flow.marketmaker.services.MarketService.{CreateOrder, PostTrade}
+import com.flow.marketmaker.services.MarketService.PostTrade
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import redis.RedisClient
 import scala.concurrent.ExecutionContext
@@ -87,16 +87,6 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
         case None =>
           sender ! marketList.filter( m => marketServices.contains(m.MarketName))
       }
-
-
-    /*********************************************************************
-      * Create an order for a user
-      ********************************************************************/
-    case CreateOrder(user, buyOrder) =>
-      marketServices.get(buyOrder.marketName) match {
-      case Some(actor) => actor ! CreateOrder(user, buyOrder)
-      case None => log.warning(s"CreateOrder - market actor not found! ${buyOrder.marketName}")
-    }
 
     /*********************************************************************
       * Post a trade to the market.

@@ -2,42 +2,12 @@ package com.flow.marketmaker.models
 
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
-
-import spray.json._
 import io.circe.{Encoder, Json}
 import io.circe.syntax._
 import io.circe.generic.semiauto._
-
+import spray.json._
 import DefaultJsonProtocol._
 
-
-object OrderStatus extends Enumeration {
-  val Pending    = Value("pending")
-  val Completed  = Value("completed")
-}
-
-
-object OrderType extends Enumeration {
-  val Buy = Value("buy")
-  val Sell    = Value("sell")
-}
-
-
-// this gets posted from the client
-// move this to the route file
-case class BuyCondition(conditionType: String, indicator: String, operator: String, value: Double)
-case class BuyOrder(exchangeName: String,
-                    marketName: String,
-                    quantity: Double,
-                    buyConditions: List[BuyCondition])
-
-
-// TODO you need to remove the classes above
-//case class Condition(conditionType: String, indicator: String, operator: String, value: Double)
-//case class Order(exchangeName: String,
-//                 marketName: String,
-//                 quantity: Double,
-//                 conditions: List[BuyCondition])
 
 object TradeStatus extends Enumeration {
   val Pending    = Value("pending")
@@ -62,84 +32,6 @@ case class TradeRequest(
 
   implicit val condFormat = jsonFormat5(Condition)
   implicit val orderFormat = jsonFormat2(ConditionArray)
-
-//  def buyOrder(userId: UUID): Order = {
-//    Order(UUID.randomUUID(), userId, exchangeName, marketName,
-//      Instant.now().atOffset(ZoneOffset.UTC), None, None, None, quantity,
-//      OrderType.Buy, OrderStatus.Pending, buyConditions.toJson)
-//  }
-//
-//  def sellOrder(userId: UUID): Option[Order] = {
-//    sellConditions match {
-//      case Some(cond) =>
-//        Some( Order (UUID.randomUUID (), userId, exchangeName, marketName,
-//          Instant.now ().atOffset (ZoneOffset.UTC), None, None, None, quantity,
-//          OrderType.Sell, OrderStatus.Pending, cond.toJson) )
-//      case None =>
-//        None
-//    }
-//  }
-}
-
-case class TradeResponse(id: UUID,
-                        exchangeName: String,
-                        marketName: String,
-                        marketCurrency: String,
-                        marketCurrencyLong: String,
-                        baseCurrency: String,
-                        baseCurrencyLong: String,
-                        createdTime: OffsetDateTime,
-                        quantity: Double,
-                        boughtTime: Option[OffsetDateTime],
-                        boughtPrice: Option[Double],
-                        soldTime: Option[OffsetDateTime],
-                        soldPrice: Option[Double],
-                        status: TradeStatus.Value,
-                        buyConditions: String,
-                        sellConditions: String)
-
-
-case class Order(id: UUID,
-                 userId: UUID,
-                 exchangeName: String,
-                 marketName: String,
-                 createdTime: OffsetDateTime,
-                 completedTime: Option[OffsetDateTime] = None,
-                 completedCondition: Option[String] = None,
-                 priceActual: Option[Double] = None,
-                 quantity: Double,
-                 orderType: OrderType.Value,
-                 status: OrderStatus.Value,
-                 conditions: Json) {
-
-  def conditionsToArray: JsArray = conditions.asInstanceOf[JsArray]
-  // evaluates all conditions and returns true if any of the conditions are true
-  //def isCondition(test: Any): Boolean = conditions.exists( _.evaluate(test) )
-  //def getCondition(test: Any): Option[String] = conditions.find( _.evaluate(test) ).map (_.toString)
-}
-
-object Order {
-
-  implicit val condEcoder: Encoder[BuyCondition] = deriveEncoder[BuyCondition]
-
-  def fromBuyOrder(buyOrder: BuyOrder, forUserId: UUID): Order = {
-
-//    val conditions = buyOrder.buyConditions.map { c =>
-//
-//      c.conditionType match {
-//        case "simpleConditional" => SimpleConditionalFactory.makeCondition(c.operator, c.value)
-//        case _ => NullCondition
-//      }
-//    }.asInstanceOf[List[Conditional]]
-
-    //Order(None, forUserId, buyOrder.exchangeName, buyOrder.marketName,
-    //  Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
-    //  OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions)
-
-    Order(UUID.randomUUID(), forUserId, buyOrder.exchangeName, buyOrder.marketName,
-      Instant.now().atOffset(ZoneOffset.UTC), None, None, None, buyOrder.quantity,
-      OrderType.Buy, OrderStatus.Pending, buyOrder.buyConditions.asJson)
-  }
 }
 
 case class Trade(id: UUID,
@@ -165,20 +57,18 @@ case class Trade(id: UUID,
 
 object Trade {
 
-  //implicit val condFormat = jsonFormat5(Condition)
-  //implicit val orderFormat = jsonFormat2(ConditionArray)
   implicit val condEcoder: Encoder[Condition] = deriveEncoder[Condition]
   implicit val condAEcoder: Encoder[ConditionArray] = deriveEncoder[ConditionArray]
 
   def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
-    val uuid = UUID.randomUUID()
+    val tradeId = UUID.randomUUID()
     val now = Instant.now().atOffset(ZoneOffset.UTC)
     val sellConditions = tradeRequest.sellConditions match {
       case Some(conditions) => conditions.asJson
       case None => Json.Null
     }
 
-    Trade(uuid,
+    Trade(tradeId,
       forUserId,
       tradeRequest.exchangeName,
       tradeRequest.marketName,

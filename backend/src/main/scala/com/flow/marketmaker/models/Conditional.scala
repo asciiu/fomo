@@ -5,7 +5,7 @@ import java.util.UUID
 import spray.json.{JsNumber, JsObject, JsString, JsValue}
 
 
-abstract class SimpleConditional(val orderId: UUID) {
+abstract class SimpleConditional(val id: UUID) {
   def symbol: String
 
   def evaluate(test: Any): Boolean
@@ -17,13 +17,13 @@ object Indicator extends Enumeration {
 }
 
 
-case class NullCondition(oid: UUID, val basePrice: Double = 0.0) extends SimpleConditional(oid) {
+case class NullCondition(nid: UUID, val basePrice: Double = 0.0) extends SimpleConditional(nid) {
   lazy val symbol = "null"
   def evaluate(testPrice: Any) = false
 }
 
 
-case class GreaterThanEq(oid: UUID, basePrice: Double, description: String) extends SimpleConditional(oid) {
+case class GreaterThanEq(nid: UUID, basePrice: Double, description: String) extends SimpleConditional(nid) {
   lazy val symbol = ">="
   lazy val indicator = Indicator.Price
   lazy val conditionType = "simpleConditional"
@@ -33,7 +33,7 @@ case class GreaterThanEq(oid: UUID, basePrice: Double, description: String) exte
 }
 
 
-case class LessThanEq(oid: UUID, basePrice: Double, description: String) extends SimpleConditional(oid) {
+case class LessThanEq(nid: UUID, basePrice: Double, description: String) extends SimpleConditional(nid) {
   lazy val symbol = "<="
   lazy val indicator = Indicator.Price
   lazy val conditionType = "simpleConditional"
@@ -45,11 +45,11 @@ case class LessThanEq(oid: UUID, basePrice: Double, description: String) extends
 
 
 object SimpleConditionalFactory {
-  def createCondition(orderId: UUID, operator: String, price: Double, description: String): SimpleConditional = {
+  def createCondition(condId: UUID, operator: String, price: Double, description: String): SimpleConditional = {
     operator match {
-      case "<=" => LessThanEq(orderId, price, description)
-      case ">=" => GreaterThanEq(orderId, price, description)
-      case _ => NullCondition(orderId)
+      case "<=" => LessThanEq(condId, price, description)
+      case ">=" => GreaterThanEq(condId, price, description)
+      case _ => NullCondition(condId)
     }
   }
 }
@@ -91,7 +91,7 @@ object JsonConditionTranslator {
     // extend new conditions based on the conditionType here
   }
 
-  def fromOrder(order: Order): List[SimpleConditional] = {
-    translate(order.conditionsToArray.elements, order.id)
-  }
+  //def fromOrder(order: Order): List[SimpleConditional] = {
+  //  translate(order.conditionsToArray.elements, order.id)
+  //}
 }
