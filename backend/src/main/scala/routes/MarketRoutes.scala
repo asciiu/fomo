@@ -10,7 +10,7 @@ import akka.util.Timeout
 import com.flow.bittrex.api.Bittrex.MarketResult
 import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.models.{Trade, TradeRequest}
-import com.flow.marketmaker.services.MarketService.{PostTrade}
+import com.flow.marketmaker.services.MarketService.PostTrade
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
@@ -26,74 +26,17 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def bagel: TheEverythingBagelDao
 
   import com.flow.bittrex.BittrexService._
-
+  import Trade._
 
   // TODO
-  // get trades
-  // get trade trade by id
-  // get single trade
   // when a trade does not execute successfully you need an error log to tell you why
   val marketRoutes = logRequestResult("MarketRoutes") {
     pathPrefix("market") {
       directory ~
       getTrade ~
       listTrades ~
-      postTrade
-    }
-  }
-
-  implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
-    final def apply(trade: Trade): Json = {
-      val buyPrice = trade.buyPrice match {
-        case Some(price) => Json.fromDoubleOrNull(price)
-        case None => Json.Null
-      }
-      val buyTime = trade.buyTime match {
-        case Some(time) => Json.fromString(time.toString)
-        case None => Json.Null
-      }
-      val buyConditionId = trade.buyConditionId match {
-        case Some(cond) => Json.fromString(cond.toString)
-        case None => Json.Null
-      }
-      val sellPrice = trade.sellPrice match {
-        case Some(price) => Json.fromDoubleOrNull(price)
-        case None => Json.Null
-      }
-      val sellTime = trade.sellTime match {
-        case Some(time) => Json.fromString(time.toString)
-        case None => Json.Null
-      }
-      val sellConditionId = trade.sellConditionId match {
-        case Some(cond) => Json.fromString(cond.toString)
-        case None => Json.Null
-      }
-      val sellConditions = trade.sellConditions match {
-        case Some(conds) => conds
-        case None => Json.Null
-      }
-      Json.obj(
-        ("id", Json.fromString(trade.id.toString)),
-        ("userId", Json.fromString(trade.userId.toString)),
-        ("exchangeName", Json.fromString(trade.exchangeName)),
-        ("marketName", Json.fromString(trade.marketName)),
-        ("marketCurrencyAbbrev", Json.fromString(trade.marketCurrencyAbbrev)),
-        ("marketCurrencyName", Json.fromString(trade.marketCurrencyName)),
-        ("baseCurrencyAbbrev", Json.fromString(trade.baseCurrencyAbbrev)),
-        ("baseCurrencyName", Json.fromString(trade.baseCurrencyName)),
-        ("quantity", Json.fromDoubleOrNull(trade.quantity)),
-        ("status", Json.fromString(trade.status.toString)),
-        ("createdOn", Json.fromString(trade.createdOn.toString)),
-        ("updatedOn", Json.fromString(trade.updatedOn.toString)),
-        ("buyTime", buyTime),
-        ("buyPrice", buyPrice),
-        ("buyConditionId", buyConditionId),
-        ("buyCondition", trade.buyConditions),
-        ("sellTime", sellTime),
-        ("sellPrice", sellPrice),
-        ("sellConditionId", sellConditionId),
-        ("sellCondition", sellConditions)
-      )
+      postTrade ~
+      updateTrade
     }
   }
 
@@ -181,5 +124,25 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         }
       }
     }
+  }
+
+  def updateTrade = {
+    path("trade") {
+      put {
+        userFromSession { user =>
+          entity(as[Trade]) { trade =>
+            implicit val timeout = Timeout(1.second)
+
+            onSuccess( bagel.updateTrade(trade).mapTo[Boolean] ) {
+              case true =>
+                completeOk
+              case _ =>
+                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+            }
+          }
+        }
+      }
+    }
+
   }
 }

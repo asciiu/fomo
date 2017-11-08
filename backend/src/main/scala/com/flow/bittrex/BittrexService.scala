@@ -127,6 +127,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
           sender ! false
       }
 
+
     /*********************************************************************
       * ship market update to correct market actor
       ********************************************************************/

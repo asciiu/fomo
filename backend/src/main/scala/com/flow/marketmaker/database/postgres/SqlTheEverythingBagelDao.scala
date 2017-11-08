@@ -49,4 +49,10 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   def findTradeById(tradeId: UUID): Future[Option[Trade]] = {
     db.run(trades.filter(_.id === tradeId).result.headOption)
   }
+
+  def updateTrade(trade: Trade): Future[Boolean] = {
+    println(trade)
+
+    Future.successful(true)
+  }
 }

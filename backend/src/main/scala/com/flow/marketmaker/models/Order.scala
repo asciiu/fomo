@@ -2,11 +2,11 @@ package com.flow.marketmaker.models
 
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
-import io.circe.{Encoder, Json}
+
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.syntax._
 import io.circe.generic.semiauto._
 import spray.json._
-import DefaultJsonProtocol._
 
 
 object TradeStatus extends Enumeration {
@@ -55,6 +55,102 @@ object Trade {
 
   implicit val condEcoder: Encoder[Condition] = deriveEncoder[Condition]
   implicit val condAEcoder: Encoder[ConditionArray] = deriveEncoder[ConditionArray]
+
+  implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
+    final def apply(trade: Trade): Json = {
+      val buyPrice = trade.buyPrice match {
+        case Some(price) => Json.fromDoubleOrNull(price)
+        case None => Json.Null
+      }
+      val buyTime = trade.buyTime match {
+        case Some(time) => Json.fromString(time.toString)
+        case None => Json.Null
+      }
+      val buyConditionId = trade.buyConditionId match {
+        case Some(cond) => Json.fromString(cond.toString)
+        case None => Json.Null
+      }
+      val sellPrice = trade.sellPrice match {
+        case Some(price) => Json.fromDoubleOrNull(price)
+        case None => Json.Null
+      }
+      val sellTime = trade.sellTime match {
+        case Some(time) => Json.fromString(time.toString)
+        case None => Json.Null
+      }
+      val sellConditionId = trade.sellConditionId match {
+        case Some(cond) => Json.fromString(cond.toString)
+        case None => Json.Null
+      }
+      val sellConditions = trade.sellConditions match {
+        case Some(conds) => conds
+        case None => Json.Null
+      }
+      Json.obj(
+        ("id", Json.fromString(trade.id.toString)),
+        ("userId", Json.fromString(trade.userId.toString)),
+        ("exchangeName", Json.fromString(trade.exchangeName)),
+        ("marketName", Json.fromString(trade.marketName)),
+        ("marketCurrencyAbbrev", Json.fromString(trade.marketCurrencyAbbrev)),
+        ("marketCurrencyName", Json.fromString(trade.marketCurrencyName)),
+        ("baseCurrencyAbbrev", Json.fromString(trade.baseCurrencyAbbrev)),
+        ("baseCurrencyName", Json.fromString(trade.baseCurrencyName)),
+        ("quantity", Json.fromDoubleOrNull(trade.quantity)),
+        ("status", Json.fromString(trade.status.toString)),
+        ("createdOn", Json.fromString(trade.createdOn.toString)),
+        ("updatedOn", Json.fromString(trade.updatedOn.toString)),
+        ("buyTime", buyTime),
+        ("buyPrice", buyPrice),
+        ("buyConditionId", buyConditionId),
+        ("buyConditions", trade.buyConditions),
+        ("sellTime", sellTime),
+        ("sellPrice", sellPrice),
+        ("sellConditionId", sellConditionId),
+        ("sellConditions", sellConditions)
+      )
+    }
+  }
+
+  implicit val decodeTrade: Decoder[Trade] = new Decoder[Trade] {
+    final def apply(c: HCursor): Decoder.Result[Trade] =
+      for {
+        id <- c.downField("id").as[String]
+        userId <- c.downField("userId").as[String]
+        exchangeName <- c.downField("exchangeName").as[String]
+        marketName <- c.downField("marketName").as[String]
+        marketCurrencyAbbrev <- c.downField("marketCurrencyAbbrev").as[String]
+        marketCurrencyName <- c.downField("marketCurrencyName").as[String]
+        baseCurrencyAbbrev <- c.downField("baseCurrencyAbbrev").as[String]
+        baseCurrencyName <- c.downField("baseCurrencyName").as[String]
+        quantity <- c.downField("quantity").as[Double]
+        status <- c.downField("status").as[String]
+        createdOn <- c.downField("createdOn").as[String]
+        updatedOn <- c.downField("updatedOn").as[String]
+        buyConditions <- c.downField("buyConditions").as[Json]
+        sellConditions <- c.downField("sellConditions").as[Json]
+      } yield {
+        new Trade(UUID.fromString(id),
+          UUID.fromString(userId),
+          exchangeName,
+          marketName,
+          marketCurrencyAbbrev,
+          marketCurrencyName,
+          baseCurrencyAbbrev,
+          baseCurrencyName,
+          quantity,
+          TradeStatus.withName(status),
+          OffsetDateTime.parse(createdOn),
+          OffsetDateTime.parse(updatedOn),
+          None,
+          None,
+          None,
+          buyConditions,
+          None,
+          None,
+          None,
+          Some(sellConditions))
+      }
+  }
 
   def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
     val tradeId = UUID.randomUUID()

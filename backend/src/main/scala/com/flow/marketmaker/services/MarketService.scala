@@ -15,7 +15,7 @@ object MarketService {
     Props(new MarketService(marketName, bagel, redis))
 
   case class PostTrade(forUser: BasicUserData, request: TradeRequest, sender: Option[ActorRef] = None)
-
+  case class UpdateTrade(forUser: BasicUserData, request: TradeRequest, sender: Option[ActorRef] = None)
 }
 
 
@@ -57,6 +57,9 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
 
     case PostTrade(user, request, Some(sender)) =>
       postTrade(user, request, sender)
+
+    case UpdateTrade(user, request, Some(sender)) =>
+      updateTrade(user, request, sender)
   }
 
   /**
@@ -106,6 +109,10 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
         sender ! false
       }
     }
+  }
+
+  private def updateTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
+    val trade = Trade.fromRequest(request, user.id)
   }
 }
 
