@@ -135,12 +135,14 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def listTrades = {
     path("trades") {
       get {
-        userFromSession { user =>
-          onSuccess( bagel.findTradesByUserId(user.id).mapTo[Seq[Trade]] ) {
-            case trades: Seq[Trade] =>
-              complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
-            case _ =>
-              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
+        parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
+          userFromSession { user =>
+            onSuccess(bagel.findTradesByUserId(user.id, marketName, exchangeName, statusIter.toList).mapTo[Seq[Trade]]) {
+              case trades: Seq[Trade] =>
+                complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
+              case _ =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
+            }
           }
         }
       }

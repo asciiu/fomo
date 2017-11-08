@@ -14,7 +14,6 @@ object TradeStatus extends Enumeration {
   val Bought     = Value("bought")
   val Sold       = Value("sold")
   val Cancelled  = Value("cancelled")
-  val Pause      = Value("paused")
 }
 
 case class Condition(id: Option[UUID], conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])

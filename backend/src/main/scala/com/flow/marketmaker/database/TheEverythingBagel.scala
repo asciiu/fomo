@@ -8,6 +8,6 @@ trait TheEverythingBagelDao {
 
   // trades
   def insert(trade: Trade): Future[Int]
-  def findTradesByUserId(userId: UUID): Future[Seq[Trade]]
+  def findTradesByUserId(userId: UUID, marketName: Option[String], exchangeName: Option[String], statuses: List[String]): Future[Seq[Trade]]
   def findTradeById(tradeId: UUID): Future[Option[Trade]]
 }
