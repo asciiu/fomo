@@ -44,11 +44,11 @@ case class Trade(id: UUID,
                  updatedOn: OffsetDateTime,
                  buyTime: Option[OffsetDateTime],
                  buyPrice: Option[Double],
-                 buyConditionId: Option[UUID],
+                 buyCondition: Option[String],
                  buyConditions: String,
                  sellTime: Option[OffsetDateTime],
                  sellPrice: Option[Double],
-                 sellConditionId: Option[UUID],
+                 sellCondition: Option[String],
                  sellConditions: Option[String])
 
 object Trade {
@@ -66,7 +66,7 @@ object Trade {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val buyConditionId = trade.buyConditionId match {
+      val buyCondition = trade.buyCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
@@ -78,7 +78,7 @@ object Trade {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val sellConditionId = trade.sellConditionId match {
+      val sellCondition = trade.sellCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
@@ -101,11 +101,11 @@ object Trade {
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),
         ("buyTime", buyTime),
         ("buyPrice", buyPrice),
-        ("buyConditionId", buyConditionId),
+        ("buyCondition", buyCondition),
         ("buyConditions", Json.fromString(trade.buyConditions)),
         ("sellTime", sellTime),
         ("sellPrice", sellPrice),
-        ("sellConditionId", sellConditionId),
+        ("sellCondition", sellCondition),
         ("sellConditions", sellConditions)
       )
     }
