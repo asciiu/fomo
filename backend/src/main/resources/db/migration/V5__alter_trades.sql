@@ -19,11 +19,11 @@ CREATE TABLE trades(
  buy_time timestamp,
  buy_price decimal,
  buy_condition_id UUID,
- buy_conditions jsonb,
+ buy_conditions text NOT NULL,
  sell_time timestamp,
  sell_price decimal,
  sell_condition_id UUID,
- sell_conditions jsonb
+ sell_conditions text
 );
 
 

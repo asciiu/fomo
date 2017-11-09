@@ -37,11 +37,11 @@ trait SqlTrade {
     def buyTime = column[OffsetDateTime]("buy_time")
     def buyPrice = column[Double]("buy_price")
     def buyConditionId = column[UUID]("buy_condition_id")
-    def buyConditions = column[Json]("buy_conditions")
+    def buyConditions = column[String]("buy_conditions")
     def sellTime = column[OffsetDateTime]("sell_time")
     def sellPrice = column[Double]("sell_price")
     def sellConditionId = column[UUID]("sell_condition_id")
-    def sellConditions = column[Json]("sell_conditions")
+    def sellConditions = column[String]("sell_conditions")
 
     def * = (id,
       userId,

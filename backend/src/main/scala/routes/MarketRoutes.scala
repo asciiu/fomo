@@ -30,8 +30,8 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   // TODO
   // when a trade does not execute successfully you need an error log to tell you why
-  val marketRoutes = logRequestResult("MarketRoutes") {
-    pathPrefix("market") {
+  val tradesRoutes = logRequestResult("TradeRoutes") {
+    pathPrefix("trade") {
       directory ~
       getTrade ~
       listTrades ~
@@ -76,7 +76,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
 
   def listTrades = {
-    path("trades") {
+    path("list") {
       get {
         parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
           userFromSession { user =>
@@ -93,7 +93,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def getTrade = {
-    path("trade" / JavaUUID) { tradeId =>
+    path(JavaUUID) { tradeId =>
       get {
         userFromSession { user =>
           onSuccess( bagel.findTradeById(tradeId).mapTo[Option[Trade]] ) {
@@ -108,7 +108,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def postTrade = {
-    path("trade") {
+    path("trades") {
       post {
         userFromSession { user =>
           entity(as[TradeRequest]) { tradeRequest =>
@@ -127,7 +127,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def updateTrade = {
-    path("trade") {
+    path(JavaUUID) { tradeId =>
       put {
         userFromSession { user =>
           entity(as[Trade]) { trade =>

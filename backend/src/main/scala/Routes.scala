@@ -20,7 +20,7 @@ trait Routes extends RoutesRequestWrapper
       passwordResetRoutes ~
       usersRoutes ~
       versionRoutes ~
-      marketRoutes
+      tradesRoutes
     } ~
     swaggerDocs
   }

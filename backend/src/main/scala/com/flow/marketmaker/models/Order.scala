@@ -26,8 +26,8 @@ case class TradeRequest(
                  baseCurrencyAbbrev: Option[String],
                  baseCurrencyName: Option[String],
                  quantity: Double,
-                 buyConditions: ConditionArray,
-                 sellConditions: Option[ConditionArray]) {
+                 buyConditions: String,
+                 sellConditions: Option[String]) {
 }
 
 case class Trade(id: UUID,
@@ -45,11 +45,11 @@ case class Trade(id: UUID,
                  buyTime: Option[OffsetDateTime],
                  buyPrice: Option[Double],
                  buyConditionId: Option[UUID],
-                 buyConditions: Json,
+                 buyConditions: String,
                  sellTime: Option[OffsetDateTime],
                  sellPrice: Option[Double],
                  sellConditionId: Option[UUID],
-                 sellConditions: Option[Json])
+                 sellConditions: Option[String])
 
 object Trade {
 
@@ -83,7 +83,7 @@ object Trade {
         case None => Json.Null
       }
       val sellConditions = trade.sellConditions match {
-        case Some(conds) => conds
+        case Some(conds) => Json.fromString(conds.toString)
         case None => Json.Null
       }
       Json.obj(
@@ -102,7 +102,7 @@ object Trade {
         ("buyTime", buyTime),
         ("buyPrice", buyPrice),
         ("buyConditionId", buyConditionId),
-        ("buyConditions", trade.buyConditions),
+        ("buyConditions", Json.fromString(trade.buyConditions)),
         ("sellTime", sellTime),
         ("sellPrice", sellPrice),
         ("sellConditionId", sellConditionId),
@@ -126,8 +126,8 @@ object Trade {
         status <- c.downField("status").as[String]
         createdOn <- c.downField("createdOn").as[String]
         updatedOn <- c.downField("updatedOn").as[String]
-        buyConditions <- c.downField("buyConditions").as[Json]
-        sellConditions <- c.downField("sellConditions").as[Json]
+        buyConditions <- c.downField("buyConditions").as[String]
+        sellConditions <- c.downField("sellConditions").as[String]
       } yield {
         new Trade(UUID.fromString(id),
           UUID.fromString(userId),
@@ -155,10 +155,6 @@ object Trade {
   def fromRequest(tradeRequest: TradeRequest, forUserId: UUID): Trade = {
     val tradeId = UUID.randomUUID()
     val now = Instant.now().atOffset(ZoneOffset.UTC)
-    val sellConditions = tradeRequest.sellConditions match {
-      case Some(conditions) => conditions.asJson
-      case None => Json.Null
-    }
 
     Trade(tradeId,
       forUserId,
@@ -175,11 +171,11 @@ object Trade {
       None,
       None,
       None,
-      tradeRequest.buyConditions.asJson,
+      tradeRequest.buyConditions,
       None,
       None,
       None,
-      Some(sellConditions)
+      tradeRequest.sellConditions
     )
   }
 }
