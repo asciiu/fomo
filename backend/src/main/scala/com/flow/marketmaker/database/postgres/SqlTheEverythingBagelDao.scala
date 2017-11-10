@@ -5,8 +5,9 @@ import java.util.UUID
 
 import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.database.postgres.schema.SqlTrade
-import com.flow.marketmaker.models.Trade
+import com.flow.marketmaker.models.{Trade, TradeStatus}
 import com.softwaremill.bootzooka.common.sql.SqlDatabase
+
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
 
@@ -44,6 +45,10 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     } else {
       db.run(query.result)
     }
+  }
+
+  def findTradesByStatus(marketName: String, tradeStatus: TradeStatus.Value): Future[Seq[Trade]] = {
+    db.run(trades.filter(t => t.status === tradeStatus && t.marketName === marketName).result)
   }
 
   def findTradeById(tradeId: UUID): Future[Option[Trade]] = {

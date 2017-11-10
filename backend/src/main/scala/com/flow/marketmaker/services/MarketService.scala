@@ -49,15 +49,15 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
 
   override def preStart() = {
     // load pending conditions from bagel
-    //bagel.findAllByOrderStatus(marketName, OrderStatus.Pending).map { orders =>
-    //  // map all the conditions into a single collection
-    //  val pendingConditions = orders.map( o => JsonConditionTranslator.fromOrder(o) ).flatten
+    bagel.findTradesByStatus(marketName, TradeStatus.Pending).map { pendingTrades =>
+      if (pendingTrades.length > 0) {
+        // map all the conditions into a single collection
+        val pendingConditions = pendingTrades.map( t => TradeBuyCondition(t.id, t.buyConditions) )
 
-    //  if (pendingConditions.length > 0) {
-    //    log.info(s"$marketName loading pending orders: $pendingConditions")
-    //    conditions.append(pendingConditions: _*)
-    //  }
-    //}
+        log.info(s"$marketName loading pending trades")
+        buyConditions.append(pendingConditions: _*)
+      }
+    }
 
     log.info(s"$marketName actor started")
   }
@@ -107,7 +107,6 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
             // TODO the buyPrice should be the actual price you may need to read this from bittrex
             buyPrice = Some(lastPrice),
             buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
-            buyCondition = Some(condish.toString),
             status = TradeStatus.Bought
           )
 
