@@ -81,14 +81,6 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   private def updateState(update: MarketUpdate) = {
     val lastPrice = update.Last
 
-//    if (update.MarketName == "BTC-SALT") {
-//      val condition = s"($lastPrice >= 0.0004 && $lastPrice <= 0.00059)"
-//      if (dynamic.eval(dynamic.parse(s"$condition")) == true) {
-//        println(buyConditions)
-//        println("Buy SALT!!")
-//      }
-//    }
-
     val conditionsThatPass = buyConditions.filter { cond =>
       val condition = cond.conditionEx.replace("price", lastPrice.toString)
       dynamic.eval(dynamic.parse(s"$condition")) == true
