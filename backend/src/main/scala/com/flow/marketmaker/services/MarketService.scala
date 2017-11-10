@@ -12,8 +12,6 @@ import models.BasicUserData
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import redis.RedisClient
-
-import scala.reflect.runtime.universe
 import scala.tools.reflect.ToolBox
 
 
@@ -38,6 +36,7 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   with ActorLogging {
 
   import MarketService._
+  import scala.reflect.runtime.currentMirror
 
   implicit val akkaSystem = context.system
 
@@ -45,7 +44,7 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
 
   val buyConditions = collection.mutable.ListBuffer[TradeBuyCondition]()
 
-  val dynamic = universe.runtimeMirror(getClass.getClassLoader).mkToolBox()
+  val dynamic = currentMirror.mkToolBox()
 
   override def preStart() = {
     // load pending conditions from bagel

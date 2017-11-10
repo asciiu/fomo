@@ -66,6 +66,7 @@ val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
 
 // javascript interface
 val scalaCompiler        = "org.scala-lang" % "scala-compiler" % "2.12.3"
+val scalaReflect         = "org.scala-lang" % "scala-reflect" % "2.12.3"
 
 
 val commonDependencies = unitTestingStack ++ loggingStack
@@ -133,7 +134,7 @@ lazy val backend: Project = (project in file("backend"))
   .settings(
     herokuAppName in Compile := "infinite-garden-24119",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
-      Seq(javaxMailSun, typesafeConfig, scalaCompiler, swagger, sprayJson, ws, redisScala),
+      Seq(javaxMailSun, typesafeConfig, scalaCompiler, scalaReflect, swagger, sprayJson, ws, redisScala),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](
