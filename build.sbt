@@ -64,6 +64,10 @@ val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaH
 // scalatrex
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
 
+// javascript interface
+val scalaCompiler        = "org.scala-lang" % "scala-compiler" % "2.12.3"
+
+
 val commonDependencies = unitTestingStack ++ loggingStack
 
 resolvers ++= Seq(
@@ -124,13 +128,12 @@ lazy val rootProject = (project in file("."))
 lazy val backend: Project = (project in file("backend"))
   .enablePlugins(BuildInfoPlugin)
   .enablePlugins(JavaAppPackaging)
-  .settings(slickTask := slickCodeGenTask.value)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
     herokuAppName in Compile := "infinite-garden-24119",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
-      Seq(javaxMailSun, typesafeConfig, swagger, sprayJson, ws, redisScala),
+      Seq(javaxMailSun, typesafeConfig, scalaCompiler, swagger, sprayJson, ws, redisScala),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
     buildInfoKeys := Seq[BuildInfoKey](
@@ -171,18 +174,3 @@ lazy val uiTests = (project in file("ui-tests"))
 RenameProject.settings
 
 fork := true
-
-
-lazy val slickTask = taskKey[Seq[File]]("gen-tables")
-lazy val slickCodeGenTask = Def.task {
-  val dir = sourceManaged.value
-  val cp = (dependencyClasspath in Compile).value
-  val r = (runner in Compile).value
-  val s = streams.value
-  val outputDir = (dir / "slick").getPath // place generated files in sbt's managed sources folder
-  toError(r.run("slick.CustomizedCodeGenerator", cp.files, Array(outputDir), s.log))
-  val fname = outputDir + "/demo/Tables.scala"
-  Seq(file(fname))
-}
-
-addCommandAlias("gen-tables", "run-main slick.CustomizedCodeGenerator")

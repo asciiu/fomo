@@ -50,9 +50,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(trades.filter(_.id === tradeId).result.headOption)
   }
 
-  def updateTrade(trade: Trade): Future[Boolean] = {
-    println(trade)
-
-    Future.successful(true)
+  def updateTrade(trade: Trade): Future[Option[Trade]] = {
+    val updatedTrade = (trades returning trades).insertOrUpdate(trade)
+    db.run(updatedTrade)
   }
 }

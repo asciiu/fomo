@@ -90,8 +90,22 @@ object JsonConditionTranslator {
 
     // extend new conditions based on the conditionType here
   }
+}
 
-  //def fromOrder(order: Order): List[SimpleConditional] = {
-  //  translate(order.conditionsToArray.elements, order.id)
-  //}
+object ConditionParser {
+
+  def parseCondition(conditions: String): Seq[String] = {
+    val priceGreaterThanEqual = """\(price >= (\d+\.\d+).*$""".r
+    val priceLessThanEqual    = """\(price <= (\d+\.\d+).*$""".r
+    val priceGreaterThan      = """\(price > (\d+\.\d+).*$""".r
+    val priceLessThan         = """\(price < (\d+\.\d+).*$""".r
+    val orConditions = conditions.split(" || ")
+
+    conditions match {
+      case priceGreaterThanEqual(price) => println(price)
+      case _ => println("what")
+    }
+
+    Seq[String]()
+  }
 }

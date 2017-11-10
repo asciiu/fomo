@@ -1,13 +1,20 @@
 package com.flow.marketmaker.services
 
+import java.time.{Instant, ZoneOffset}
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.flow.marketmaker.database.TheEverythingBagelDao
 import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.models._
 import models.BasicUserData
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import redis.RedisClient
+
+import scala.reflect.runtime.universe
+import scala.tools.reflect.ToolBox
 
 
 object MarketService {
@@ -34,7 +41,11 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
 
   implicit val akkaSystem = context.system
 
-  val conditions = collection.mutable.ListBuffer[SimpleConditional]()
+  case class TradeBuyCondition(tradeId: UUID, conditionEx: String)
+
+  val buyConditions = collection.mutable.ListBuffer[TradeBuyCondition]()
+
+  val dynamic = universe.runtimeMirror(getClass.getClassLoader).mkToolBox()
 
   override def preStart() = {
     // load pending conditions from bagel
@@ -70,32 +81,45 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   private def updateState(update: MarketUpdate) = {
     val lastPrice = update.Last
 
-    val processConditions = conditions.filter(_.evaluate(lastPrice))
-
-//    processConditions.foreach { condish =>
-//      val orderId = condish.orderId
-//
-//      bagel.findByOrderId(orderId).map { order =>
-//        if (order.isDefined) {
-//          // TODO this is where the order shall be executed via the BittrexClient
-//          // read the actual price from Bittrex and set the priceActual below
-//
-//          val updatedOrder = order.get.copy(
-//            priceActual = Some(lastPrice),
-//            completedTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
-//            completedCondition = Some(condish.toString),
-//            status = OrderStatus.Completed
-//          )
-//
-//          println(s"Last Price: ${lastPrice}")
-//          println(s"Execute $orderId ${updatedOrder.quantity} ${updatedOrder.marketName} for user: ${updatedOrder.userId}")
-//          bagel.update(updatedOrder)
-//        }
+//    if (update.MarketName == "BTC-SALT") {
+//      val condition = s"($lastPrice >= 0.0004 && $lastPrice <= 0.00059)"
+//      if (dynamic.eval(dynamic.parse(s"$condition")) == true) {
+//        println(buyConditions)
+//        println("Buy SALT!!")
 //      }
 //    }
 
+    val conditionsThatPass = buyConditions.filter { cond =>
+      val condition = cond.conditionEx.replace("price", lastPrice.toString)
+      dynamic.eval(dynamic.parse(s"$condition")) == true
+    }
+
+    conditionsThatPass.foreach { condish =>
+      val tradeId = condish.tradeId
+
+      bagel.findTradeById(tradeId).map { t =>
+
+        if (t.isDefined) {
+          val trade = t.get
+          // TODO this is where the order shall be executed via the BittrexClient
+
+          val updatedTrade = t.get.copy(
+            // TODO the buyPrice should be the actual price you may need to read this from bittrex
+            buyPrice = Some(lastPrice),
+            buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
+            buyCondition = Some(condish.toString),
+            status = TradeStatus.Bought
+          )
+
+          println(s"Last Price: ${lastPrice}")
+          println(s"Execute buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
+          bagel.updateTrade(updatedTrade)
+        }
+      }
+    }
+
     // remove the conditions that have passed
-    conditions --= processConditions
+    buyConditions --= conditionsThatPass
   }
 
 
@@ -104,6 +128,9 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
 
     bagel.insert(trade).map { result =>
       if (result > 0) {
+        val conditions = trade.buyConditions
+        buyConditions.append(TradeBuyCondition(trade.id, conditions))
+
         sender ! true
       } else {
         sender ! false
