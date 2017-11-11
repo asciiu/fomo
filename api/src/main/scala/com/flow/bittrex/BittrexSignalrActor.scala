@@ -5,11 +5,11 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.MarketUpdateDao
+import com.flowy.marketmaker.database.MarketUpdateDao
 import com.google.gson.JsonElement
 import microsoft.aspnet.signalr.client.Action
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.ExecutionContext
 
 object BittrexSignalrActor {
 

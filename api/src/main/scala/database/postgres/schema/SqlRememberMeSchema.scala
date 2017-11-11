@@ -1,6 +1,6 @@
 package database.postgres.schema
 
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
 import models.RememberMeToken

@@ -4,13 +4,13 @@ import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import com.flow.marketmaker.database.TheEverythingBagelDao
-import com.flow.marketmaker.models.MarketStructures.MarketUpdate
-import com.flow.marketmaker.models._
+import com.flowy.marketmaker.database.TheEverythingBagelDao
+import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
+import com.flowy.marketmaker.models.{Trade, TradeRequest, TradeStatus}
 import models.BasicUserData
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import redis.RedisClient
 import scala.tools.reflect.ToolBox
 

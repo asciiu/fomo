@@ -2,7 +2,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import sbt.{file, _}
-import Keys._
+import Keys.{libraryDependencies, _}
 
 import scala.util.Try
 import complete.DefaultParsers._
@@ -53,15 +53,27 @@ val seleniumFirefox = "org.seleniumhq.selenium" % "selenium-firefox-driver" % se
 val seleniumStack   = Seq(seleniumJava, seleniumFirefox)
 
 
+// akka toolkits
+val akkaActor            = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaClustering       = "com.typesafe.akka" %% "akka-cluster" % akkaVersion
+val akkRemote            = "com.typesafe.akka" %% "akka-remote" % akkaVersion
+val akkaClusterMetrics   = "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion
+val akkaClusterTools     = "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion
+val akkaMultNode         = "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion
+
 val akkaHttpCore         = "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
 val akkaHttpExperimental = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val akkaHttpTestkit      = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 val akkaHttpSession      = "com.softwaremill.akka-http-session" %% "core" % "0.5.0"
 val jwtSession           = "com.softwaremill.akka-http-session" %% "jwt"  % "0.5.1"
+
 val akkaStack            = Seq(akkaHttpCore, akkaHttpExperimental, akkaHttpTestkit, akkaHttpSession)
+
 val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http" % "0.11.0"
 val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
+val sigarLoders          = "io.kamon" % "sigar-loader" % "1.6.6-rev002"
+
+val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaClusterMetrics, akkaClusterTools, akkaMultNode, scalatest)
 
 // scalatrex
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
@@ -130,7 +142,7 @@ lazy val api: Project = (project in file("api"))
   .settings(Revolver.settings)
   .settings(
     herokuAppName in Compile := "infinite-garden-24119",
-    libraryDependencies ++= slickStack ++ akkaStack ++ circe ++
+    libraryDependencies ++= slickStack ++ akkaStack ++ akkaClusterStack ++ circe ++
       Seq(javaxMailSun, typesafeConfig, scalaCompiler, scalaReflect, swagger, sprayJson, ws, redisScala),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
     buildInfoObject := "BuildInfo",
@@ -155,10 +167,33 @@ lazy val api: Project = (project in file("api"))
     assemblyJarName in assembly := "fomo.jar",
     assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
   )
+  .dependsOn(common)
+
+
+lazy val common = (project in file("common"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "common",
+    libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ Seq(scalaCompiler, redisScala)
+  )
+
+
+/****************************************************************
+  * Trailing Stop loss
+  ***************************************************************/
+lazy val trailingStopService: Project = (project in file("trailing-stop"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "trailingStopService",
+    libraryDependencies ++= akkaClusterStack
+  )
+  .dependsOn(common)
+
 
 lazy val ui = (project in file("ui"))
   .settings(commonSettings: _*)
   .settings(test in Test := (test in Test).dependsOn(npmTask.toTask(" run test")).value)
+
 
 lazy val uiTests = (project in file("ui-tests"))
   .settings(commonSettings: _*)
@@ -167,22 +202,6 @@ lazy val uiTests = (project in file("ui-tests"))
     libraryDependencies ++= seleniumStack,
     test in Test := (test in Test).dependsOn(npmTask.toTask(" run build")).value
   ) dependsOn api
-
-
-/****************************************************************
-  Handles trailing stop losses
-  ***************************************************************/
-lazy val trailingStopService: Project = (project in file("trailing-stop"))
-  .settings(commonSettings: _*)
-  .settings(
-    name := "trailingStopService"
-  )
-
-lazy val common = (project in file("common"))
-  .settings(commonSettings: _*)
-  .settings(
-    name := "common"
-  )
 
 
 RenameProject.settings

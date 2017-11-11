@@ -3,9 +3,8 @@ package database.postgres.schema
 import java.time.OffsetDateTime
 import java.util.UUID
 
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
 import models.{BasicUserData, User}
-
 
 /**
   * The schemas are in separate traits, so that if your DAO would require to access (e.g. join) multiple tables,

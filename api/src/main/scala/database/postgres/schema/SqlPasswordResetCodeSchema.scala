@@ -1,9 +1,8 @@
 package database.postgres.schema
 
+import com.flowy.marketmaker.common.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
-
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import models.PasswordResetCode
 
 trait SqlPasswordResetCodeSchema { this: SqlUserSchema =>

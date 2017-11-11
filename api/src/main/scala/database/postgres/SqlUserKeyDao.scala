@@ -2,8 +2,8 @@ package database.postgres
 
 import java.util.UUID
 
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.FutureHelpers._
 import database.dao.UserKeyDao
 import database.postgres.schema.SqlUserKeySchema
 import models.UserKey

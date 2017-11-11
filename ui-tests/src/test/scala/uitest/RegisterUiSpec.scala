@@ -1,6 +1,6 @@
 package uitest
 
-import com.softwaremill.bootzooka.common.Utils
+import com.flowy.marketmaker.common.Utils
 import org.scalatest.BeforeAndAfterEach
 import uitest.pages.RegistrationPage
 

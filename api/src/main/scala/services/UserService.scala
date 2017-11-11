@@ -2,7 +2,7 @@ package services
 
 import java.util.UUID
 
-import com.softwaremill.bootzooka.common.Utils
+import com.flowy.marketmaker.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
 import database.dao.UserDao

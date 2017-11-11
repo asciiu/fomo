@@ -8,13 +8,13 @@ import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.server.Directives._
 import akka.util.Timeout
 import com.flow.bittrex.api.Bittrex.MarketResult
-import com.flow.marketmaker.database.TheEverythingBagelDao
-import com.flow.marketmaker.models.{Trade, TradeRequest}
+import com.flowy.marketmaker.database.TheEverythingBagelDao
+import com.flowy.marketmaker.models.{Trade, TradeRequest}
 import com.flow.marketmaker.services.MarketService.PostTrade
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.{Encoder, Json}
+import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
 

@@ -1,7 +1,7 @@
 package database.postgres
 
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.FutureHelpers._
 import database.dao.RememberMeTokenDao
 import database.postgres.schema.SqlRememberMeSchema
 import models.RememberMeToken

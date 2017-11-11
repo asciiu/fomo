@@ -1,6 +1,6 @@
 package com.softwaremill.bootzooka.passwordreset.application
 
-import com.softwaremill.bootzooka.common.ConfigWithDefault
+import com.flowy.marketmaker.common.ConfigWithDefault
 import com.typesafe.config.Config
 
 trait PasswordResetConfig extends ConfigWithDefault {

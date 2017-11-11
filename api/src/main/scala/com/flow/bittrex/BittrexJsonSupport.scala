@@ -4,7 +4,7 @@ import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import com.flow.marketmaker.models.MarketStructures.MarketUpdate
+import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, JsonFormat}
 import spray.json._
 

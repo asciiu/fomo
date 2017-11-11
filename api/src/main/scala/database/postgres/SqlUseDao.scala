@@ -1,7 +1,7 @@
 package database.postgres
 
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.FutureHelpers._
+import com.flowy.marketmaker.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.user._
 import database.dao.UserDao
 import database.postgres.schema.SqlUserSchema

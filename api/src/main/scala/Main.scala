@@ -1,15 +1,21 @@
 package com.softwaremill.bootzooka
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem}
 import akka.event.{Logging, LoggingAdapter}
 import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import services.HttpService
+
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 object Main extends App with StrictLogging {
-  implicit val actorSystem = ActorSystem("main")
+  val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port = 2553 ").
+    withFallback(ConfigFactory.parseString("akka.cluster.roles = [api]")).
+    withFallback(ConfigFactory.load())
+
+  implicit val actorSystem = ActorSystem("ClusterSystem", config)
   implicit val executor: ExecutionContext = actorSystem.dispatcher
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()

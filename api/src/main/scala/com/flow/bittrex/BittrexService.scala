@@ -7,11 +7,13 @@ import akka.stream.ActorMaterializer
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
 import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
-import com.flow.marketmaker.models.MarketStructures.MarketUpdate
 import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.PostTrade
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
+import com.flowy.marketmaker.models.TrailingStopLossRegistration
+import com.flowy.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import redis.RedisClient
 
 import scala.concurrent.ExecutionContext
@@ -50,6 +52,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
   // map of marketName (BTC-ANT) to actor ref for MarketService
   val marketServices = scala.collection.mutable.Map[String, ActorRef]()
 
+  var backends = IndexedSeq.empty[ActorRef]
 
   override def preStart = {
     bittrexClient.publicGetMarkets().map { response: MarketResponse =>
@@ -117,6 +120,11 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
       }
 
 
+    case TrailingStopLossRegistration if !backends.contains(sender()) =>
+      println("registering with trailing stop loss")
+      context watch sender()
+      backends = backends :+ sender()
+
     /*********************************************************************
       * ship market update to correct market actor
       ********************************************************************/
@@ -137,5 +145,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
       //forward message to market service actor
       marketServices(marketName) ! update
+
+      backends.foreach(b => b ! update)
   }
 }

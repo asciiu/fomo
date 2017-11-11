@@ -1,13 +1,11 @@
 package database.postgres
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
-import com.softwaremill.bootzooka.common.FutureHelpers._
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.FutureHelpers._
 import database.dao.PasswordResetCodeDao
 import database.postgres.schema.{SqlPasswordResetCodeSchema, SqlUserSchema}
 import models.{PasswordResetCode, User}
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 

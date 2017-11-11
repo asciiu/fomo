@@ -6,12 +6,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.flow.bittrex.{BittrexService, BittrexSignalrActor}
-import com.flow.marketmaker.MarketEventBus
-import com.flow.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flow.bittrex.{BittrexService}
+import com.flowy.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.softwaremill.bootzooka.Main.actorSystem
 import com.softwaremill.bootzooka.ServerConfig
-import com.softwaremill.bootzooka.common.sql.{DatabaseConfig, SqlDatabase}
+import com.flowy.marketmaker.common.sql.{DatabaseConfig, SqlDatabase}
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailConfig, EmailTemplatingEngine, SmtpEmailService}
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.user.application._

@@ -4,7 +4,7 @@ import java.util.UUID
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
-import com.softwaremill.bootzooka.common.Utils
+import com.flowy.marketmaker.common.Utils
 import com.softwaremill.bootzooka.user._
 
 case class User(

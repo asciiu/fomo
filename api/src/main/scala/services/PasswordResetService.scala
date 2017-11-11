@@ -2,7 +2,7 @@ package services
 
 import java.time.Instant
 
-import com.softwaremill.bootzooka.common.Utils
+import com.flowy.marketmaker.common.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.email.domain.EmailContentWithSubject
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
