@@ -20,7 +20,7 @@ import io.circe.syntax._
 
 import scala.concurrent.duration._
 
-trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
+trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def bittrexService: ActorRef
   def bagel: TheEverythingBagelDao
@@ -30,7 +30,7 @@ trait MarketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   // TODO
   // when a trade does not execute successfully you need an error log to tell you why
-  val tradesRoutes = logRequestResult("TradeRoutes") {
+  val tradeRoutes = logRequestResult("TradeRoutes") {
     pathPrefix("trade") {
       directory ~
       getTrade ~

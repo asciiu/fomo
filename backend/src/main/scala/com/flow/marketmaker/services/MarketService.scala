@@ -25,7 +25,6 @@ object MarketService {
 
 
 /**
-  * TODO need to rename this to the SimpleCondtionalService
   * note: This service shall be started when the system starts
   * currently it is started when an update in the supervisor gets a market update
   * @param marketName

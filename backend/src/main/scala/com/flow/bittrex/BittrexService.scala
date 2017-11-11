@@ -98,17 +98,8 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
       (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
         case (Some(mResult), Some(actor)) =>
-          // gen uuids for all buy conditions
-          //val bconditions = request.buyConditions.copy(conditions =
-          //  request.buyConditions.conditions.map( c => c.copy(id = Some(UUID.randomUUID()))))
-
-          //// gen uuids for all sell conditions
-          //val sconditions = request.sellConditions match {
-          //  case Some(condArray) =>
-          //    Some(condArray.copy(conditions =
-          //      condArray.conditions.map( c => c.copy(id = Some(UUID.randomUUID())))))
-          //  case None => None
-          //}
+          // we must match on Some(mResult), Some(actor) to ensure we have the correct
+          // resources for the marketservice
 
           val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.BaseCurrency),
             baseCurrencyName = Some(mResult.BaseCurrencyLong),
@@ -116,6 +107,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
             marketCurrencyName = Some(mResult.MarketCurrencyLong)
           )
 
+          // send the request with completed names to the market service
           val newTrade = PostTrade(user, newRequest, Some(sender()))
           actor ! newTrade
 
