@@ -10,8 +10,7 @@ import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.PostTrade
 import com.flowy.marketmaker.common.sql.SqlDatabase
-import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
-import com.flowy.marketmaker.models.TrailingStopLossRegistration
+import com.flowy.marketmaker.models.{BittrexWebsocketClientRegistration, TrailingStopLossRegistration}
 import com.flowy.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import redis.RedisClient
@@ -40,9 +39,6 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
   // TODO this is probably bad practice we should only need one instance
   // of the bagel - maybe the marketupdatedao should be merged into the everythingbagel?
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
-  lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
-  val bittrexEventBus = new MarketEventBus("bittrex")
-  val bittrexFeed = system.actorOf(BittrexSignalrActor.props(bittrexEventBus, marketUpdateDao), name = "bittrex.websocket")
 
   val bittrexClient = new BittrexClient()
 
@@ -53,6 +49,7 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
   val marketServices = scala.collection.mutable.Map[String, ActorRef]()
 
   var backends = IndexedSeq.empty[ActorRef]
+  var bittrex = IndexedSeq.empty[ActorRef]
 
   override def preStart = {
     bittrexClient.publicGetMarkets().map { response: MarketResponse =>
@@ -63,14 +60,9 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
           log.warning("could not receive market list from bittrex")
       }
     }
-
-    log info "subscribed to bittrex socket updates"
-    bittrexEventBus.subscribe(self, "updates")
   }
 
-  override def postStop = {
-    bittrexEventBus.unsubscribe(self, "updates")
-  }
+  override def postStop = {}
 
   def receive = {
     /*********************************************************************
@@ -120,10 +112,23 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
       }
 
 
+    /*********************************************************************
+      * ship market update to correct market actor
+      ********************************************************************/
     case TrailingStopLossRegistration if !backends.contains(sender()) =>
       println("registering with trailing stop loss")
       context watch sender()
       backends = backends :+ sender()
+
+
+    /*********************************************************************
+      * Subscribe to the bittrex websocket feed
+      ********************************************************************/
+    case BittrexWebsocketClientRegistration if !bittrex.contains(sender()) =>
+      log info "subscribed to bittrex socket updates"
+      context watch sender()
+      bittrex = bittrex :+ sender()
+
 
     /*********************************************************************
       * ship market update to correct market actor

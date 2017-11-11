@@ -1,8 +1,7 @@
-package com.flow.bittrex
+package com.flowy.bittrex
 
 import microsoft.aspnet.signalr.client.{SignalRFuture, Action, ErrorCallback}
 import microsoft.aspnet.signalr.client.hubs.HubConnection
-
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
 

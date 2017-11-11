@@ -178,13 +178,22 @@ lazy val common = (project in file("common"))
   )
 
 
+lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "bittrex-websocket",
+    libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
+  )
+  .dependsOn(common)
+
+
 /****************************************************************
   * Trailing Stop loss
   ***************************************************************/
 lazy val trailingStopService: Project = (project in file("trailing-stop"))
   .settings(commonSettings: _*)
   .settings(
-    name := "trailingStopService",
+    name := "trailing-stop",
     libraryDependencies ++= akkaClusterStack
   )
   .dependsOn(common)
