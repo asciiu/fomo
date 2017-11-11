@@ -13,7 +13,7 @@ val scalaLoggingVersion = "3.5.0"
 val slickVersion        = "3.2.1"
 val seleniumVersion     = "2.53.0"
 val circeVersion        = "0.8.0"
-val akkaVersion         = "2.5.3"
+val akkaVersion         = "2.5.6"
 val akkaHttpVersion     = "10.0.10"
 
 val slf4jApi       = "org.slf4j" % "slf4j-api" % slf4jVersion
@@ -52,6 +52,8 @@ val seleniumJava    = "org.seleniumhq.selenium" % "selenium-java" % seleniumVers
 val seleniumFirefox = "org.seleniumhq.selenium" % "selenium-firefox-driver" % seleniumVersion % "test"
 val seleniumStack   = Seq(seleniumJava, seleniumFirefox)
 
+
+val akkaClustering       = "com.typesafe.akka" %% "akka-cluster" % akkaVersion
 val akkaHttpCore         = "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
 val akkaHttpExperimental = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val akkaHttpTestkit      = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
@@ -64,9 +66,10 @@ val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaH
 // scalatrex
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
 
-// javascript interface
+// string condition interpreters
 val scalaCompiler        = "org.scala-lang" % "scala-compiler" % "2.12.3"
 val scalaReflect         = "org.scala-lang" % "scala-reflect" % "2.12.3"
+
 
 
 val commonDependencies = unitTestingStack ++ loggingStack
@@ -111,22 +114,16 @@ lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "fomo",
-    herokuFatJar in Compile := Some((assemblyOutputPath in backend in assembly).value),
-    deployHeroku in Compile := ((deployHeroku in Compile) dependsOn (assembly in backend)).value
+    herokuFatJar in Compile := Some((assemblyOutputPath in api in assembly).value),
+    deployHeroku in Compile := ((deployHeroku in Compile) dependsOn (assembly in api)).value
   )
-  .aggregate(backend, ui)
+  .aggregate(api, ui)
 
 
 /****************************************************************
-  * The backend project uses pillar and cassandra as the data store.
-  * Use the pillar plugin to migrate.
-  *
-  * createKeyspace
-  * dropKeyspace
-  * migrate
-  * cleanMigrate
+  API project
   ***************************************************************/
-lazy val backend: Project = (project in file("backend"))
+lazy val api: Project = (project in file("api"))
   .enablePlugins(BuildInfoPlugin)
   .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
@@ -169,7 +166,23 @@ lazy val uiTests = (project in file("ui-tests"))
     parallelExecution := false,
     libraryDependencies ++= seleniumStack,
     test in Test := (test in Test).dependsOn(npmTask.toTask(" run build")).value
-  ) dependsOn backend
+  ) dependsOn api
+
+
+/****************************************************************
+  Handles trailing stop losses
+  ***************************************************************/
+lazy val trailingStopService: Project = (project in file("trailing-stop"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "trailingStopService"
+  )
+
+lazy val common = (project in file("common"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "common"
+  )
 
 
 RenameProject.settings
