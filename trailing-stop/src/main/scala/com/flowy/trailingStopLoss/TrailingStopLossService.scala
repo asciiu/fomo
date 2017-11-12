@@ -6,12 +6,17 @@ import akka.cluster.ClusterEvent.CurrentClusterState
 import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.Member
 import akka.cluster.MemberStatus
+import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import com.flowy.marketmaker.models.{BittrexWebsocketClientRegistration, TrailingStopLossRegistration}
+
 import language.postfixOps
 import messages.{GetStopLosses, TrailingStop}
 
 class TrailingStopLossService extends Actor with ActorLogging{
+  import DistributedPubSubMediator.{ Subscribe, SubscribeAck }
+
   // todo add redis cache
   val cluster = Cluster(context.system)
 
@@ -19,10 +24,19 @@ class TrailingStopLossService extends Actor with ActorLogging{
 
   val stopSells = scala.collection.mutable.Map[String, StopLossCollection]()
 
+  val mediator = DistributedPubSub(context.system).mediator
+
   // subscribe to cluster changes, MemberUp
   // re-subscribe when restart
-  override def preStart(): Unit = cluster.subscribe(self, classOf[MemberUp])
-  override def postStop(): Unit = cluster.unsubscribe(self)
+  override def preStart(): Unit = {
+    mediator ! Subscribe("TrailingStop", self)
+    mediator ! Subscribe("MarketUpdate", self)
+  }
+
+  override def postStop(): Unit = {
+    mediator ! Unsubscribe("TrailingStop", self)
+    mediator ! Unsubscribe("MarketUpdate", self)
+  }
 
   def receive = {
     /**
@@ -53,32 +67,23 @@ class TrailingStopLossService extends Actor with ActorLogging{
           log.warning(s"market has not been received in updates yet ${stopSell}")
       }
 
-    /**
-      * Receive member up message from cluster
-      */
-    case MemberUp(m) =>
-      register(m)
+    case SubscribeAck(Subscribe("TrailingStop", None, `self`)) ⇒
+      log.info("subscribed to trailing stops")
 
-    case state: CurrentClusterState =>
-      state.members.filter(_.status == MemberStatus.Up) foreach register
+    case SubscribeAck(Subscribe("MarketUpdate", None, `self`)) ⇒
+      log.info("subscribed to market updates")
 
     /**
       * update state of service from market update
       */
     case update: MarketUpdate =>
+      println(update)
       val collection = stopSells.getOrElse(update.MarketName, new StopLossCollection(update.MarketName, update.Last))
 
       collection.updateStopLosses(update.Last)
       collection.triggeredStopLossesRemoved(update.Last).foreach { stop =>
         log.info(s"trigger stop sell $stop")
       }
-  }
-
-  private def register(member: Member): Unit = {
-    if (member.hasRole("api")) {
-      log.info("member is Up: {}", member.address)
-      context.actorSelection(RootActorPath(member.address) / "user" / "bittrex") ! TrailingStopLossRegistration
-    }
   }
 }
 

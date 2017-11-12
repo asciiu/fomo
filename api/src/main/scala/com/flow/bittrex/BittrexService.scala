@@ -2,6 +2,7 @@ package com.flow.bittrex
 
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.cluster.pubsub.DistributedPubSub
 import akka.stream.ActorMaterializer
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
@@ -49,6 +50,9 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
   var backends = IndexedSeq.empty[ActorRef]
   var bittrex = IndexedSeq.empty[ActorRef]
 
+  // activate the extension
+  val mediator = DistributedPubSub(context.system).mediator
+
   override def preStart = {
     bittrexClient.publicGetMarkets().map { response: MarketResponse =>
       response.result match {
@@ -88,7 +92,6 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
       * Post a trade to the market.
       ********************************************************************/
     case PostTrade(user, request, _) =>
-
       (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
         case (Some(mResult), Some(actor)) =>
           // we must match on Some(mResult), Some(actor) to ensure we have the correct
@@ -111,10 +114,9 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
 
     /*********************************************************************
-      * ship market update to correct market actor
+      * This is not needed anymore as I'm moving to pub sub
       ********************************************************************/
     case TrailingStopLossRegistration if !backends.contains(sender()) =>
-      println("registering with trailing stop loss")
       context watch sender()
       backends = backends :+ sender()
 

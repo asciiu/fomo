@@ -4,14 +4,18 @@ import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.flowy.marketmaker.database.TheEverythingBagelDao
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import com.flowy.marketmaker.models.{Trade, TradeRequest, TradeStatus}
+import com.flowy.trailingStopLoss.messages.TrailingStop
 import models.BasicUserData
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
 import redis.RedisClient
+
 import scala.tools.reflect.ToolBox
 
 
@@ -44,6 +48,9 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   val buyConditions = collection.mutable.ListBuffer[TradeBuyCondition]()
 
   val dynamic = currentMirror.mkToolBox()
+
+  val mediator = DistributedPubSub(context.system).mediator
+
 
   override def preStart() = {
     // load pending conditions from bagel
@@ -118,16 +125,14 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
   private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
 
+    //println("Publishing this")
+    //mediator ! Publish("TrailingStop", TrailingStop(user.id, request.marketName, 0.02, 0.0))
+
     bagel.insert(trade).map { result =>
       if (result > 0) {
         val conditions = trade.buyConditions
 
-        val sellConditions =
-        val trailingStop = trade.sellConditions
-
-
         buyConditions.append(TradeBuyCondition(trade.id, conditions))
-
 
         sender ! true
       } else {
