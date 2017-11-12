@@ -103,6 +103,9 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
           println(s"Last Price: ${lastPrice}")
           println(s"Execute buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
           bagel.updateTrade(updatedTrade)
+
+          // TODO now must examine the sell conditions
+
         }
       }
     }
@@ -118,7 +121,13 @@ class MarketService(val marketName: String, bagel: TheEverythingBagelDao, redis:
     bagel.insert(trade).map { result =>
       if (result > 0) {
         val conditions = trade.buyConditions
+
+        val sellConditions =
+        val trailingStop = trade.sellConditions
+
+
         buyConditions.append(TradeBuyCondition(trade.id, conditions))
+
 
         sender ! true
       } else {

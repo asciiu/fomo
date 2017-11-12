@@ -5,9 +5,9 @@ The Fear of Missing Out on something great! This shall be the new hotness for th
 
 ### Prerequisites
 
-*Postgres 10
-*sbt 0.13.16
-*scala 2.12
+* Postgres 10
+* sbt 0.13.16
+* scala 2.12
 
 ## Getting Started
 1. Start the bittrex-websocket:
@@ -27,6 +27,7 @@ reStart
 project trailingStopService
 reStart
 ```
+
 
 
 

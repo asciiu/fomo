@@ -1,17 +1,15 @@
 package com.flow.bittrex
 
-import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import com.flow.bittrex.api.Bittrex.{MarketResponse, MarketResult}
 import com.flow.bittrex.api.BittrexClient
-import com.flow.marketmaker.MarketEventBus
 import com.flow.marketmaker.services.MarketService
 import com.flow.marketmaker.services.MarketService.PostTrade
 import com.flowy.marketmaker.common.sql.SqlDatabase
 import com.flowy.marketmaker.models.{BittrexWebsocketClientRegistration, TrailingStopLossRegistration}
-import com.flowy.marketmaker.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flowy.marketmaker.database.postgres.SqlTheEverythingBagelDao
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import redis.RedisClient
 

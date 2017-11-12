@@ -167,7 +167,7 @@ lazy val api: Project = (project in file("api"))
     assemblyJarName in assembly := "fomo.jar",
     assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
   )
-  .dependsOn(common)
+  .dependsOn(common, trailingStopService)
 
 
 /****************************************************************
