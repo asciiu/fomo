@@ -1,15 +1,10 @@
 package com.flowy.trailingStopLoss
 
-import akka.actor.{Actor, ActorLogging, ActorRef, RootActorPath}
+import akka.actor.{Actor, ActorLogging}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.CurrentClusterState
-import akka.cluster.ClusterEvent.MemberUp
-import akka.cluster.Member
-import akka.cluster.MemberStatus
 import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
-import com.flowy.marketmaker.models.{BittrexWebsocketClientRegistration, TrailingStopLossRegistration}
 
 import language.postfixOps
 import messages.{GetStopLosses, TrailingStop}
@@ -19,8 +14,6 @@ class TrailingStopLossService extends Actor with ActorLogging{
 
   // todo add redis cache
   val cluster = Cluster(context.system)
-
-  var bittrex = IndexedSeq.empty[ActorRef]
 
   val stopSells = scala.collection.mutable.Map[String, StopLossCollection]()
 
@@ -39,14 +32,6 @@ class TrailingStopLossService extends Actor with ActorLogging{
   }
 
   def receive = {
-    /**
-      * Register with bittrex web socket to receive updates
-      */
-    case BittrexWebsocketClientRegistration if !bittrex.contains(sender()) =>
-      log.info("registering with bittrex websocket client")
-      context watch sender()
-      bittrex = bittrex :+ sender()
-
     case GetStopLosses(userId, marketName) =>
       stopSells.get(marketName) match {
         case Some(collection) =>
