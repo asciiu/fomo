@@ -133,7 +133,7 @@ lazy val rootProject = (project in file("."))
 
 
 /****************************************************************
-  API project
+  * this is the api
   ***************************************************************/
 lazy val api: Project = (project in file("api"))
   .enablePlugins(BuildInfoPlugin)
@@ -170,6 +170,9 @@ lazy val api: Project = (project in file("api"))
   .dependsOn(common)
 
 
+/****************************************************************
+  * all common code shared amongst the projects go here
+  ***************************************************************/
 lazy val common = (project in file("common"))
   .settings(commonSettings: _*)
   .settings(
@@ -178,6 +181,9 @@ lazy val common = (project in file("common"))
   )
 
 
+/****************************************************************
+  * this is the bittrex signalr client
+  ***************************************************************/
 lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket"))
   .settings(commonSettings: _*)
   .settings(
@@ -188,7 +194,7 @@ lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket")
 
 
 /****************************************************************
-  * Trailing Stop loss
+  * trailing stop
   ***************************************************************/
 lazy val trailingStopService: Project = (project in file("trailing-stop"))
   .settings(commonSettings: _*)

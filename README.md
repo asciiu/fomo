@@ -6,13 +6,31 @@ following tech:
 * akka-http
 * slick
 * flyway
-* scala 2.12
 
+### Prerequisites
 
+Postgres 10
+sbt 0.13.16
+scala 2.12
 
+## Getting Started
+1. Start the bittrex-websocket:
+```
+project bittrex
+reStart
+```
 
+2. Start the api
+```
+project api
+reStart
+```
 
-
+3. Start the trail-stop
+```
+project trailingStopService
+reStart
+```
 
 
 

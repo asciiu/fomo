@@ -1,5 +1,7 @@
 package com.flowy.trailingStopLoss
 
+import java.util.UUID
+
 import language.postfixOps
 import akka.actor.{Actor, ActorLogging, ActorRef, RootActorPath}
 import akka.cluster.Cluster
@@ -16,6 +18,8 @@ class TrailingStopLossService extends Actor with ActorLogging{
   val cluster = Cluster(context.system)
 
   var bittrex = IndexedSeq.empty[ActorRef]
+
+  case class MarketStopSell(userId: UUID, marketName: String, lastPrice: Double, margin: Double)
 
   // subscribe to cluster changes, MemberUp
   // re-subscribe when restart
