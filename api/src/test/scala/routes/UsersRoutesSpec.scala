@@ -4,7 +4,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
-import models.UserKey
+import com.flowy.fomoApi.models.UserKey
+import com.flowy.fomoApi.routes.UsersRoutes
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 

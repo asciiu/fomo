@@ -3,7 +3,8 @@ package services
 import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
-import models.User
+import com.flowy.fomoApi.models.User
+import com.flowy.fomoApi.services.UserRegisterResult
 import org.scalatest.Matchers
 
 import scala.concurrent.Await

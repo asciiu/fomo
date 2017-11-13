@@ -31,7 +31,7 @@ val circe        = Seq(circeCore, circeGeneric, circeJawn, circeParse)
 
 val javaxMailSun = "com.sun.mail" % "javax.mail" % "1.5.5"
 
-// database
+// com.flowy.fomoApi.database
 val slick       = "com.typesafe.slick" %% "slick" % slickVersion
 val slickHikari = "com.typesafe.slick" %% "slick-hikaricp" % slickVersion
 val slickpg     = "com.github.tminglei" %% "slick-pg" % "0.15.4"
@@ -157,7 +157,7 @@ lazy val api: Project = (project in file("api"))
 
       compilationResult
     },
-    mainClass in Compile := Some("com.softwaremill.bootzooka.Main"),
+    mainClass in Compile := Some("com.flowy.fomoApi.Main"),
     // We need to include the whole webapp, hence replacing the resource directory
     unmanagedResourceDirectories in Compile := {
       (unmanagedResourceDirectories in Compile).value ++ List(
@@ -167,7 +167,7 @@ lazy val api: Project = (project in file("api"))
     assemblyJarName in assembly := "fomo.jar",
     assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
   )
-  .dependsOn(common, trailingStopService)
+  .dependsOn(common, trailingStopService, bittrexExchangeService)
 
 
 /****************************************************************
@@ -177,8 +177,17 @@ lazy val common = (project in file("common"))
   .settings(commonSettings: _*)
   .settings(
     name := "common",
-    libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ Seq(scalaCompiler, redisScala)
+    libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ Seq(scalaCompiler, sprayJson, redisScala, ws)
   )
+
+
+lazy val bittrexExchangeService: Project = (project in file("bittrex-exchange"))
+  .settings(commonSettings: _*)
+  .settings(
+    name := "bittrex-exchange",
+    libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
+  )
+  .dependsOn(common, trailingStopService)
 
 
 /****************************************************************

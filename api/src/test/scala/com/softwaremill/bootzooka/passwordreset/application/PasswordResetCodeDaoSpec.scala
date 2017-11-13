@@ -1,8 +1,8 @@
 package com.softwaremill.bootzooka.passwordreset.application
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
-import database.postgres.SqlPasswordResetCodeDao
-import models.PasswordResetCode
+import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
+import com.flowy.fomoApi.models.PasswordResetCode
 
 class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
   behavior of "PasswordResetCodeDao"

@@ -42,7 +42,7 @@ object SqlDatabase extends StrictLogging {
   def embeddedConnectionStringFromConfig(config: DatabaseConfig): String = {
     val url      = config.dbH2Url
     val fullPath = url.split(":")(3)
-    logger.info(s"Using an embedded database, with data files located at: $fullPath")
+    logger.info(s"Using an embedded com.flowy.fomoApi.database, with data files located at: $fullPath")
     url
   }
 

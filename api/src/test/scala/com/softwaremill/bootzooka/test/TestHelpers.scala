@@ -2,7 +2,7 @@ package com.softwaremill.bootzooka.test
 
 import java.time.{OffsetDateTime, ZoneOffset}
 
-import models.User
+import com.flowy.fomoApi.models.User
 
 trait TestHelpers {
 

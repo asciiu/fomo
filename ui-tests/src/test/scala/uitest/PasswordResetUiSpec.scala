@@ -1,6 +1,6 @@
 package uitest
 
-import models.PasswordResetCode
+import com.flowy.fomoApi.models.PasswordResetCode
 
 class PasswordResetUiSpec extends BaseUiSpec {
 
