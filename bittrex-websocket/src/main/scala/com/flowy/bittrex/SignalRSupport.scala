@@ -1,7 +1,8 @@
 package com.flowy.bittrex
 
-import microsoft.aspnet.signalr.client.{SignalRFuture, Action, ErrorCallback}
+import microsoft.aspnet.signalr.client.{Action, ErrorCallback, SignalRFuture}
 import microsoft.aspnet.signalr.client.hubs.HubConnection
+
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
 
@@ -39,6 +40,17 @@ trait SignalRSupport {
     if (configurator != null)
       configurator(connection)
 
+    // TODO this needs to be implemented for cloudfare
+    // this did not work
+    // https://github.com/n0mad01/node.bittrex.api/issues/67
+    //val credentials = new Credentials() {
+    //  override def prepareRequest(request: Request) {
+    //    request.addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
+    //    request.addHeader("cookie", "cf_clearance=cc41caa57b8bd1250223890897b0a67823ad2efa-1510527079-10800")
+    //  }
+    //}
+    //connection.setCredentials(credentials)
+
     connection.start().toNativeFuture
   }
 
@@ -54,7 +66,7 @@ trait SignalRSupport {
    * @param error The error.
    */
   protected def onSignalRError(error: Throwable): Unit = {
-    if (error != null) println(s"connection.onError: $error")
+    if (error != null) println(s"connection.onError: ${error}")
     else println("SignalR error handler: error was null!")
   }
 

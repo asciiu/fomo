@@ -3,7 +3,6 @@ package com.flowy.bittrex
 import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.MemberUp
 import akka.cluster.pubsub.DistributedPubSub
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives
@@ -70,17 +69,18 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
       flow)
 
   override def preStart() = {
-    // TODO this is broken
-    connectSignalR { connection =>
-      val broadcastHub = connection.createHubProxy("corehub")
-      val subscription = broadcastHub.subscribe("updateSummaryState")
-
+    // TODO this is broken because of cloudfare
+    // reference https://github.com/n0mad01/node.bittrex.api/issues/67
+//    connectSignalR { connection =>
+//      val broadcastHub = connection.createHubProxy("CoreHub")
+//      val subscription = broadcastHub.subscribe("updateSummaryState")
+//
 //      subscription.addReceivedHandler(new Action[Array[JsonElement]]() {
 //        override def run(obj: Array[JsonElement]): Unit = {
 //          publishSummary(obj(0).toString)
 //        }
 //      })
-    }
+//    }
 
     log.info("started bittrex websocket")
   }
