@@ -6,6 +6,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import com.flowy.bittrexExchange.messages.TrailingStop
 import com.flowy.marketmaker.database.TheEverythingBagelDao
 import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
 import com.flowy.marketmaker.models.{BasicUserData, Trade, TradeRequest, TradeStatus}
@@ -75,20 +76,11 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       updateTrade(user, request, sender)
   }
 
-  /**
-    * Updates the internal state of this service.
-    * @param update
-    * @return
-    */
-  private def updateState(update: MarketUpdate) = {
-    val lastPrice = update.Last
 
-    val conditionsThatPass = buyConditions.filter { cond =>
-      val condition = cond.conditionEx.replace("price", lastPrice.toString)
-      dynamic.eval(dynamic.parse(s"$condition")) == true
-    }
+  private def executeTrades(lastPrice: Double, conditions: List[TradeBuyCondition]) = {
+    val sellConditions = scala.collection.mutable.Seq[TradeBuyCondition]()
 
-    conditionsThatPass.foreach { condish =>
+    conditions.foreach { condish =>
       val tradeId = condish.tradeId
 
       bagel.findTradeById(tradeId).map { t =>
@@ -104,26 +96,55 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
             status = TradeStatus.Bought
           )
 
-          println(s"Last Price: ${lastPrice}")
-          println(s"Execute buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
+          log.info(s"buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
           bagel.updateTrade(updatedTrade)
 
-          // TODO now must examine the sell conditions
+          // TODO this needs refinement
+          if (trade.sellConditions.isDefined) {
+            val sellConditions = trade.sellConditions.get
+            val conditions = sellConditions.split(" or ")
 
+            conditions.foreach{ c =>
+              if (c.contains("TrailingStop")) {
+                val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+                c match {
+                  case extractParams(percent, refPrice) =>
+                    val trailStop = TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble)
+                    mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble))
+                    log.info(s"sending trailing stop $trailStop")
+                  case _ =>
+                  // do nothing
+                }
+              }
+            }
+          }
         }
       }
     }
+  }
+
+  /**
+    * Updates the internal state of this service.
+    * @param update
+    * @return
+    */
+  private def updateState(update: MarketUpdate) = {
+    val lastPrice = update.Last
+
+    // get all buy conditions that pass
+    val conditionsThatPass = buyConditions.filter { cond =>
+      val condition = cond.conditionEx.replace("price", lastPrice.toString)
+      dynamic.eval(dynamic.parse(s"$condition")) == true
+    }
+
+    executeTrades(lastPrice, conditionsThatPass.toList)
 
     // remove the conditions that have passed
     buyConditions --= conditionsThatPass
   }
 
-
   private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
-
-    //println("Publishing this")
-    //mediator ! Publish("TrailingStop", TrailingStop(user.id, request.marketName, 0.02, 0.0))
 
     bagel.insert(trade).map { result =>
       if (result > 0) {

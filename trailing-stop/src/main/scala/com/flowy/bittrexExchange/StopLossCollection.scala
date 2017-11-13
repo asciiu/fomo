@@ -11,7 +11,11 @@ class StopLossCollection(marketName: String, lprice: Double) {
   def last = lastPrice
 
   def addStopLoss(stop: TrailingStop) = {
-    collection += stop
+    if (stop.refPrice <= 0.0) {
+      collection += stop.copy(refPrice = lastPrice)
+    } else {
+      collection += stop
+    }
   }
 
   def getStopLosses(userId: UUID): Seq[TrailingStop] = {

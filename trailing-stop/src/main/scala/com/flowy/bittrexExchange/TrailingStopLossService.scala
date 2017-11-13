@@ -62,12 +62,15 @@ class TrailingStopLossService extends Actor with ActorLogging{
       * update state of service from market update
       */
     case update: MarketUpdate =>
-      println(update)
-      val collection = stopSells.getOrElse(update.MarketName, new StopLossCollection(update.MarketName, update.Last))
-
-      collection.updateStopLosses(update.Last)
-      collection.triggeredStopLossesRemoved(update.Last).foreach { stop =>
-        log.info(s"trigger stop sell $stop")
+      stopSells.get(update.MarketName) match {
+        case Some(collection) =>
+          collection.updateStopLosses(update.Last)
+          collection.triggeredStopLossesRemoved(update.Last).foreach { stop =>
+            log.info(s"trigger stop sell $stop")
+          }
+        case None =>
+          val collection = new StopLossCollection(update.MarketName, update.Last)
+          stopSells += (update.MarketName -> collection)
       }
   }
 }
