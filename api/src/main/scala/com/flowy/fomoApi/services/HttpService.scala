@@ -18,6 +18,7 @@ import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import com.flowy.fomoApi.database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao, SqlUserKeyDao}
+import com.flowy.marketmaker.api.BittrexClient
 import redis.RedisClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,6 +42,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val userKeyDao = new SqlUserKeyDao(sqlDatabase)
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
+  lazy val bittrexClient = new BittrexClient()
 
   lazy val emailService = if (config.emailEnabled) {
     new SmtpEmailService(config)(serviceExecutionContext)

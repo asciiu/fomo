@@ -17,13 +17,14 @@ trait SqlUserKeySchema {
     // format: OFF
     def id              = column[UUID]("id", O.PrimaryKey)
     def userId          = column[UUID]("user_id")
+    def exchange        = column[String]("exchange")
     def key             = column[String]("api_key")
     def secret          = column[String]("secret")
     def description     = column[String]("description")
     def createdOn       = column[OffsetDateTime]("created_on")
     def updatedOn       = column[OffsetDateTime]("updated_on")
 
-    def * = (id, userId, key, secret, description, createdOn, updatedOn) <>
+    def * = (id, userId, exchange, key, secret, description, createdOn, updatedOn) <>
       ((UserKey.apply _).tupled, UserKey.unapply)
 
     // format: ON

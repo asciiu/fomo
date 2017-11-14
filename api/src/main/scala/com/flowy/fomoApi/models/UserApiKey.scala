@@ -5,6 +5,7 @@ import java.util.UUID
 
 case class UserKey (id: UUID,
                     userId: UUID,
+                    exchange: String,
                     key: String,
                     secret: String,
                     description: String,
@@ -14,11 +15,13 @@ case class UserKey (id: UUID,
 
 object UserKey  {
   def withRandomUUID(userId: UUID,
+                     exchange: String,
                      key: String,
                      secret: String,
                      description: String) =
     UserKey(UUID.randomUUID(),
       userId,
+      exchange,
       key,
       secret,
       description,

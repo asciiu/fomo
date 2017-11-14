@@ -131,6 +131,8 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           entity(as[Trade]) { trade =>
             implicit val timeout = Timeout(1.second)
 
+            // TODO update the active trade orders in the system
+
             onSuccess( bagel.updateTrade(trade).mapTo[Boolean] ) {
               case true =>
                 completeOk
@@ -141,6 +143,5 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         }
       }
     }
-
   }
 }

@@ -5,8 +5,11 @@ import javax.ws.rs.{GET, POST, Path}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
+import com.flowy.fomoApi.models.UserKey
 import com.flowy.fomoApi.services.{UserKeyService, UserRegisterResult, UserService}
 import com.flowy.fomoApi.services.{UserRegisterResult, UserService}
+import com.flowy.marketmaker.api.Bittrex.BalancesResponse
+import com.flowy.marketmaker.api.{Auth, BittrexClient}
 import com.flowy.marketmaker.common.Utils
 import com.flowy.marketmaker.models.BasicUserData
 import com.softwaremill.bootzooka.common.api.RoutesSupport
@@ -29,18 +32,20 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def userService: UserService
   def userKeyService: UserKeyService
+  def bittrexClient: BittrexClient
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
       addApiKey ~
-        basicUserInfo ~
-        changePassword ~
-        changeuUserEmail ~
-        loginUser ~
-        logoutUser ~
-        registerUser
+      balances ~
+      basicUserInfo ~
+      changePassword ~
+      changeuUserEmail ~
+      loginUser ~
+      logoutUser ~
+      registerUser
     }
   }
 
@@ -154,16 +159,41 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       post {
         userFromSession{ user =>
           entity(as[ApiKey]) { key =>
-            onSuccess(userKeyService.addUserKey(user.id, key.key, key.secret, key.description)) {
+            onSuccess(userKeyService.addUserKey(user.id, key.exchange, key.key, key.secret, key.description)) {
               case Left(msg) =>
                 complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
               case Right(_)  =>
                 completeOk
+            }
           }
         }
       }
     }
-  }
+
+  def balances =
+    path("balances") {
+      get {
+        parameters('exchange) { exchangeName =>
+          userFromSession { user =>
+            onSuccess(userKeyService.getUserKeys(user.id, exchangeName)) {
+              case userKeys: Seq[UserKey] if userKeys.length > 0 =>
+                // TODO what should the behavior be in case there are multiple keys
+                // let's just assume there will be a single key for now
+                val default = userKeys.head
+                val auth = Auth(default.key, default.secret)
+                onSuccess(bittrexClient.accountGetBalances(auth)){
+                  case balResponse: BalancesResponse =>
+                    complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", balResponse.asJson))
+                  case _ =>
+                    complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+                }
+              case _ =>
+                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+            }
+          }
+        }
+      }
+    }
 
   def changeuUserEmail =
     path("changeemail") {
@@ -204,7 +234,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 }
 
 
-case class ApiKey(key: String, secret: String, description: String)
+case class ApiKey(exchange: String, key: String, secret: String, description: String)
 case class RegistrationInput(first: String, last: String, email: String, password: String) {
   def firstEscaped = Utils.escapeHtml(first)
   def lastEscaped = Utils.escapeHtml(last)
