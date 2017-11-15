@@ -1,0 +1,3 @@
+stage("test") {
+  echo "works!"
+}
