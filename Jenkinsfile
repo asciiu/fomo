@@ -9,9 +9,9 @@ node {
       git branch: 'master', url: 'https://github.com/asciiu/fomo.git'
     }
 
-    stage('Compile'){
+    stage('Building'){
       ansiColor('xterm') {
-        sh "${sbtHome}/bin/sbt assembly"
+        sh "${sbtHome}/bin/sbt 'project bittrexWebsocketClient' assembly"
       }
     }
   } catch (e) {
