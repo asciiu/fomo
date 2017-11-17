@@ -9,3 +9,5 @@ addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 addSbtPlugin("com.lucidchart" % "sbt-scalafmt" % "1.14")
 
 addSbtPlugin("com.heroku" % "sbt-heroku" % "2.0.0")
+
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")

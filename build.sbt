@@ -96,7 +96,7 @@ lazy val updateNpm = taskKey[Unit]("Update npm")
 lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
 
 lazy val commonSettings = Seq(
-  organization := "com.softwaremill",
+  organization := "com.flowy",
   version := "0.0.1-SNAPSHOT",
   scalaVersion := scalaVer,
   crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
@@ -142,7 +142,7 @@ lazy val api: Project = (project in file("api"))
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
-    herokuAppName in Compile := "infinite-garden-24119",
+    assemblyJarName in assembly := "api.jar",
     libraryDependencies ++= slickStack ++ akkaStack ++ akkaClusterStack ++ circe ++
       Seq(javaxMailSun, typesafeConfig, scalaCompiler, scalaReflect, swagger, sprayJson, ws, redisScala),
     buildInfoPackage := "com.softwaremill.bootzooka.version",
@@ -164,9 +164,7 @@ lazy val api: Project = (project in file("api"))
       (unmanagedResourceDirectories in Compile).value ++ List(
         baseDirectory.value.getParentFile / ui.base.getName / "dist"
       )
-    },
-    assemblyJarName in assembly := "fomo.jar",
-    assembly := assembly.dependsOn(npmTask.toTask(" run build")).value
+    }
   )
   .dependsOn(common, trailingStopService, bittrexExchangeService)
 
@@ -177,6 +175,7 @@ lazy val api: Project = (project in file("api"))
 lazy val common = (project in file("common"))
   .settings(commonSettings: _*)
   .settings(
+    assemblyJarName in assembly := "common.jar",
     name := "common",
     libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ Seq(scalaCompiler, sprayJson, redisScala, ws)
   )
@@ -185,6 +184,7 @@ lazy val common = (project in file("common"))
 lazy val bittrexExchangeService: Project = (project in file("bittrex-exchange"))
   .settings(commonSettings: _*)
   .settings(
+    assemblyJarName in assembly := "bittrexExchangeService.jar",
     name := "bittrex-exchange",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
@@ -197,6 +197,7 @@ lazy val bittrexExchangeService: Project = (project in file("bittrex-exchange"))
 lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket"))
   .settings(commonSettings: _*)
   .settings(
+    assemblyJarName in assembly := "bittrexWebsocketClient.jar",
     name := "bittrex-websocket",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
@@ -209,6 +210,7 @@ lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket")
 lazy val trailingStopService: Project = (project in file("trailing-stop"))
   .settings(commonSettings: _*)
   .settings(
+    assemblyJarName in assembly := "trailingStopService.jar",
     name := "trailing-stop",
     libraryDependencies ++= akkaClusterStack
   )
