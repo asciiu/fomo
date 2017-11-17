@@ -11,7 +11,7 @@ node {
 
     stage('Building'){
       ansiColor('xterm') {
-        sh "${sbtHome}/bin/sbt 'project bittrexWebsocketClient' assembly"
+        sh "${sbtHome}/bin/sbt project assembly"
       }
     }
   } catch (e) {
