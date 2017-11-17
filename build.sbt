@@ -8,6 +8,7 @@ import scala.util.Try
 import scala.sys.process.Process
 import complete.DefaultParsers._
 
+val scalaVer            = "2.12.4"
 val slf4jVersion        = "1.7.21"
 val logBackVersion      = "1.1.7"
 val scalaLoggingVersion = "3.5.0"
@@ -80,8 +81,8 @@ val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaCluster
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
 
 // string condition interpreters
-val scalaCompiler        = "org.scala-lang" % "scala-compiler" % "2.12.3"
-val scalaReflect         = "org.scala-lang" % "scala-reflect" % "2.12.3"
+val scalaCompiler        = "org.scala-lang" % "scala-compiler" % scalaVer
+val scalaReflect         = "org.scala-lang" % "scala-reflect" % scalaVer
 
 
 
@@ -97,7 +98,7 @@ lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
 lazy val commonSettings = Seq(
   organization := "com.softwaremill",
   version := "0.0.1-SNAPSHOT",
-  scalaVersion := "2.12.4",
+  scalaVersion := scalaVer,
   crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
