@@ -1,10 +1,11 @@
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import sbt.{file, _}
-import Keys.{libraryDependencies, _}
+import sbt._
+import Keys._
 
 import scala.util.Try
+import scala.sys.process.Process
 import complete.DefaultParsers._
 
 val slf4jVersion        = "1.7.21"
@@ -96,7 +97,7 @@ lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
 lazy val commonSettings = Seq(
   organization := "com.softwaremill",
   version := "0.0.1-SNAPSHOT",
-  scalaVersion := "2.12.3",
+  scalaVersion := "2.12.4",
   crossScalaVersions := Seq(scalaVersion.value, "2.11.8"),
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
@@ -137,7 +138,6 @@ lazy val rootProject = (project in file("."))
   ***************************************************************/
 lazy val api: Project = (project in file("api"))
   .enablePlugins(BuildInfoPlugin)
-  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
   .settings(Revolver.settings)
   .settings(
