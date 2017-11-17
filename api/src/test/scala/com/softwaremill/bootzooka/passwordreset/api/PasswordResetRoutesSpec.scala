@@ -7,9 +7,10 @@ import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
 import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
-import com.flowy.fomoApi.models.{PasswordResetCode, User}
+import com.flowy.fomoApi.models.PasswordResetCode
 import com.flowy.fomoApi.routes.PasswordResetRoutes
 import com.flowy.fomoApi.services.PasswordResetService
+import com.flowy.marketmaker.models.User
 
 class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>
 

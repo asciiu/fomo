@@ -1,7 +1,7 @@
 package com.softwaremill.bootzooka.user
 
 import com.flowy.marketmaker.common.Utils
-import com.flowy.fomoApi.models.User
+import com.flowy.marketmaker.models.User
 
 // Run this locally to determine the desired number of iterations in PBKDF2
 object EncryptPasswordBenchmark extends App {

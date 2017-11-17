@@ -1,6 +1,6 @@
 package com.softwaremill.bootzooka.user.domain
 
-import com.flowy.fomoApi.models.User
+import com.flowy.marketmaker.models.User
 import org.scalatest.{FlatSpec, Matchers}
 
 class UserSpec extends FlatSpec with Matchers {

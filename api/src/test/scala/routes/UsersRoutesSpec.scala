@@ -6,6 +6,7 @@ import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.flowy.fomoApi.models.UserKey
 import com.flowy.fomoApi.routes.UsersRoutes
+import com.flowy.marketmaker.api.BittrexClient
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -15,6 +16,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
   val routes = Route.seal(new UsersRoutes with TestRoutesSupport {
     override val userService = spec.userService
     override val userKeyService = spec.userKeyService
+    override val bittrexClient = new BittrexClient()
   }.usersRoutes)
 
   "POST /register" should "register new user" in {
@@ -142,7 +144,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     val secret = "secret_key"
     val email = "user11@sml.com"
     val user = newUser("user11", "11", email, "pass", "salt")
-    val userKey = UserKey.withRandomUUID(user.id, key, secret, "testy")
+    val userKey = UserKey.withRandomUUID(user.id, "test exchange", key, secret, "testy")
 
     userDao.add(user)
     val future = userKeyDao.add(userKey)

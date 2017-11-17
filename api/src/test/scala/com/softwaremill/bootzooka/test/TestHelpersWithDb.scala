@@ -1,12 +1,11 @@
 package com.softwaremill.bootzooka.test
 
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
 import com.softwaremill.bootzooka.email.application.{DummyEmailService, EmailTemplatingEngine}
 import com.flowy.fomoApi.database.postgres.{SqlUserDao, SqlUserKeyDao}
-import com.flowy.fomoApi.models.User
 import com.flowy.fomoApi.services.{UserKeyService, UserService}
+import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.marketmaker.models.User
 import org.scalatest.concurrent.ScalaFutures
-import services.UserService
 
 import scala.concurrent.ExecutionContext
 

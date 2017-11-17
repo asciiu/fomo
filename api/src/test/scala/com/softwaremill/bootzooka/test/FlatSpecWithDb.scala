@@ -1,6 +1,6 @@
 package com.softwaremill.bootzooka.test
 
-import com.softwaremill.bootzooka.common.sql.SqlDatabase
+import com.flowy.marketmaker.common.sql.SqlDatabase
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import slick.jdbc.H2Profile.api._
