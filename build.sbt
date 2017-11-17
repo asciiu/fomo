@@ -42,7 +42,7 @@ val slickpgd    = "com.github.tminglei" %% "slick-pg_joda-time" % "0.15.4"
 val slickspray  = "com.github.tminglei" %% "slick-pg_spray-json" % "0.15.4"
 val slickgen    = "com.typesafe.slick" %% "slick-codegen" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.3.176" //watch out! 1.4.190 is beta
-val postgres    = "org.postgresql" % "postgresql" % "9.4.1208"
+val postgres    = "org.postgresql" % "postgresql" % "42.1.4"
 val flyway      = "org.flywaydb" % "flyway-core" % "4.0"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway, slickpg, slickpgc, slickpgd, slickgen, slickspray)
 val redisScala  = "com.github.etaty" %% "rediscala" % "1.8.0"
@@ -62,23 +62,23 @@ val akkRemote            = "com.typesafe.akka" %% "akka-remote" % akkaVersion
 val akkaClusterMetrics   = "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion
 val akkaClusterTools     = "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion
 val akkaMultNode         = "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion
+val akkaStream           = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 
-val akkaHttpCore         = "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion
-val akkaHttpExperimental = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
+val akkaHttp             = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
 val akkaHttpTestkit      = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % "test"
 val akkaHttpSession      = "com.softwaremill.akka-http-session" %% "core" % "0.5.0"
 val jwtSession           = "com.softwaremill.akka-http-session" %% "jwt"  % "0.5.1"
 
-val akkaStack            = Seq(akkaHttpCore, akkaHttpExperimental, akkaHttpTestkit, akkaHttpSession)
+val akkaStack            = Seq(akkaHttp, akkaHttpTestkit, akkaHttpSession)
 
 val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http" % "0.11.0"
 val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val sigarLoders          = "io.kamon" % "sigar-loader" % "1.6.6-rev002"
 
-val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaClusterMetrics, akkaClusterTools, akkaMultNode, scalatest)
+val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaStream, akkaClusterMetrics, akkaClusterTools, akkaMultNode, scalatest)
 
 // scalatrex
-val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.0"
+val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.3"
 
 // string condition interpreters
 val scalaCompiler        = "org.scala-lang" % "scala-compiler" % scalaVer
