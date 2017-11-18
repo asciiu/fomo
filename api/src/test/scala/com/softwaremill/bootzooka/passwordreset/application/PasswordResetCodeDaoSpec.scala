@@ -44,7 +44,7 @@ class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
       _ <- future1
       _ <- future2
     } //When
-    yield dao.remove(code1).futureValue
+    yield dao.remove(code1)
 
     //Then
     whenReady(bgActions) { _ =>
