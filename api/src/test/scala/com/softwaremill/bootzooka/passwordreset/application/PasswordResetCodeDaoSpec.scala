@@ -34,7 +34,7 @@ class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
     val code1 = PasswordResetCode(code = "code1", user = user1)
     val code2 = PasswordResetCode(code = "code2", user = user2)
 
-    implicit val timeout = 1 second
+    implicit val timeout = 3 second
 
     val bgActions = for {
       _ <- dao.add(code1)
