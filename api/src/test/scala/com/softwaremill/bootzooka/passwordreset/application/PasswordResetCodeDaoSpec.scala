@@ -3,11 +3,15 @@ package com.softwaremill.bootzooka.passwordreset.application
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
 import com.flowy.fomoApi.models.PasswordResetCode
+import org.scalatest.time.{Millis, Seconds, Span}
 
 class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
   behavior of "PasswordResetCodeDao"
 
   val dao = new SqlPasswordResetCodeDao(sqlDatabase)
+
+  implicit val defaultPatience =
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   it should "add and load code" in {
     // Given
