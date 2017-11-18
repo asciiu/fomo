@@ -53,11 +53,11 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
       "/user/register",
       Map("first" -> "<script>alert('haxor');</script>",
         "last" -> "<script>alert('haxor');</script>",
-        "email" -> "newUser@sml.com",
+        "email" -> "boner@dot.com",
         "password" -> "secret")
     ) ~> routes ~> check {
       status should be(StatusCodes.OK)
-      userDao.findByEmail("newUser@sml.com").futureValue.map(_.firstName) should be(
+      userDao.findByEmail("boner@dot.com").futureValue.map(_.firstName) should be(
         Some("&lt;script&gt;alert('haxor');&lt;/script&gt;")
       )
     }
@@ -133,7 +133,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
   "POST /apikey" should "add a new user key" in {
     userDao.add(newUser("user10", "10", "user10@sml.com", "pass", "salt")).futureValue
     withLoggedInUser("user10@sml.com", "pass") { transform =>
-      Post("/user/apikey", Map("key" -> "key", "secret" -> "sssh", "description" -> "testy key")) ~> transform ~> routes ~> check {
+      Post("/user/apikey", Map("key" -> "key", "exchange" -> "test", "secret" -> "sssh", "description" -> "testy key")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.OK)
       }
     }
@@ -151,7 +151,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     Await.ready(future, 5.second)
 
     withLoggedInUser(email, "pass") { transform =>
-      Post("/user/apikey", Map("key" -> key, "secret" -> secret, "description" -> "testy key")) ~> transform ~> routes ~> check {
+      Post("/user/apikey", Map("key" -> key, "exchange" -> "test", "secret" -> secret, "description" -> "testy key")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Conflict)
       }
     }

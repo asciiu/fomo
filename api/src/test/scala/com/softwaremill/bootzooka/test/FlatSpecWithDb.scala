@@ -18,12 +18,6 @@ trait FlatSpecWithDb
 
   override protected def beforeAll() {
     super.beforeAll()
-    createAll()
-  }
-
-  def clearData() {
-    dropAll()
-    createAll()
   }
 
   override protected def afterAll() {
@@ -31,21 +25,13 @@ trait FlatSpecWithDb
     sqlDatabase.close()
   }
 
-  private def dropAll(): Unit = {
-    sqlDatabase.db.run(sqlu"DROP ALL OBJECTS").futureValue
-  }
-
-  private def createAll() {
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
     sqlDatabase.updateSchema()
   }
 
   override protected def afterEach() {
-    try {
-      clearData()
-    } catch {
-      case e: Exception => e.printStackTrace()
-    }
-
     super.afterEach()
+    sqlDatabase.db.run(sqlu"DROP ALL OBJECTS").futureValue
   }
 }

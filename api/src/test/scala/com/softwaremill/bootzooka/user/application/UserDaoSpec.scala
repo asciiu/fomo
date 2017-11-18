@@ -33,10 +33,10 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
 
   it should "add new user" in {
     // Given
-    val first = "test1"
-    val last  = "test2"
+    val first = "test_person"
+    val last  = "test_last"
     val login = "newuser"
-    val email = "newemail@sml.com"
+    val email = "test@sml.com"
 
     // When
     userDao.add(newUser(first, last, email, "pass", "salt")).futureValue
@@ -70,7 +70,7 @@ class UserDaoSpec extends FlatSpecWithDb with StrictLogging with TestHelpers wit
 
   it should "find by uppercase email" in {
     // Given
-    val email = "1email@sml.com".toUpperCase
+    val email = "2email@sml.com".toUpperCase
 
     // When
     val userOpt = userDao.findByEmail(email).futureValue
