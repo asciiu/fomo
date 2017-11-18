@@ -3,7 +3,6 @@ package com.softwaremill.bootzooka.passwordreset.application
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
 import com.flowy.fomoApi.models.PasswordResetCode
-import scala.concurrent.duration._
 
 class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
   behavior of "PasswordResetCodeDao"
@@ -34,11 +33,12 @@ class PasswordResetCodeDaoSpec extends FlatSpecWithDb with TestHelpersWithDb {
     val code1 = PasswordResetCode(code = "code1", user = user1)
     val code2 = PasswordResetCode(code = "code2", user = user2)
 
-    implicit val timeout = 3 second
+    val future1 = dao.add(code1)
+    val future2 = dao.add(code2)
 
     val bgActions = for {
-      _ <- dao.add(code1)
-      _ <- dao.add(code2)
+      _ <- future1
+      _ <- future2
     } //When
     yield dao.remove(code1).futureValue
 
