@@ -124,6 +124,11 @@ def haltOnCmdResultError(result: Int) {
   }
 }
 
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
+
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
