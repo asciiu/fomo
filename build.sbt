@@ -126,7 +126,8 @@ def haltOnCmdResultError(result: Int) {
 
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF") => MergeStrategy.discard
-  case PathList("reference.conf", "application.conf") => MergeStrategy.concat
+  case PathList("reference.conf") => MergeStrategy.concat
+  case PathList("application.conf") => MergeStrategy.concat
   case x => MergeStrategy.first
 }
 
