@@ -14,6 +14,12 @@ node {
         sh "${sbtHome}/bin/sbt 'project bittrexWebsocketClient' assembly"
       }
     }
+
+    stage (‘Deploy’) {
+      ansiColor('xterm') {
+        sh ‘scp -r /var/lib/jenkins/workspace/fomo/bittrex-websocket/target/scala-2.12/bittrexWebsocketClient.jar ubuntu@54.183.216.67 :~/’
+      }
+    }
   } catch (e) {
     currentBuild.result = "FAILED"
     throw e
