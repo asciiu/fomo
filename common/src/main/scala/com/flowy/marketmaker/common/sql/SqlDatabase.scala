@@ -90,6 +90,8 @@ object SqlDatabase extends StrictLogging {
     val dbName   = config.dbPostgresDbName
     val username = config.dbPostgresUsername
     val password = config.dbPostgresPassword
+    println("HERE")
+    println(password)
     JdbcConnectionString(postgresUrl(host, port, dbName), username, password)
   }
 
