@@ -105,6 +105,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= commonDependencies,
   assemblyMergeStrategy in assembly := {
     case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case PathList("application.conf") => MergeStrategy.first
     case x =>
       val oldStrategy = (assemblyMergeStrategy in assembly).value
       oldStrategy(x)
