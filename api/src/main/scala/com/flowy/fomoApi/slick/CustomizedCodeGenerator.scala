@@ -36,7 +36,7 @@ object CustomizedCodeGenerator {
     println(future)
   }
 
-  val config = ConfigFactory.parseFile(new File("backend/src/main/resources/reference.conf"))
+  val config = ConfigFactory.parseFile(new File("backend/src/main/resources/application.conf"))
 
   val url = config.getString("bootzooka.db.postgres.properties.url")
   val user = config.getString("bootzooka.db.postgres.properties.user")
