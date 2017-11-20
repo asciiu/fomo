@@ -103,6 +103,12 @@ lazy val commonSettings = Seq(
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   libraryDependencies ++= commonDependencies,
+  assemblyMergeStrategy in assembly := {
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x =>
+      val oldStrategy = (assemblyMergeStrategy in assembly).value
+      oldStrategy(x)
+  },
   updateNpm := {
     println("Updating npm dependencies")
     haltOnCmdResultError(Process("npm install", baseDirectory.value / ".." / "ui") !)
@@ -122,13 +128,6 @@ def haltOnCmdResultError(result: Int) {
   if (result != 0) {
     throw new Exception("Build failed.")
   }
-}
-
-assemblyMergeStrategy in assembly := {
-  case PathList("META-INF") => MergeStrategy.discard
-  case PathList("reference.conf") => MergeStrategy.concat
-  case PathList("application.conf") => MergeStrategy.concat
-  case x => MergeStrategy.first
 }
 
 lazy val rootProject = (project in file("."))
@@ -166,6 +165,7 @@ lazy val api: Project = (project in file("api"))
       compilationResult
     },
     mainClass in Compile := Some("com.flowy.fomoApi.Main"),
+    test in assembly := {},
     // We need to include the whole webapp, hence replacing the resource directory
     unmanagedResourceDirectories in Compile := {
       (unmanagedResourceDirectories in Compile).value ++ List(

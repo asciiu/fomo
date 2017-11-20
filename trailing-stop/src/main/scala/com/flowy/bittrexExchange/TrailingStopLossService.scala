@@ -1,4 +1,4 @@
-package com.flowy.bittrexExchange
+package com.flowy.trailingStop
 
 import akka.actor.{Actor, ActorLogging}
 import akka.cluster.Cluster

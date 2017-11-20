@@ -1,4 +1,4 @@
-package com.flowy.bittrexExchange.messages
+package com.flowy.trailingStop.messages
 
 import java.util.UUID
 
