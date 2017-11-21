@@ -17,7 +17,7 @@ node {
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r /var/lib/jenkins/workspace/fomo/bittrex-exchange/target/scala-2.12/bittrexExchangeService.jar ubuntu@stage.fomo.exchange:~/"
+        sh "scp -r '/var/lib/jenkins/workspace/Fomo Bittrex Exchange/bittrex-exchange/target/scala-2.12/bittrexExchangeService.jar' ubuntu@stage.fomo.exchange:~/"
       }
     }
 
