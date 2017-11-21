@@ -21,11 +21,11 @@ node {
       }
     }
 
-    #stage ('Restarting') {
-    #  ansiColor('xterm') {
-    #    sh "ssh ubuntu@54.183.216.67 'sudo systemctl restart BittrexWebsocketClient'"
-    #  }
-    #}
+    //stage ('Restarting') {
+    //  ansiColor('xterm') {
+    //    sh "ssh ubuntu@54.183.216.67 'sudo systemctl restart BittrexWebsocketClient'"
+    //  }
+    //}
   } catch (e) {
     currentBuild.result = "FAILED"
     throw e
