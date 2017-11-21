@@ -17,7 +17,7 @@ node {
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r /var/lib/jenkins/workspace/fomo/trailing-stop/target/scala-2.12/trailingStopService.jar ubuntu@stage.fomo.exchange:~/"
+        sh "scp -r /var/lib/jenkins/workspace/Fomo Trailing Stop/trailing-stop/target/scala-2.12/trailingStopService.jar ubuntu@stage.fomo.exchange:~/"
       }
     }
 
