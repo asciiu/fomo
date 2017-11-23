@@ -6,10 +6,10 @@ import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
-import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
-import com.flowy.fomoApi.models.PasswordResetCode
-import com.flowy.fomoApi.routes.PasswordResetRoutes
-import com.flowy.fomoApi.services.PasswordResetService
+import com.flowy.fomoapi.database.postgres.SqlPasswordResetCodeDao
+import com.flowy.fomoapi.models.PasswordResetCode
+import com.flowy.fomoapi.routes.PasswordResetRoutes
+import com.flowy.fomoapi.services.PasswordResetService
 import com.flowy.marketmaker.models.User
 
 class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>

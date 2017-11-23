@@ -2,7 +2,7 @@ package com.softwaremill.bootzooka.swagger
 
 import com.github.swagger.akka.model.Info
 import akka.actor.ActorSystem
-import com.flowy.fomoApi.routes.{UsersRoutes, VersionRoutes}
+import com.flowy.fomoapi.routes.{UsersRoutes, VersionRoutes}
 import com.github.swagger.akka._
 import com.softwaremill.bootzooka.version.BuildInfo._
 

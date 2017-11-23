@@ -3,7 +3,7 @@ package uitest
 import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.Http.ServerBinding
-import com.flowy.fomoApi.services.{DependencyWiring, HttpService}
+import com.flowy.fomoapi.services.{DependencyWiring, HttpService}
 import com.softwaremill.bootzooka.email.application.DummyEmailService
 import com.softwaremill.bootzooka.passwordreset.application.SqlPasswordResetCodeSchema
 import com.softwaremill.bootzooka.user.application.SqlUserSchema

@@ -1,6 +1,6 @@
 package com.softwaremill.bootzooka.user.application
 
-import com.flowy.fomoApi.services.UserRegisterValidator
+import com.flowy.fomoapi.services.UserRegisterValidator
 import org.scalatest.{FlatSpec, Matchers}
 
 class UserRegisterValidatorSpec extends FlatSpec with Matchers {

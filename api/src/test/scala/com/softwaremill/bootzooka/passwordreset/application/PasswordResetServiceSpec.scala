@@ -6,9 +6,9 @@ import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.typesafe.config.ConfigFactory
-import com.flowy.fomoApi.database.postgres.SqlPasswordResetCodeDao
-import com.flowy.fomoApi.models.PasswordResetCode
-import com.flowy.fomoApi.services.PasswordResetService
+import com.flowy.fomoapi.database.postgres.SqlPasswordResetCodeDao
+import com.flowy.fomoapi.models.PasswordResetCode
+import com.flowy.fomoapi.services.PasswordResetService
 import com.flowy.marketmaker.models.User
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {

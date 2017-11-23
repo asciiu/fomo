@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
 import com.softwaremill.session.{RefreshTokenData, RefreshTokenLookupResult, RefreshTokenStorage}
-import com.flowy.fomoApi.database.dao.RememberMeTokenDao
-import com.flowy.fomoApi.models.RememberMeToken
+import com.flowy.fomoapi.database.dao.RememberMeTokenDao
+import com.flowy.fomoapi.models.RememberMeToken
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
