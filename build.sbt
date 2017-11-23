@@ -166,7 +166,7 @@ lazy val api: Project = (project in file("api"))
 
       compilationResult
     },
-    mainClass in Compile := Some("com.flowy.fomoApi.Main"),
+    mainClass in Compile := Some("com.flowy.fomoapi.Main"),
     test in assembly := {},
     // We need to include the whole webapp, hence replacing the resource directory
     unmanagedResourceDirectories in Compile := {

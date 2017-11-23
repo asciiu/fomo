@@ -22,8 +22,8 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit ec: ExecutionContext) {
     }
   }
 
-  def upsert(ukey: UserKey): Future[Boolean] = {
-    userKeyDao.upsert(ukey)
+  def update(ukey: UserKey): Future[Boolean] = {
+    userKeyDao.updateKey(ukey)
   }
 
   def getUserKey(userId: UUID, key: String): Future[Option[UserKey]] = {

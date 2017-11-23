@@ -5,13 +5,13 @@ import com.flowy.fomoapi.models.UserKey
 import scala.concurrent.Future
 
 trait UserKeyDao {
-  def add(userKey: UserKey): Future[UUID]
+  def add(userKey: UserKey): Future[Option[UserKey]]
   def findById(keyId: UUID): Future[Option[UserKey]]
   def findByKeyPair(key: String, secret: String): Future[Option[UserKey]]
   def findByUserId(userId: UUID, exchangeName: String): Future[Seq[UserKey]]
   def findByUserIdAndKey(userId: UUID, key: String): Future[Option[UserKey]]
 
-  def upsert(ukey: UserKey): Future[Boolean]
+  def updateKey(ukey: UserKey): Future[Boolean]
   def remove(keyID: UUID): Future[Unit]
 }
 

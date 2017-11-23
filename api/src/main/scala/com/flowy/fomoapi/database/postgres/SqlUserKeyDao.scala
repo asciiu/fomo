@@ -9,6 +9,7 @@ import com.flowy.fomoapi.database.postgres.schema.SqlUserKeySchema
 import com.flowy.fomoapi.models.UserKey
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Success
 
 class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
   extends UserKeyDao with SqlUserKeySchema {
@@ -19,8 +20,16 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   private def findOneWhere(condition: UserKeys => Rep[Boolean]) =
     db.run(userKeys.filter(condition).result.headOption)
 
-  def add(key: UserKey): Future[UUID] =
-    db.run(userKeys returning userKeys.map(_.id) += key)
+  def add(key: UserKey): Future[Option[UserKey]] = {
+    val query = userKeys += key
+
+    db.run(query.asTry).map { result =>
+      result match {
+        case Success(count) if count > 0 => Some(key)
+        case _ => None
+      }
+    }
+  }
 
   def findById(keyId: UUID): Future[Option[UserKey]] =
     findOneWhere(_.id === keyId)
@@ -37,8 +46,15 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   def remove(keyId: UUID): Future[Unit] =
     db.run(userKeys.filter(_.id === keyId).delete).mapToUnit
 
-  def upsert(ukey: UserKey): Future[Boolean] = {
-    db.run(userKeys.insertOrUpdate(ukey)).foreach(println)
-    Future.successful(true)
+  def updateKey(ukey: UserKey): Future[Boolean] = {
+    val updateAction = userKeys.filter(k => k.id === ukey.id && k.userId === ukey.userId && k.exchange === ukey.exchange)
+      .map(lk => (lk.key, lk.secret, lk.description)).update((ukey.key, ukey.secret, ukey.description))
+
+    db.run( updateAction.asTry ).map {result =>
+      result match {
+        case Success(count) if count > 0 => true
+        case _ => false
+      }
+    }
   }
 }
