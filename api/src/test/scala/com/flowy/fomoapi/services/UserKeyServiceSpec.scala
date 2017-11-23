@@ -1,5 +1,7 @@
 package com.flowy.fomoapi.services
 
+import java.util.UUID
+
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import org.scalatest.Matchers
 
@@ -62,5 +64,26 @@ class UserKeyServiceSpec extends FlatSpecWithDb with Matchers with TestHelpersWi
     updatedKey.key should be(newKey)
     updatedKey.secret should be(newSecret)
     updatedKey.description should be(newDesc)
+  }
+
+  it should "not update a key that does not match the id, userId, and exchange name" in {
+    val newKey = "new_key"
+    val newSecret = "new_secret"
+    val newDesc = "Update a user key test"
+
+    val user = userDao.findByEmail(userEmail).futureValue
+    val ukey = userKeyService.getUserKey(user.get.id, "new_key").futureValue.get
+
+    // if the id, userID, and exhange name are not found from a previous key pair
+    // we cannot update a key
+    val status = userKeyService.update(ukey.copy(
+      userId = UUID.randomUUID(),
+      exchange = "Newex",
+      key = newKey,
+      secret = newSecret,
+      description = newDesc)).futureValue
+
+    status should be(false)
+
   }
 }
