@@ -5,8 +5,7 @@ import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import slick.jdbc.H2Profile.api._
 
-trait FlatSpecWithDb
-    extends FlatSpec
+trait FlatSpecWithDb extends FlatSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach
@@ -18,20 +17,20 @@ trait FlatSpecWithDb
 
   override protected def beforeAll() {
     super.beforeAll()
+    sqlDatabase.updateSchema()
   }
 
   override protected def afterAll() {
     super.afterAll()
+    sqlDatabase.db.run(sqlu"DROP ALL OBJECTS").futureValue
     sqlDatabase.close()
   }
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
-    sqlDatabase.updateSchema()
   }
 
   override protected def afterEach() {
     super.afterEach()
-    sqlDatabase.db.run(sqlu"DROP ALL OBJECTS").futureValue
   }
 }
