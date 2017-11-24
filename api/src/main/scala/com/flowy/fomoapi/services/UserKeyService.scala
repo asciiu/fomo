@@ -26,11 +26,12 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit ec: ExecutionContext) {
     userKeyDao.updateKey(ukey)
   }
 
-  def getUserKey(userId: UUID, key: String): Future[Option[UserKey]] = {
-    userKeyDao.findByUserIdAndKey(userId, key)
+  def remove(userId: UUID, exchange: String): Future[Boolean] = {
+    // TODO cancel all trades
+    userKeyDao.remove(userId, exchange)
   }
 
-  def getUserKeys(userId: UUID, exchangeName: String): Future[Seq[UserKey]] = {
-    userKeyDao.findByUserId(userId, exchangeName)
+  def getUserKey(userId: UUID, exchange: String): Future[Option[UserKey]] = {
+    userKeyDao.findByUserId(userId, exchange)
   }
 }

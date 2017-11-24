@@ -1,5 +1,7 @@
 package com.flowy.fomoapi.routes
 
+import java.time.{Instant, ZoneOffset}
+import java.util.UUID
 import javax.ws.rs.{GET, POST, Path}
 
 import akka.http.scaladsl.model.StatusCodes
@@ -36,9 +38,22 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 
+  def convertToUkey(userId: UUID, request: UpdateApiKeyRequest): UserKey =
+    UserKey(request.id,
+      userId,
+      request.exchange,
+      request.key,
+      request.secret,
+      request.description,
+      Instant.now().atOffset(ZoneOffset.UTC),
+      Instant.now().atOffset(ZoneOffset.UTC))
+
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
       addApiKey ~
+      getApiKey ~
+      removeApiKey ~
+      updateApiKey ~
       balances ~
       basicUserInfo ~
       changePassword ~
@@ -170,16 +185,49 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  def getApiKey =
+    path("apikey") {
+      get {
+        parameters('exchange) { exchangeName =>
+          userFromSession { user =>
+            onSuccess(userKeyService.getUserKey(user.id, exchangeName)) {
+              case Some(key) =>
+                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", key.asJson))
+              case _ =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "Exchange key not found. Try adding it.", Json.Null))
+            }
+          }
+        }
+      }
+    }
+
+  def removeApiKey = {
+    path("apikey") {
+      delete {
+        userFromSession { user =>
+          entity(as[RemoveApiKeyRequest]) { request =>
+            onSuccess(userKeyService.remove(user.id, request.exchange)) {
+              case true =>
+                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+              case false =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user key not found", Json.Null))
+            }
+          }
+        }
+      }
+    }
+  }
+
   def updateApiKey = {
     path("apikey") {
       put {
         userFromSession { user =>
-          entity(as[ApiKey]) { key =>
-            onSuccess(userKeyService.addUserKey(user.id, key.exchange, key.key, key.secret, key.description)) {
-              case Left(msg) =>
-                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
-              case Right(_) =>
-                completeOk
+          entity(as[UpdateApiKeyRequest]) { ukey =>
+            onSuccess(userKeyService.update(convertToUkey(user.id, ukey))) {
+              case true =>
+                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+              case false =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "key id, userId, and exchange not found", Json.Null))
             }
           }
         }
@@ -192,12 +240,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       get {
         parameters('exchange) { exchangeName =>
           userFromSession { user =>
-            onSuccess(userKeyService.getUserKeys(user.id, exchangeName)) {
-              case userKeys: Seq[UserKey] if userKeys.length > 0 =>
-                // TODO what should the behavior be in case there are multiple keys
-                // let's just assume there will be a single key for now
-                val default = userKeys.head
-                val auth = Auth(default.key, default.secret)
+            onSuccess(userKeyService.getUserKey(user.id, exchangeName)) {
+              case Some(ukey) =>
+                val auth = Auth(ukey.key, ukey.secret)
                 onSuccess(bittrexClient.accountGetBalances(auth)){
                   case balResponse: BalancesResponse =>
                     complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", balResponse.asJson))
@@ -252,6 +297,8 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
 
 case class ApiKey(exchange: String, key: String, secret: String, description: String)
+case class UpdateApiKeyRequest(id: UUID, exchange: String, key: String, secret: String, description: String)
+case class RemoveApiKeyRequest(exchange: String)
 case class RegistrationInput(first: String, last: String, email: String, password: String) {
   def firstEscaped = Utils.escapeHtml(first)
   def lastEscaped = Utils.escapeHtml(last)
