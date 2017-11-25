@@ -178,6 +178,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
               case Left(msg) =>
                 complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
               case Right(_)  =>
+
                 completeOk
             }
           }
@@ -227,7 +228,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
               case true =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
               case false =>
-                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "key id, userId, and exchange not found", Json.Null))
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "invalid key entered", Json.Null))
             }
           }
         }
