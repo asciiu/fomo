@@ -186,7 +186,7 @@ lazy val common = (project in file("common"))
   .settings(
     assemblyJarName in assembly := "common.jar",
     name := "common",
-    libraryDependencies ++= slickStack ++ akkaStack ++ circe ++ Seq(scalaCompiler, sprayJson, redisScala, ws)
+    libraryDependencies ++= akkaStack ++ circe ++ slickStack ++ Seq(scalaCompiler, sprayJson, redisScala, scalatest, ws)
   )
 
 
@@ -212,6 +212,14 @@ lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket")
   )
   .dependsOn(common)
 
+lazy val walletService: Project = (project in file("wallet-service"))
+  .settings(commonSettings: _*)
+  .settings(
+    assemblyJarName in assembly := "walletService.jar",
+    name := "wallet-service",
+    libraryDependencies ++= akkaClusterStack
+  )
+  .dependsOn(common)
 
 /****************************************************************
   * trailing stop
