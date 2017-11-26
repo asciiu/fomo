@@ -12,6 +12,12 @@ object Exchange extends Enumeration {
   val Poloniex  = Value("poloniex")
 }
 
+object ApiKeyStatus extends Enumeration {
+  val Added      = Value("added")
+  val Verified   = Value("verified")
+  val Invalid    = Value("invalid")
+}
+
 object TradeStatus extends Enumeration {
   val Pending    = Value("pending")
   val Bought     = Value("bought")

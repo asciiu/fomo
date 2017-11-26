@@ -12,14 +12,14 @@ import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
 import com.flowy.common.api.Bittrex.BalancesResponse
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.utils.Utils
-import com.flowy.common.models.{BasicUserData, UserKey}
+import com.flowy.common.models.{ApiKeyStatus, BasicUserData, Exchange, UserKey}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api._
 import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.Json
+import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.swagger.annotations._
@@ -40,13 +40,13 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def convertToUkey(userId: UUID, request: UpdateApiKeyRequest): UserKey =
     UserKey(request.id,
       userId,
-      request.exchange,
+      Exchange.withName(request.exchange),
       request.key,
       request.secret,
       request.description,
+      ApiKeyStatus.Added,
       Instant.now().atOffset(ZoneOffset.UTC),
-      Instant.now().atOffset(ZoneOffset.UTC),
-      None
+      Instant.now().atOffset(ZoneOffset.UTC)
     )
 
   val usersRoutes = logRequestResult("UserRoutes") {
@@ -63,6 +63,17 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       logoutUser ~
       registerUser
     }
+  }
+
+  implicit val encodeStatus: Encoder[ApiKeyStatus.Value] = new Encoder[ApiKeyStatus.Value] {
+    final def apply(a: ApiKeyStatus.Value): Json = Json.obj(
+      ("status", Json.fromString(a.toString))
+    )
+  }
+  implicit val encodeExchange: Encoder[Exchange.Value] = new Encoder[Exchange.Value] {
+    final def apply(a: Exchange.Value): Json = Json.obj(
+      ("status", Json.fromString(a.toString))
+    )
   }
 
   @POST
@@ -175,7 +186,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       post {
         userFromSession{ user =>
           entity(as[ApiKey]) { key =>
-            onSuccess(userKeyService.addUserKey(user.id, key.exchange, key.key, key.secret, key.description)) {
+            onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange), key.key, key.secret, key.description)) {
               case Left(msg) =>
                 complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
               case Right(_)  =>
@@ -192,7 +203,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       get {
         parameters('exchange) { exchangeName =>
           userFromSession { user =>
-            onSuccess(userKeyService.getUserKey(user.id, exchangeName)) {
+            onSuccess(userKeyService.getUserKey(user.id, Exchange.withName(exchangeName))) {
               case Some(key) =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", key.asJson))
               case _ =>
@@ -208,7 +219,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       delete {
         userFromSession { user =>
           entity(as[RemoveApiKeyRequest]) { request =>
-            onSuccess(userKeyService.remove(user.id, request.exchange)) {
+            onSuccess(userKeyService.remove(user.id, Exchange.withName(request.exchange))) {
               case true =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
               case false =>
@@ -242,7 +253,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       get {
         parameters('exchange) { exchangeName =>
           userFromSession { user =>
-            onSuccess(userKeyService.getUserKey(user.id, exchangeName)) {
+            onSuccess(userKeyService.getUserKey(user.id, Exchange.withName(exchangeName))) {
               case Some(ukey) =>
                 val auth = Auth(ukey.key, ukey.secret)
                 onSuccess(bittrexClient.accountGetBalances(auth)){

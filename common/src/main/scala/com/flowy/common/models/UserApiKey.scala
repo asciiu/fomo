@@ -5,31 +5,30 @@ import java.util.UUID
 
 case class UserKey (id: UUID,
                     userId: UUID,
-                    exchange: String,
+                    exchange: Exchange.Value,
                     key: String,
                     secret: String,
                     description: String,
+                    status: ApiKeyStatus.Value,
                     createdOn: OffsetDateTime,
-                    updatedOn: OffsetDateTime,
-                    validatedOn: Option[OffsetDateTime]
+                    updatedOn: OffsetDateTime
                    )
 
 
 object UserKey  {
   def withRandomUUID(userId: UUID,
-                     exchange: String,
+                     exchange: Exchange.Value,
                      key: String,
                      secret: String,
-                     description: String
-                    ) =
+                     description: String,
+                     status: ApiKeyStatus.Value) =
     UserKey(UUID.randomUUID(),
       userId,
       exchange,
       key,
       secret,
       description,
+      status,
       Instant.now().atOffset(ZoneOffset.UTC),
-      Instant.now().atOffset(ZoneOffset.UTC),
-      Some(Instant.now().atOffset(ZoneOffset.UTC))
-    )
+      Instant.now().atOffset(ZoneOffset.UTC))
 }

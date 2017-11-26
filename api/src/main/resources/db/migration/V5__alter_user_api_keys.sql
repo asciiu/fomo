@@ -8,9 +8,9 @@ CREATE TABLE "user_api_keys"(
   "api_key" VARCHAR NOT NULL,
   "secret"  VARCHAR NOT NULL,
   "description" VARCHAR,
+  "status" VARCHAR NOT NULL,
   "created_on" TIMESTAMP DEFAULT now(),
-  "updated_on" TIMESTAMP default current_timestamp,
-  "validated_on" TIMESTAMP
+  "updated_on" TIMESTAMP default current_timestamp
 );
 
 ALTER TABLE "user_api_keys" ADD CONSTRAINT "user_api_keys_user_fk"

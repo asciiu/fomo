@@ -1,26 +1,24 @@
 package com.flowy.common.database
 
+import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
 import java.util.UUID
-
-import com.flowy.common.models.UserKey
-
 import scala.concurrent.Future
 
 trait UserKeyDao {
   def add(userKey: UserKey): Future[Option[UserKey]]
 
-  def findAllValidated(withinHours: Int): Future[Seq[UserKey]]
+  def findAllWithStatus(status: ApiKeyStatus.Value): Future[Seq[UserKey]]
 
   def findById(keyId: UUID): Future[Option[UserKey]]
 
   def findByKeyPair(key: String, secret: String): Future[Option[UserKey]]
 
-  def findByUserId(userId: UUID, exchangeName: String): Future[Option[UserKey]]
+  def findByUserId(userId: UUID, exchange: Exchange.Value): Future[Option[UserKey]]
 
   def findByUserIdAndKey(userId: UUID, key: String): Future[Option[UserKey]]
 
   def updateKey(ukey: UserKey): Future[Boolean]
 
-  def remove(userId: UUID, exchange: String): Future[Boolean]
+  def remove(userId: UUID, exchange: Exchange.Value): Future[Boolean]
 }
 
