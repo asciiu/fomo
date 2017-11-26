@@ -11,7 +11,7 @@ import akka.stream.ActorMaterializer
 import com.flowy.common.Util
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.{Exchange, UserKey}
+import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
 
 import language.postfixOps
 import redis.RedisClient
@@ -57,13 +57,13 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
     // subscribe to cluster messages
     mediator ! Subscribe("CacheBittrexWallets", self)
 
-    bagel.userKeyDao.findAllValidated(24).map {
+    bagel.userKeyDao.findAllWithStatus(ApiKeyStatus.Verified).map {
       case keys: Seq[UserKey] if keys.length > 0 =>
         keys.foreach { key =>
           cacheUserWallets(key)
         }
       case _ =>
-        log.warning("found 0 validated api keys")
+        log.warning("found 0 verified api keys")
     }
   }
 
@@ -96,8 +96,7 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
     bittrexClient.accountGetBalances(auth).map { response =>
       response.result match {
         case Some(balances) =>
-          log.info(s"validated userId: ${ukey.userId} bittrex keys")
-          bagel.userKeyDao.updateKey(ukey.copy( validatedOn = Some(Util.now()) ))
+          log.info(s"verified bittrex key for userId: ${ukey.userId}")
           balances.foreach { currency =>
 
             val key = s"userId:${ukey.userId}:bittrex:${currency.Currency}"
@@ -116,7 +115,8 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
             }
           }
         case None =>
-          log.info(s"invalid key or zero balance for bittrex internal user ${ukey.userId}")
+          bagel.userKeyDao.updateKey(ukey.copy( status = ApiKeyStatus.Invalid ))
+          log.info(s"invalid key or zero balance using bittrex key for userId: ${ukey.userId}")
       }
     }
   }
