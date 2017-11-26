@@ -7,9 +7,9 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.flowy.trailingStop.messages.TrailingStop
-import com.flowy.marketmaker.database.TheEverythingBagelDao
-import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
-import com.flowy.marketmaker.models.{BasicUserData, Trade, TradeRequest, TradeStatus}
+import com.flowy.common.database.TheEverythingBagelDao
+import com.flowy.common.models.MarketStructures.MarketUpdate
+import com.flowy.common.models.{BasicUserData, Trade, TradeRequest, TradeStatus}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext

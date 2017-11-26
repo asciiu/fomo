@@ -6,7 +6,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
 import com.flowy.bittrexExchange.ExchangeService.GetMarkets
 import com.flowy.bittrexExchange.MarketTradeService.PostTrade
-import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.common.utils.sql.SqlDatabase
 import redis.RedisClient
 
 import scala.concurrent.ExecutionContext

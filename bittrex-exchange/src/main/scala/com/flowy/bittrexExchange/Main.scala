@@ -2,9 +2,9 @@ package com.flowy.bittrexExchange
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.flowy.marketmaker.common.ServerConfig
-import com.flowy.marketmaker.common.sql.{DatabaseConfig, SqlDatabase}
-import com.flowy.marketmaker.database.postgres.SqlTheEverythingBagelDao
+import com.flowy.common.utils.ServerConfig
+import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
+import com.flowy.common.database.postgres.SqlTheEverythingBagelDao
 import com.typesafe.config.ConfigFactory
 import redis.RedisClient
 

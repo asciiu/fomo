@@ -3,10 +3,10 @@ package com.flowy.fomoapi.services
 import java.util.UUID
 
 import akka.stream.ActorMaterializer
-import com.flowy.fomoapi.models.UserKey
-import com.flowy.fomoapi.database.dao.UserKeyDao
-import com.flowy.marketmaker.api.{Auth, BittrexClient}
-import com.flowy.marketmaker.api.Bittrex.BalancesResponse
+import com.flowy.common.api.{Auth, BittrexClient}
+import com.flowy.common.api.Bittrex.BalancesResponse
+import com.flowy.common.database.UserKeyDao
+import com.flowy.common.models.UserKey
 
 import scala.concurrent.{ExecutionContext, Future}
 

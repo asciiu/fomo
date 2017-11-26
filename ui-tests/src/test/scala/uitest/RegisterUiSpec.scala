@@ -1,6 +1,6 @@
 package uitest
 
-import com.flowy.marketmaker.common.Utils
+import com.flowy.common.utils.Utils
 import org.scalatest.BeforeAndAfterEach
 import uitest.pages.RegistrationPage
 

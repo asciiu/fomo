@@ -3,13 +3,13 @@ package com.flowy.fomoapi.services
 import java.time.Instant
 
 import com.flowy.fomoapi.models.PasswordResetCode
-import com.flowy.marketmaker.common.Utils
+import com.flowy.common.utils.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.email.domain.EmailContentWithSubject
 import com.softwaremill.bootzooka.passwordreset.application.PasswordResetConfig
 import com.typesafe.scalalogging.StrictLogging
 import com.flowy.fomoapi.database.dao.{PasswordResetCodeDao, UserDao}
-import com.flowy.marketmaker.models.User
+import com.flowy.common.models.User
 
 import scala.concurrent.{ExecutionContext, Future}
 

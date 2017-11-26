@@ -1,7 +1,7 @@
 package com.flowy.fomoapi.database.dao
 
 import com.softwaremill.bootzooka.user._
-import com.flowy.marketmaker.models.{BasicUserData, User}
+import com.flowy.common.models.{BasicUserData, User}
 
 import scala.concurrent.Future
 

@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpersWithDb}
 import com.flowy.fomoapi.services.UserRegisterResult
-import com.flowy.marketmaker.models.User
+import com.flowy.common.models.User
 import org.scalatest.Matchers
 
 import scala.concurrent.Await

@@ -5,7 +5,7 @@ import java.util.UUID
 import com.softwaremill.bootzooka.test.{FlatSpecWithDb, TestHelpers}
 import com.typesafe.scalalogging.StrictLogging
 import com.flowy.fomoapi.database.postgres.SqlUserDao
-import com.flowy.marketmaker.models.User
+import com.flowy.common.models.User
 import org.scalatest.Matchers
 
 import scala.language.implicitConversions

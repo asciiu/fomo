@@ -2,11 +2,11 @@ package com.flowy.fomoapi.services
 
 import java.util.UUID
 
-import com.flowy.marketmaker.common.Utils
+import com.flowy.common.utils.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
 import com.flowy.fomoapi.database.dao.UserDao
-import com.flowy.marketmaker.models.{BasicUserData, User}
+import com.flowy.common.models.{BasicUserData, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 

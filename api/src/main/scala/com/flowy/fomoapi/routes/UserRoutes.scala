@@ -7,13 +7,12 @@ import javax.ws.rs.{GET, POST, Path}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
-import com.flowy.fomoapi.models.UserKey
 import com.flowy.fomoapi.services.{UserKeyService, UserRegisterResult, UserService}
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.marketmaker.api.Bittrex.BalancesResponse
-import com.flowy.marketmaker.api.{Auth, BittrexClient}
-import com.flowy.marketmaker.common.Utils
-import com.flowy.marketmaker.models.BasicUserData
+import com.flowy.common.api.Bittrex.BalancesResponse
+import com.flowy.common.api.{Auth, BittrexClient}
+import com.flowy.common.utils.Utils
+import com.flowy.common.models.{BasicUserData, UserKey}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api._
 import com.softwaremill.bootzooka.user.application.Session

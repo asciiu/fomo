@@ -8,7 +8,7 @@ import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.softwaremill.session.{RefreshTokenStorage, SessionManager}
 import com.flowy.fomoapi.services.UserService
-import com.flowy.marketmaker.models.BasicUserData
+import com.flowy.common.models.BasicUserData
 
 import scala.concurrent.ExecutionContext
 

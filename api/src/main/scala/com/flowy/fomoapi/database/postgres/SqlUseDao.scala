@@ -1,11 +1,11 @@
 package com.flowy.fomoapi.database.postgres
 
-import com.flowy.marketmaker.common.FutureHelpers._
-import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.common.utils.FutureHelpers._
+import com.flowy.common.utils.sql.SqlDatabase
 import com.softwaremill.bootzooka.user._
 import com.flowy.fomoapi.database.dao.UserDao
 import com.flowy.fomoapi.database.postgres.schema.SqlUserSchema
-import com.flowy.marketmaker.models.{BasicUserData, User}
+import com.flowy.common.models.{BasicUserData, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 

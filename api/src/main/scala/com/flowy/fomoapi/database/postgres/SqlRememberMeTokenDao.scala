@@ -1,7 +1,7 @@
 package com.flowy.fomoapi.database.postgres
 
-import com.flowy.marketmaker.common.sql.SqlDatabase
-import com.flowy.marketmaker.common.FutureHelpers._
+import com.flowy.common.utils.sql.SqlDatabase
+import com.flowy.common.utils.FutureHelpers._
 import com.flowy.fomoapi.database.dao.RememberMeTokenDao
 import com.flowy.fomoapi.database.postgres.schema.SqlRememberMeSchema
 import com.flowy.fomoapi.models.RememberMeToken

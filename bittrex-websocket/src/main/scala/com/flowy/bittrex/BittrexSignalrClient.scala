@@ -10,8 +10,8 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import com.flowy.marketmaker.database.MarketUpdateDao
-import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
+import com.flowy.common.database.MarketUpdateDao
+import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.google.gson.JsonElement
 import microsoft.aspnet.signalr.client.Action
 import scala.concurrent.{ExecutionContext, Future, Promise}

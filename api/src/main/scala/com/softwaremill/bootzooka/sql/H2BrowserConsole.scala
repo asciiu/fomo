@@ -1,7 +1,7 @@
 package com.softwaremill.bootzooka.sql
 
 
-import com.flowy.marketmaker.common.sql.{DatabaseConfig, SqlDatabase}
+import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
 import com.typesafe.config.ConfigFactory
 import org.h2.tools.Console
 

@@ -1,6 +1,6 @@
 package com.flowy.fomoapi.database.postgres.schema
 
-import com.flowy.marketmaker.common.sql.SqlDatabase
+import com.flowy.common.utils.sql.SqlDatabase
 import java.time.OffsetDateTime
 import java.util.UUID
 import com.flowy.fomoapi.models.PasswordResetCode

@@ -6,8 +6,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
-import com.flowy.marketmaker.common.sql.{DatabaseConfig, SqlDatabase}
-import com.flowy.marketmaker.database.postgres.SqlTheEverythingBagelDao
+import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
+import com.flowy.common.database.postgres.{SqlTheEverythingBagelDao, SqlUserKeyDao}
 import com.flowy.fomoapi.Main.actorSystem
 import com.flowy.fomoapi.Routes
 import com.softwaremill.bootzooka.ServerConfig
@@ -17,8 +17,8 @@ import com.softwaremill.bootzooka.user.application._
 import com.softwaremill.session.{SessionConfig, SessionManager}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
-import com.flowy.fomoapi.database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao, SqlUserKeyDao}
-import com.flowy.marketmaker.api.BittrexClient
+import com.flowy.fomoapi.database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao}
+import com.flowy.common.api.BittrexClient
 import redis.RedisClient
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -212,11 +212,11 @@ lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket")
   )
   .dependsOn(common)
 
-lazy val walletService: Project = (project in file("wallet-service"))
+lazy val cacheService: Project = (project in file("cache-service"))
   .settings(commonSettings: _*)
   .settings(
-    assemblyJarName in assembly := "walletService.jar",
-    name := "wallet-service",
+    assemblyJarName in assembly := "cacheService.jar",
+    name := "cache-service",
     libraryDependencies ++= akkaClusterStack
   )
   .dependsOn(common)

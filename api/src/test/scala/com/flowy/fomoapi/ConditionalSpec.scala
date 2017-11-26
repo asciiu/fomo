@@ -2,7 +2,7 @@ package com.flowy.fomoapi
 
 import java.util.UUID
 
-import com.flowy.marketmaker.models.{GreaterThanEq, LessThanEq}
+import com.flowy.common.models.{GreaterThanEq, LessThanEq}
 import org.scalatest.{FlatSpec, Matchers}
 
 class ConditionalSpec extends FlatSpec with Matchers  {

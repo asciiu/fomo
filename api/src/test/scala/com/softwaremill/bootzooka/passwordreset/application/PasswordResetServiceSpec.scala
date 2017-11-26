@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 import com.flowy.fomoapi.database.postgres.SqlPasswordResetCodeDao
 import com.flowy.fomoapi.models.PasswordResetCode
 import com.flowy.fomoapi.services.PasswordResetService
-import com.flowy.marketmaker.models.User
+import com.flowy.common.models.User
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
 

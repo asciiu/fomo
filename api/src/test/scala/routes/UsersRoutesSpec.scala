@@ -4,9 +4,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
-import com.flowy.fomoapi.models.UserKey
 import com.flowy.fomoapi.routes.UsersRoutes
-import com.flowy.marketmaker.api.BittrexClient
+import com.flowy.common.api.BittrexClient
+import com.flowy.common.models.UserKey
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

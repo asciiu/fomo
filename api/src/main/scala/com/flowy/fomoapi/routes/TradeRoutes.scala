@@ -7,9 +7,9 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.flowy.bittrexExchange.ExchangeService.GetMarkets
 import com.flowy.bittrexExchange.MarketTradeService.PostTrade
-import com.flowy.marketmaker.api.Bittrex.MarketResult
-import com.flowy.marketmaker.database.TheEverythingBagelDao
-import com.flowy.marketmaker.models.{Trade, TradeRequest}
+import com.flowy.common.api.Bittrex.MarketResult
+import com.flowy.common.database.TheEverythingBagelDao
+import com.flowy.common.models.{Trade, TradeRequest}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging

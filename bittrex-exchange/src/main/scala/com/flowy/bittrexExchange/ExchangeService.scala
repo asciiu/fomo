@@ -4,10 +4,10 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Subscribe, Unsubscribe}
 import akka.stream.ActorMaterializer
-import com.flowy.marketmaker.api.Bittrex.{MarketResponse, MarketResult}
-import com.flowy.marketmaker.api.BittrexClient
-import com.flowy.marketmaker.database.TheEverythingBagelDao
-import com.flowy.marketmaker.models.MarketStructures.MarketUpdate
+import com.flowy.common.api.Bittrex.{MarketResponse, MarketResult}
+import com.flowy.common.api.BittrexClient
+import com.flowy.common.database.TheEverythingBagelDao
+import com.flowy.common.models.MarketStructures.MarketUpdate
 import redis.RedisClient
 import scala.concurrent.ExecutionContext
 

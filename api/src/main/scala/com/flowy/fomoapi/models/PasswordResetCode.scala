@@ -3,7 +3,7 @@ package com.flowy.fomoapi.models
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
-import com.flowy.marketmaker.models.User
+import com.flowy.common.models.User
 
 /**
   * Code used in the process of password reset.
