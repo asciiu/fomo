@@ -1,6 +1,6 @@
 package com.flowy.cacheService
 
-import java.time.OffsetDateTime
+import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
@@ -8,6 +8,7 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
+import com.flowy.common.Util
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{Exchange, UserKey}
@@ -96,7 +97,7 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
       response.result match {
         case Some(balances) =>
           log.info(s"validated userId: ${ukey.userId} bittrex keys")
-          bagel.userKeyDao.updateKey(ukey.copy( validatedOn = Some(OffsetDateTime.now()) ))
+          bagel.userKeyDao.updateKey(ukey.copy( validatedOn = Some(Util.now()) ))
           balances.foreach { currency =>
 
             val key = s"userId:${ukey.userId}:bittrex:${currency.Currency}"

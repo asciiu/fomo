@@ -20,7 +20,8 @@ object UserKey  {
                      exchange: String,
                      key: String,
                      secret: String,
-                     description: String) =
+                     description: String
+                    ) =
     UserKey(UUID.randomUUID(),
       userId,
       exchange,
@@ -29,6 +30,6 @@ object UserKey  {
       description,
       Instant.now().atOffset(ZoneOffset.UTC),
       Instant.now().atOffset(ZoneOffset.UTC),
-      None
+      Some(Instant.now().atOffset(ZoneOffset.UTC))
     )
 }
