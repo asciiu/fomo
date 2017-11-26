@@ -24,8 +24,9 @@ trait SqlUserKeySchema {
     def description     = column[String]("description")
     def createdOn       = column[OffsetDateTime]("created_on")
     def updatedOn       = column[OffsetDateTime]("updated_on")
+    def validatedOn     = column[OffsetDateTime]("validated_on")
 
-    def * = (id, userId, exchange, key, secret, description, createdOn, updatedOn) <>
+    def * = (id, userId, exchange, key, secret, description, createdOn, updatedOn, validatedOn.?) <>
       ((UserKey.apply _).tupled, UserKey.unapply)
 
     // format: ON

@@ -9,7 +9,8 @@ CREATE TABLE "user_api_keys"(
   "secret"  VARCHAR NOT NULL,
   "description" VARCHAR,
   "created_on" TIMESTAMP DEFAULT now(),
-  "updated_on" TIMESTAMP default current_timestamp
+  "updated_on" TIMESTAMP default current_timestamp,
+  "validated_on" TIMESTAMP
 );
 
 ALTER TABLE "user_api_keys" ADD CONSTRAINT "user_api_keys_user_fk"

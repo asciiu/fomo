@@ -1,5 +1,6 @@
 package com.flowy.cacheService
 
+import java.time.OffsetDateTime
 import java.util.UUID
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
@@ -9,7 +10,7 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.Exchange
+import com.flowy.common.models.{Exchange, UserKey}
 
 import language.postfixOps
 import redis.RedisClient
@@ -55,10 +56,13 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
     // subscribe to cluster messages
     mediator ! Subscribe("CacheBittrexWallets", self)
 
-    bagel.userKeyDao.findByUserId(UUID.fromString("6d3d515c-d5e9-4106-a38f-93270df6113e"), Exchange.Bittrex.toString).map {
-      case Some(key) => println(key)
-        cacheUserWallets(key.userId, Auth(key.key, key.secret))
-      case None =>  println("no keys found")
+    bagel.userKeyDao.findAllValidated(24).map {
+      case keys: Seq[UserKey] if keys.length > 0 =>
+        keys.foreach { key =>
+          cacheUserWallets(key)
+        }
+      case _ =>
+        log.warning("found 0 validated api keys")
     }
   }
 
@@ -82,33 +86,38 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
       * returns Future[Boolean] - true if cached false if no cache
       */
     case CacheBittrexWallets(userId, auth) =>
-      cacheUserWallets(userId, auth)
+      //cacheUserWallets(userId, auth)
   }
 
-  private def cacheUserWallets(userId: UUID, auth: Auth) = {
+  private def cacheUserWallets(ukey: UserKey) = {
+    val auth = Auth(ukey.key, ukey.secret)
+
     bittrexClient.accountGetBalances(auth).map { response =>
       response.result match {
         case Some(balances) =>
+          log.info(s"validated userId: ${ukey.userId} bittrex keys")
+          bagel.userKeyDao.updateKey(ukey.copy( validatedOn = Some(OffsetDateTime.now()) ))
           balances.foreach { currency =>
-            println(currency)
-            
-            val key = s"userId:$userId:bittrex:${currency.Currency}"
+
+            val key = s"userId:${ukey.userId}:bittrex:${currency.Currency}"
             val futureStatus = redis.hmset[String](key,
               Map("balance" -> currency.Balance.toString,
                 "available" -> currency.Available.toString,
                 "pending" -> currency.Pending.toString,
                 "address" -> currency.CryptoAddress.toString))
+
             futureStatus.map{
-              case true => cachedKeys += key
+              case true =>
+                // expire the keys after 24 hours - 86400 seconds
+                redis.expire(key, 86400)
+                cachedKeys += key
               case false => ???
             }
-            sender ! futureStatus
           }
         case None =>
-          sender ! Future.successful(false)
+          log.info(s"invalid key or zero balance for bittrex internal user ${ukey.userId}")
       }
     }
-
   }
 }
 

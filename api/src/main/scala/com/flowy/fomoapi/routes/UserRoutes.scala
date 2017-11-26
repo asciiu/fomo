@@ -45,7 +45,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       request.secret,
       request.description,
       Instant.now().atOffset(ZoneOffset.UTC),
-      Instant.now().atOffset(ZoneOffset.UTC))
+      Instant.now().atOffset(ZoneOffset.UTC),
+      None
+    )
 
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {

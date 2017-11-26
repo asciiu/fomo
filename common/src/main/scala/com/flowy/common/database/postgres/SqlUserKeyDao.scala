@@ -1,5 +1,6 @@
 package com.flowy.common.database.postgres
 
+import java.time.OffsetDateTime
 import java.util.UUID
 
 import com.flowy.common.database.UserKeyDao
@@ -30,6 +31,11 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
     }
   }
 
+  def findAllValidated(withinHours: Int): Future[Seq[UserKey]] = {
+    val query = userKeys.filter(_.validatedOn > OffsetDateTime.now().minusHours(withinHours))
+    db.run(query.result)
+  }
+
   def findById(keyId: UUID): Future[Option[UserKey]] =
     findOneWhere(_.id === keyId)
 
@@ -53,8 +59,15 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   }
 
   def updateKey(ukey: UserKey): Future[Boolean] = {
-    val updateAction = userKeys.filter(k => k.id === ukey.id && k.userId === ukey.userId && k.exchange === ukey.exchange)
-      .map(lk => (lk.key, lk.secret, lk.description)).update((ukey.key, ukey.secret, ukey.description))
+    val updateAction = ukey.validatedOn match {
+      case Some(timestamp) =>
+        userKeys.filter(k => k.id === ukey.id && k.userId === ukey.userId && k.exchange === ukey.exchange)
+          .map(lk => (lk.key, lk.secret, lk.description, lk.validatedOn)).update((ukey.key, ukey.secret, ukey.description, timestamp))
+      case None =>
+        userKeys.filter(k => k.id === ukey.id && k.userId === ukey.userId && k.exchange === ukey.exchange)
+          .map(lk => (lk.key, lk.secret, lk.description)).update((ukey.key, ukey.secret, ukey.description))
+    }
+
 
     db.run( updateAction.asTry ).map {result =>
       result match {

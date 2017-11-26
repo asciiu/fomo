@@ -10,7 +10,9 @@ case class UserKey (id: UUID,
                     secret: String,
                     description: String,
                     createdOn: OffsetDateTime,
-                    updatedOn: OffsetDateTime)
+                    updatedOn: OffsetDateTime,
+                    validatedOn: Option[OffsetDateTime]
+                   )
 
 
 object UserKey  {
@@ -26,6 +28,7 @@ object UserKey  {
       secret,
       description,
       Instant.now().atOffset(ZoneOffset.UTC),
-      Instant.now().atOffset(ZoneOffset.UTC)
+      Instant.now().atOffset(ZoneOffset.UTC),
+      None
     )
 }
