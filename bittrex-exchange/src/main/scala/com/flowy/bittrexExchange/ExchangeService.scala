@@ -131,6 +131,8 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
         // fire up a new actor for this market
         marketServices += marketName -> context.actorOf(MarketTradeService.props(marketName, bagel, redis), marketName)
 
+        log.info(s"MarketTradeService started for ${marketName}")
+
         // send a message to the retriever to get the candle data from Poloniex
         // if the 24 hour baseVolume from this update is greater than our threshold
         //eventBus.publish(MarketEvent(NewMarket, QueueMarket(marketName)))

@@ -16,6 +16,7 @@ import com.typesafe.scalalogging.StrictLogging
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
+import redis.RedisClient
 
 import scala.concurrent.duration._
 
@@ -23,6 +24,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def bittrexService: ActorRef
   def bagel: TheEverythingBagelDao
+  def redis: RedisClient
 
   import Trade._
 
@@ -106,17 +108,26 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   }
 
   def postTrade = {
-    path("trades") {
+    path("new") {
       post {
         userFromSession { user =>
           entity(as[TradeRequest]) { tradeRequest =>
             implicit val timeout = Timeout(1.second)
 
-            onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
-              case true =>
-                completeOk
+            val currency = tradeRequest.marketName.split("-")(1)
+            val key = s"userId:${user.id}:bittrex:${currency}"
+
+            onSuccess( redis.hget[String](key, "balance") ) {
+              case Some(balance) if balance.toDouble > tradeRequest.quantity =>
+
+                onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
+                  case true =>
+                    completeOk
+                  case _ =>
+                    complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+                }
               case _ =>
-                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+                complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user balance for ${currency} is less than trade amount", Json.Null))
             }
           }
         }

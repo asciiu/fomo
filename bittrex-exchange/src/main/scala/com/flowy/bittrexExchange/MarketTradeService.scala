@@ -6,6 +6,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.http.scaladsl.server.Directives.onSuccess
 import com.flowy.trailingStop.messages.TrailingStop
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
@@ -87,36 +88,45 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
         if (t.isDefined) {
           val trade = t.get
-          // TODO this is where the order shall be executed via the BittrexClient
 
-          val updatedTrade = t.get.copy(
-            // TODO the buyPrice should be the actual price you may need to read this from bittrex
-            buyPrice = Some(lastPrice),
-            buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
-            status = TradeStatus.Bought
-          )
+          val currency = trade.marketName.split("-")(1)
+          val key = s"userId:${trade.userId}:bittrex:${trade.marketCurrencyAbbrev}"
 
-          log.info(s"buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
-          bagel.updateTrade(updatedTrade)
+          redis.hget[String](key, "balance").map {
+            case Some(balance) if balance.toDouble > trade.quantity => ???
+              // TODO this is where the order shall be executed via the BittrexClient
 
-          // TODO this needs refinement
-          if (trade.sellConditions.isDefined) {
-            val sellConditions = trade.sellConditions.get
-            val conditions = sellConditions.split(" or ")
+              val updatedTrade = t.get.copy(
+                // TODO the buyPrice should be the actual price you may need to read this from bittrex
+                buyPrice = Some(lastPrice),
+                buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
+                status = TradeStatus.Bought
+              )
 
-            conditions.foreach{ c =>
-              if (c.contains("TrailingStop")) {
-                val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
-                c match {
-                  case extractParams(percent, refPrice) =>
-                    val trailStop = TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble)
-                    mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble))
-                    log.info(s"sending trailing stop $trailStop")
-                  case _ =>
-                  // do nothing
+              log.info(s"buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
+              bagel.updateTrade(updatedTrade)
+
+              // TODO this needs refinement
+              if (trade.sellConditions.isDefined) {
+                val sellConditions = trade.sellConditions.get
+                val conditions = sellConditions.split(" or ")
+
+                conditions.foreach{ c =>
+                  if (c.contains("TrailingStop")) {
+                    val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+                    c match {
+                      case extractParams(percent, refPrice) =>
+                        val trailStop = TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble)
+                        mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble))
+                        log.info(s"sending trailing stop $trailStop")
+                      case _ =>
+                      // do nothing
+                    }
+                  }
                 }
               }
-            }
+            case _ =>
+              log.info(s"Canceling trade ${trade.id} due to insufficient balance")
           }
         }
       }
