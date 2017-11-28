@@ -4,6 +4,8 @@ import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 import javax.ws.rs.{GET, POST, Path}
 
+import akka.actor.ActorRef
+import akka.cluster.pubsub.DistributedPubSub
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
@@ -34,6 +36,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def userService: UserService
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
+  def mediator: ActorRef
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 

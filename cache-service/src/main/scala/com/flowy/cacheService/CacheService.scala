@@ -9,6 +9,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
 import com.flowy.common.Util
+import com.flowy.common.api.Bittrex.BalanceResult
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
@@ -26,7 +27,7 @@ object CacheService {
     Props(new CacheService(bagel, redis))
 
   case class CacheBittrexWallets(userId: UUID, auth: Auth)
-  case object Hello
+  case class CacheBittrexBalances(userId: UUID, balances: List[BalanceResult])
 }
 
 /**
@@ -55,7 +56,7 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
   override def preStart(): Unit = {
     // subscribe to cluster messages
-    mediator ! Subscribe("CacheBittrexWallets", self)
+    mediator ! Subscribe("CacheBittrexBalances", self)
 
     bagel.userKeyDao.findAllWithStatus(ApiKeyStatus.Verified).map {
       case keys: Seq[UserKey] if keys.length > 0 =>
@@ -68,13 +69,10 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
   }
 
   override def postStop(): Unit = {
-    mediator ! Unsubscribe("CacheBittrexWallets", self)
+    mediator ! Unsubscribe("CacheBittrexBalances", self)
   }
 
   def receive = {
-
-    case Hello =>
-      println("hello from test")
 
     case SubscribeAck(Subscribe("Wallet", None, `self`)) ⇒
       log.info("subscribed to Wallet commands")
@@ -88,8 +86,40 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
       */
     case CacheBittrexWallets(userId, auth) =>
       //cacheUserWallets(userId, auth)
+
+    /**
+      * Cache the bittrex balances
+      */
+    case CacheBittrexBalances(userId, balances) =>
+      cacheUserBalances(userId, balances)
   }
 
+
+  // TODO response to sender with boolean
+  private def cacheUserBalances(userId: UUID, balances: List[BalanceResult]) = {
+    log.info(s"caching balances for userId: ${userId}")
+
+    balances.foreach { currency =>
+
+      val key = s"userId:${userId}:bittrex:${currency.Currency}"
+      val futureStatus = redis.hmset[String](key,
+        Map("balance" -> currency.Balance.toString,
+          "available" -> currency.Available.toString,
+          "pending" -> currency.Pending.toString,
+          "address" -> currency.CryptoAddress.toString))
+
+      futureStatus.map{
+        case true =>
+          // expire the keys after 24 hours - 86400 seconds
+          redis.expire(key, 86400)
+          cachedKeys += key
+        case false => ???
+      }
+    }
+  }
+
+
+  // TODO response to sender with boolean
   private def cacheUserWallets(ukey: UserKey) = {
     val auth = Auth(ukey.key, ukey.secret)
 
@@ -97,23 +127,9 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
       response.result match {
         case Some(balances) =>
           log.info(s"verified bittrex key for userId: ${ukey.userId}")
-          balances.foreach { currency =>
 
-            val key = s"userId:${ukey.userId}:bittrex:${currency.Currency}"
-            val futureStatus = redis.hmset[String](key,
-              Map("balance" -> currency.Balance.toString,
-                "available" -> currency.Available.toString,
-                "pending" -> currency.Pending.toString,
-                "address" -> currency.CryptoAddress.toString))
+          cacheUserBalances(ukey.userId, balances)
 
-            futureStatus.map{
-              case true =>
-                // expire the keys after 24 hours - 86400 seconds
-                redis.expire(key, 86400)
-                cachedKeys += key
-              case false => ???
-            }
-          }
         case None =>
           bagel.userKeyDao.updateKey(ukey.copy( status = ApiKeyStatus.Invalid ))
           log.info(s"invalid key or zero balance using bittrex key for userId: ${ukey.userId}")

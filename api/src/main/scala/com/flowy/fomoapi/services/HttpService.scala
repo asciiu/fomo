@@ -3,6 +3,7 @@ package com.flowy.fomoapi.services
 import java.util.Locale
 
 import akka.actor.ActorSystem
+import akka.cluster.pubsub.DistributedPubSub
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
@@ -43,6 +44,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
   lazy val bittrexClient = new BittrexClient()
+  lazy val mediator = DistributedPubSub(system).mediator
 
   lazy val emailService = if (config.emailEnabled) {
     new SmtpEmailService(config)(serviceExecutionContext)

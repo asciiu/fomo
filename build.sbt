@@ -175,7 +175,7 @@ lazy val api: Project = (project in file("api"))
       )
     }
   )
-  .dependsOn(common, trailingStopService, bittrexExchangeService)
+  .dependsOn(common, bittrexExchangeService, cacheService, trailingStopService)
 
 
 /****************************************************************
