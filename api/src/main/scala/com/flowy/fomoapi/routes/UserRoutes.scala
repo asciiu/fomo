@@ -1,15 +1,9 @@
 package com.flowy.fomoapi.routes
 
-import java.time.{Instant, ZoneOffset}
-import java.util.UUID
-import javax.ws.rs.{GET, POST, Path}
-
-import akka.actor.ActorRef
-import akka.cluster.pubsub.DistributedPubSub
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
-import com.flowy.fomoapi.services.{UserKeyService, UserRegisterResult, UserService}
+import com.flowy.fomoapi.services.UserKeyService
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
 import com.flowy.common.api.Bittrex.BalancesResponse
 import com.flowy.common.api.{Auth, BittrexClient}
@@ -21,11 +15,13 @@ import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
+import java.time.{Instant, ZoneOffset}
+import java.util.UUID
+import javax.ws.rs.{GET, POST, Path}
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.swagger.annotations._
-
 import scala.concurrent.Future
 
 
@@ -36,7 +32,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def userService: UserService
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
-  def mediator: ActorRef
 
   implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
 

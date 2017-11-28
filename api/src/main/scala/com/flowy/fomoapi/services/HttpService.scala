@@ -44,7 +44,6 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   lazy val rememberMeTokenDao = new SqlRememberMeTokenDao(sqlDatabase)(daoExecutionContext)
   lazy val serviceExecutionContext = system.dispatchers.lookup("service-dispatcher")
   lazy val bittrexClient = new BittrexClient()
-  lazy val mediator = DistributedPubSub(system).mediator
 
   lazy val emailService = if (config.emailEnabled) {
     new SmtpEmailService(config)(serviceExecutionContext)
