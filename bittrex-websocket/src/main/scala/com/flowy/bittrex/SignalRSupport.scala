@@ -1,8 +1,10 @@
 package com.flowy.bittrex
 
-import microsoft.aspnet.signalr.client.{Action, ErrorCallback, SignalRFuture}
-import microsoft.aspnet.signalr.client.hubs.HubConnection
+import java.util
 
+import microsoft.aspnet.signalr.client.http.Request
+import microsoft.aspnet.signalr.client.{Action, Credentials, ErrorCallback, SignalRFuture}
+import microsoft.aspnet.signalr.client.hubs.HubConnection
 import scala.concurrent.{Future, Promise}
 import scala.util.Success
 
@@ -23,7 +25,7 @@ trait SignalRSupport {
    * @note AF: This is shitty design.
    *       Find a better way (concurrent dictionary of connections keyed by URL perhaps).
    */
-  private lazy val connection = new HubConnection(signalRServiceUrl)
+  private lazy val connection = new HubConnection(signalRServiceUrl, false)
 
   /**
    * Asynchronously connect to the SignalR service specified by `signalRServiceUrl`.
@@ -31,22 +33,25 @@ trait SignalRSupport {
    * @return A `Future[Void]` representing the asynchronous connection process.
    */
   protected def connectSignalR(configurator: (HubConnection) => Unit = null): Future[Unit] = {
+
     connection.error(new ErrorCallback {
       override def onError(error: Throwable): Unit = {
         onSignalRError(error)
       }
     })
 
-    if (configurator != null)
+    if (configurator != null) {
       configurator(connection)
-
+    }
     // TODO this needs to be implemented for cloudfare
     // this did not work
     // https://github.com/n0mad01/node.bittrex.api/issues/67
     //val credentials = new Credentials() {
     //  override def prepareRequest(request: Request) {
-    //    request.addHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
-    //    request.addHeader("cookie", "cf_clearance=cc41caa57b8bd1250223890897b0a67823ad2efa-1510527079-10800")
+    //    request.setHeaders(Map(
+    //      "User-Agent" -> "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36",
+    //      "cookie" -> "__cfduid=d5e3524ac98f70650dadb928afdf68a161511935946"
+    //    ))
     //  }
     //}
     //connection.setCredentials(credentials)

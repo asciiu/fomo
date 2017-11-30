@@ -73,21 +73,21 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
     // reference https://github.com/n0mad01/node.bittrex.api/issues/67
 //    connectSignalR { connection =>
 //      val broadcastHub = connection.createHubProxy("CoreHub")
-//      val subscription = broadcastHub.subscribe("updateSummaryState")
+//      //val subscription = broadcastHub.subscribe("SubscribeToSummaryDeltas")
+//      val subscription = broadcastHub.subscribe("SubscribeToExchangeDeltas")
 //
 //      subscription.addReceivedHandler(new Action[Array[JsonElement]]() {
 //        override def run(obj: Array[JsonElement]): Unit = {
 //          publishSummary(obj(0).toString)
 //        }
 //      })
+//      log.info("connected to bittrex")
 //    }
-
-    log.info("started bittrex websocket")
   }
 
 
   override def postStop() = {
-    disconnectSignalR()
+    //disconnectSignalR()
     log.info("closed bittrex websocket")
   }
 
