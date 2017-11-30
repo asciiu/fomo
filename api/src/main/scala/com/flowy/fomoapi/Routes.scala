@@ -7,6 +7,7 @@ import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.api.RoutesRequestWrapper
 import com.softwaremill.bootzooka.swagger.SwaggerDocService
 
+
 trait Routes extends RoutesRequestWrapper
   with UsersRoutes
   with PasswordResetRoutes
@@ -23,12 +24,22 @@ trait Routes extends RoutesRequestWrapper
       versionRoutes ~
       tradeRoutes
     } ~
+    indexRoute ~
     swaggerDocs
   }
+
+  // needed for aws health checks
+  def indexRoute =
+    path("index.html") {
+      get {
+        completeOk
+      }
+    }
 
   // swagger for api docs
   def swaggerDocs = path("docs") {
     getFromResource("swagger/index.html") } ~
     new SwaggerDocService(config.serverHost, config.serverPort, system).routes ~
     getFromResourceDirectory("swagger")
+
 }
