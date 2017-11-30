@@ -57,7 +57,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       basicUserInfo ~
       changePassword ~
       changeuUserEmail ~
-      loginUser ~
+      session ~
       logoutUser ~
       registerUser
     }
@@ -75,7 +75,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   }
 
   @POST
-  @Path("/login")
+  @Path("/session")
   @ApiOperation(value = "Login for user",
     notes = "Returns set-authoriation and optional set-refresh-token headers. Subsequent requests will need these headers set for authentication.",
     response = classOf[BasicUserData])
@@ -86,8 +86,8 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   @ApiResponses(Array(
     new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
   ))
-  def loginUser =
-    path("login") {
+  def session =
+    path("session") {
       post {
         entity(as[LoginInput]) { in =>
           onSuccess(userService.authenticate(in.email, in.password)) {

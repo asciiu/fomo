@@ -29,6 +29,13 @@ reStart
 ```
 
 
+## Service Deployment Order
+1. Bittrex Web Socket
+2. Bittrex Exchange Service
+3. Bittrex Trailing Stop
+4. Api
+
+
 
 
 
