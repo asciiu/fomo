@@ -17,13 +17,13 @@ node {
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r /var/lib/jenkins/workspace/fomo/bittrex-websocket/target/scala-2.12/bittrexWebsocketClient.jar ubuntu@stage.fomo.exchange:~/"
+        sh "scp -r /var/lib/jenkins/workspace/fomo/bittrex-websocket/target/scala-2.12/bittrexWebsocketClient.jar ubuntu@s1.fomo.exchange:~/"
       }
     }
 
     stage ('Restarting') {
       ansiColor('xterm') {
-        sh "ssh ubuntu@54.183.216.67 'sudo systemctl restart BittrexWebsocketClient'"
+        sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart BittrexWebsocketClient'"
       }
     }
   } catch (e) {
