@@ -17,13 +17,13 @@ node {
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r '/var/lib/jenkins/workspace/Fomo Trailing Stop/trailing-stop/target/scala-2.12/trailingStopService.jar' ubuntu@stage.fomo.exchange:~/"
+        sh "scp -r '/var/lib/jenkins/workspace/Fomo Trailing Stop/trailing-stop/target/scala-2.12/trailingStopService.jar' ubuntu@s1.fomo.exchange:~/"
       }
     }
 
     stage ('Restarting') {
       ansiColor('xterm') {
-        sh "ssh ubuntu@stage.fomo.exchange 'sudo systemctl restart btrailingstop'"
+        sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart btrailingstop'"
       }
     }
   } catch (e) {
