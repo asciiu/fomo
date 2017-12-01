@@ -21,7 +21,7 @@ object Main extends App {
       withFallback(ConfigFactory.load())
   }
 
-  implicit val system = ActorSystem("ClusterSystem", config.rootConfig)
+  implicit val system = ActorSystem("cluster", config.rootConfig)
   implicit val executor: ExecutionContext = system.dispatcher
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 

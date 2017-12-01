@@ -15,11 +15,11 @@ object Main extends App {
 
   lazy val config = new DatabaseConfig with ServerConfig {
     override def rootConfig = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").
-      withFallback(ConfigFactory.parseString("akka.cluster.roles = [BittrexWebSocketClient]")).
+      withFallback(ConfigFactory.parseString("akka.cluster.roles = [bittrex-websocket]")).
       withFallback(ConfigFactory.load())
   }
 
-  implicit val system = ActorSystem("ClusterSystem", config.rootConfig)
+  implicit val system = ActorSystem("cluster", config.rootConfig)
   implicit val executor: ExecutionContext = system.dispatcher
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
