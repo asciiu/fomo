@@ -59,7 +59,6 @@ val seleniumStack   = Seq(seleniumJava, seleniumFirefox)
 val akkaActor            = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaClustering       = "com.typesafe.akka" %% "akka-cluster" % akkaVersion
 val akkRemote            = "com.typesafe.akka" %% "akka-remote" % akkaVersion
-val akkaClusterMetrics   = "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion
 val akkaClusterTools     = "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion
 val akkaMultNode         = "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion
 val akkaStream           = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -75,7 +74,7 @@ val swagger              = "com.github.swagger-akka-http" %% "swagger-akka-http"
 val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion
 val sigarLoders          = "io.kamon" % "sigar-loader" % "1.6.6-rev002"
 
-val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaStream, akkaClusterMetrics, akkaClusterTools, akkaMultNode, scalatest)
+val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaStream, akkaClusterTools, akkaMultNode, scalatest)
 
 // scalatrex
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.3"
