@@ -11,6 +11,7 @@ node {
 
     stage('Building'){
       ansiColor('xterm') {
+        sh "${sbtHome}/bin/sbt 'project api' clean"
         sh "${sbtHome}/bin/sbt 'project api' assembly"
       }
     }
