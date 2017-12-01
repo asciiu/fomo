@@ -15,7 +15,7 @@ object Main extends App with StrictLogging {
     withFallback(ConfigFactory.parseString("akka.cluster.roles = [api]")).
     withFallback(ConfigFactory.load())
 
-  implicit val actorSystem = ActorSystem("ClusterSystem", config)
+  implicit val actorSystem = ActorSystem("cluster-api", config)
   implicit val executor: ExecutionContext = actorSystem.dispatcher
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
