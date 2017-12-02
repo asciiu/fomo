@@ -251,7 +251,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     path("session") {
       get {
         userFromSession { user =>
-          complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+          setSession(refreshable, usingHeaders, Session(user.id)) {
+            complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+          }
         }
       }
     }
