@@ -50,16 +50,16 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
       addApiKey ~
-      getApiKey ~
-      removeApiKey ~
-      updateApiKey ~
       balances ~
-      sessionBegin ~
       changePassword ~
-      changeuUserEmail ~
+      changeUserEmail ~
+      getApiKey ~
       loginUser ~
       logoutUser ~
-      registerUser
+      registerUser ~
+      removeApiKey ~
+      session ~
+      updateApiKey
     }
   }
 
@@ -105,18 +105,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  @GET
-  @Path("/register")
-  @ApiOperation(value = "Registers a new user",
-    response = classOf[JSendResponse])
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "body", value = "registration deets", required = true,
-      dataTypeClass = classOf[RegistrationInput], paramType = "body")
-  ))
-  @ApiResponses(Array(
-    new ApiResponse(code = 400, message = "The request contains bad syntax or cannot be fulfilled."),
-    new ApiResponse(code = 409, message = "Email already taken")
-  ))
   def registerUser =
     path("register") {
       post {
@@ -133,17 +121,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  @GET
-  @Path("/changepassword")
-  @ApiOperation(value = "Changes a user's password",
-    response = classOf[JSendResponse])
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "body", value = "new password", required = true,
-      dataTypeClass = classOf[ChangePasswordInput], paramType = "body")
-  ))
-  @ApiResponses(Array(
-    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
-  ))
   def changePassword =
     path("changepassword") {
       post {
@@ -249,7 +226,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  def changeuUserEmail =
+  def changeUserEmail =
     path("changeemail") {
       patch {
         userIdFromSession { userId =>
@@ -270,14 +247,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  @GET
-  @Path("/info")
-  @ApiOperation(value = "Returns basic user info",
-    response = classOf[JSendResponse])
-  @ApiResponses(Array(
-    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
-  ))
-  def sessionBegin =
+  def session =
     path("session") {
       get {
         userFromSession { user =>
