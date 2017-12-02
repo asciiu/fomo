@@ -1,23 +1,19 @@
 package com.flowy.cacheService
 
-import java.time.{Instant, OffsetDateTime, ZoneOffset}
-import java.util.UUID
-
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSubMediator.Unsubscribe
 import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import akka.stream.ActorMaterializer
-import com.flowy.common.Util
-import com.flowy.common.api.Bittrex.BalanceResult
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
+import com.flowy.common.models.{ApiKeyStatus, Balance, UserKey}
+import java.util.UUID
 
 import language.postfixOps
 import redis.RedisClient
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 object CacheService {
   def props(bagel: TheEverythingBagelDao, redis: RedisClient)
@@ -27,7 +23,7 @@ object CacheService {
     Props(new CacheService(bagel, redis))
 
   case class CacheBittrexWallets(userId: UUID, auth: Auth)
-  case class CacheBittrexBalances(userId: UUID, balances: List[BalanceResult])
+  case class CacheBittrexBalances(userId: UUID, balances: List[Balance])
 }
 
 /**
@@ -96,7 +92,7 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
 
   // TODO response to sender with boolean
-  private def cacheUserBalances(userId: UUID, balances: List[BalanceResult]) = {
+  private def cacheUserBalances(userId: UUID, balances: List[Balance]) = {
     log.info(s"caching balances for userId: ${userId}")
 
     balances.foreach { currency =>

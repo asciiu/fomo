@@ -5,7 +5,7 @@ import com.flowy.common.utils.sql.SqlDatabase
 import com.softwaremill.bootzooka.user._
 import com.flowy.fomoapi.database.dao.UserDao
 import com.flowy.fomoapi.database.postgres.schema.SqlUserSchema
-import com.flowy.common.models.{BasicUserData, User}
+import com.flowy.common.models.{UserData, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,8 +21,11 @@ class SqlUserDao(protected val database: SqlDatabase)(implicit val ec: Execution
 
   def findById(userId: UserId): Future[Option[User]] = findOneWhere(_.id === userId)
 
-  def findBasicDataById(userId: UserId): Future[Option[BasicUserData]] =
-    db.run(users.filter(_.id === userId).map(_.basic).result.headOption)
+  def findBasicDataById(userId: UserId): Future[Option[UserData]] =
+    db.run(users.filter(_.id === userId).result.headOption).map{
+      case Some(user) => Some(UserData.fromUser(user))
+      case None => None
+    }
 
   def findByEmail(email: String): Future[Option[User]] = findOneWhere(_.email.toLowerCase === email.toLowerCase)
 

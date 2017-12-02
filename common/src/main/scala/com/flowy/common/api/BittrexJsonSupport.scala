@@ -1,17 +1,12 @@
 package com.flowy.common.api
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import com.flowy.common.models.Balance
 import spray.json.DefaultJsonProtocol
 
 object Bittrex {
 
   // Results
-  case class BalanceResult(Currency: String,
-                           Balance: Double,
-                           Available: Double,
-                           Pending: Double,
-                           CryptoAddress: Option[String])
-
   case class DepositAddressResult(Currency: String, address: Option[String])
 
   case class OrderHistoryResult(OrderUuid: String,
@@ -137,8 +132,8 @@ object Bittrex {
   case class StandardNullResponse(success: Boolean, message: String)
 
   // All bittrex responses return some sort of result
-  type BalanceResponse = StandardResponse[BalanceResult]
-  type BalancesResponse = StandardResponse[List[BalanceResult]]
+  type BalanceResponse = StandardResponse[Balance]
+  type BalancesResponse = StandardResponse[List[Balance]]
   type DepositAddressResponse = StandardResponse[DepositAddressResult]
   type OrderHistoryResponse = StandardResponse[List[OrderHistoryResult]]
   type GetOpenOrdersResponse = StandardResponse[List[OrderResult]]
@@ -159,7 +154,7 @@ trait BittrexJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import Bittrex._
 
   // result formatters
-  implicit val balanceResult          = jsonFormat5(BalanceResult)
+  implicit val balanceResult          = jsonFormat5(Balance)
   implicit val depositAddressResult   = jsonFormat2(DepositAddressResult)
   implicit val orderHistoryResult     = jsonFormat14(OrderHistoryResult)
   implicit val openOrderResult        = jsonFormat12(OrderResult)
@@ -176,8 +171,8 @@ trait BittrexJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val marketHistoryResult    = jsonFormat7(MarketHistoryResult)
 
   // formatters for bittrex responses requires result formatters above
-  implicit val balanceReponse         = jsonFormat3(StandardResponse[BalanceResult])
-  implicit val balancesResponse       = jsonFormat3(StandardResponse[List[BalanceResult]])
+  implicit val balanceReponse         = jsonFormat3(StandardResponse[Balance])
+  implicit val balancesResponse       = jsonFormat3(StandardResponse[List[Balance]])
   implicit val depositAddressResponse = jsonFormat3(StandardResponse[DepositAddressResult])
   implicit val orderHistResponse      = jsonFormat3(StandardResponse[List[OrderHistoryResult]])
   implicit val openOrderResponse      = jsonFormat3(StandardResponse[List[OrderResult]])

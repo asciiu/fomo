@@ -8,7 +8,7 @@ import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.softwaremill.session.{RefreshTokenStorage, SessionManager}
 import com.flowy.fomoapi.services.UserService
-import com.flowy.common.models.BasicUserData
+import com.flowy.common.models.UserData
 
 import scala.concurrent.ExecutionContext
 
@@ -22,7 +22,7 @@ trait SessionSupport {
 
   def userService: UserService
 
-  def userFromSession: Directive1[BasicUserData] = userIdFromSession.flatMap { userId =>
+  def userFromSession: Directive1[UserData] = userIdFromSession.flatMap { userId =>
     onSuccess(userService.findById(userId)).flatMap {
       case None       => reject(AuthorizationFailedRejection)
       case Some(user) => provide(user)

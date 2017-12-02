@@ -2,8 +2,9 @@ package com.flowy.fomoapi.database.postgres.schema
 
 import java.time.OffsetDateTime
 import java.util.UUID
+
 import com.flowy.common.utils.sql.SqlDatabase
-import com.flowy.common.models.{BasicUserData, User}
+import com.flowy.common.models.{User, UserData}
 
 /**
   * The schemas are in separate traits, so that if your DAO would require to access (e.g. join) multiple tables,
@@ -29,7 +30,7 @@ trait SqlUserSchema {
     def createdOn       = column[OffsetDateTime]("created_on")
 
     def * = (id, email, first, last, password, salt) <> ((User.apply _).tupled, User.unapply)
-    def basic = (id, first, last, email) <> ((BasicUserData.apply _).tupled, BasicUserData.unapply)
+    //def basic = (id, first, last, email, Seq.empty) <> ((UserData.apply _).tupled, UserData.unapply)
     // format: ON
   }
 }

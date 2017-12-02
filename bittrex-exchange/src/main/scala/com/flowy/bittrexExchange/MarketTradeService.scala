@@ -6,11 +6,10 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import akka.http.scaladsl.server.Directives.onSuccess
 import com.flowy.trailingStop.messages.TrailingStop
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
-import com.flowy.common.models.{BasicUserData, Trade, TradeRequest, TradeStatus}
+import com.flowy.common.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.ExecutionContext
@@ -23,8 +22,8 @@ object MarketTradeService {
   def props(marketName: String, bagel: TheEverythingBagelDao, redis: RedisClient)(implicit context: ExecutionContext) =
     Props(new MarketTradeService(marketName, bagel, redis))
 
-  case class PostTrade(forUser: BasicUserData, request: TradeRequest, sender: Option[ActorRef] = None)
-  case class UpdateTrade(forUser: BasicUserData, request: TradeRequest, sender: Option[ActorRef] = None)
+  case class PostTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
+  case class UpdateTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
 }
 
 
@@ -153,7 +152,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     buyConditions --= conditionsThatPass
   }
 
-  private def postTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
+  private def postTrade(user: UserData, request: TradeRequest, sender: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
 
     bagel.insert(trade).map { result =>
@@ -169,7 +168,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     }
   }
 
-  private def updateTrade(user: BasicUserData, request: TradeRequest, sender: ActorRef) = {
+  private def updateTrade(user: UserData, request: TradeRequest, sender: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
   }
 }

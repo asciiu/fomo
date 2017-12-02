@@ -42,8 +42,16 @@ object User {
     )
 }
 
-case class BasicUserData(id: UserId, first: String, last: String, email: String)
+case class Balance(Currency: String,
+                   Balance: Double,
+                   Available: Double,
+                   Pending: Double,
+                   CryptoAddress: Option[String])
 
-object BasicUserData {
-  def fromUser(user: User) = new BasicUserData(user.id, user.firstName, user.lastName, user.email)
+case class UserData(id: UserId, first: String, last: String, email: String, exchanges: Seq[ExchangeData])
+
+case class ExchangeData(name: String, balances: Seq[Balance])
+
+object UserData {
+  def fromUser(user: User) = new UserData(user.id, user.firstName, user.lastName, user.email, Seq.empty)
 }

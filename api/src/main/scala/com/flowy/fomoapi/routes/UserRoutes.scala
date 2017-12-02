@@ -8,7 +8,7 @@ import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
 import com.flowy.common.api.Bittrex.BalancesResponse
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.utils.Utils
-import com.flowy.common.models.{ApiKeyStatus, BasicUserData, Exchange, UserKey}
+import com.flowy.common.models.{ApiKeyStatus, UserData, Exchange, UserKey}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api._
 import com.softwaremill.bootzooka.user.application.Session
@@ -33,7 +33,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
 
-  implicit val basicUserDataCbs = CanBeSerialized[BasicUserData]
+  implicit val basicUserDataCbs = CanBeSerialized[UserData]
 
   def convertToUkey(userId: UUID, request: UpdateApiKeyRequest): UserKey =
     UserKey(request.id,
@@ -87,7 +87,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
               } else {
                 setSession(oneOff, usingHeaders, session)
               }) {
-                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user).asJson))
               }
           }
         }
@@ -247,12 +247,37 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  def checkBalances(userId: UUID) = {
+    userKeyService.getAllKeys(userId).map {
+      case keys: Seq[UserKey] if keys.nonEmpty =>
+        keys.foreach { k =>
+
+          if (k.exchange == Exchange.Bittrex) {
+            bittrexClient.accountGetBalances(Auth(k.key, k.secret)).map (println)
+          }
+        }
+      //auth
+      //onSuccess(bittrexClient.accountGetBalances(auth)) {
+      //  case balResponse: BalancesResponse =>
+      //   complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", balResponse.asJson))
+      //case _ =>
+      //   complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+      //}
+      //}
+      case _ =>
+        //val reponseBody = ExchangeData()
+
+    }
+  }
+
   def session =
     path("session") {
       get {
         userFromSession { user =>
+          checkBalances(user.id)
+
           setSession(refreshable, usingHeaders, Session(user.id)) {
-            complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
+            complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user).asJson))
           }
         }
       }

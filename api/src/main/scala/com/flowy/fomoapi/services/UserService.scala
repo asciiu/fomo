@@ -6,7 +6,7 @@ import com.flowy.common.utils.Utils
 import com.softwaremill.bootzooka.email.application.{EmailService, EmailTemplatingEngine}
 import com.softwaremill.bootzooka.user._
 import com.flowy.fomoapi.database.dao.UserDao
-import com.flowy.common.models.{BasicUserData, User}
+import com.flowy.common.models.{UserData, User}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -16,7 +16,7 @@ class UserService(
     emailTemplatingEngine: EmailTemplatingEngine
 )(implicit ec: ExecutionContext) {
 
-  def findById(userId: UserId): Future[Option[BasicUserData]] =
+  def findById(userId: UserId): Future[Option[UserData]] =
     userDao.findBasicDataById(userId)
 
   def registerNewUser(first: String, last: String, email: String, password: String): Future[UserRegisterResult] = {
@@ -52,10 +52,10 @@ class UserService(
       )
   }
 
-  def authenticate(email: String, nonEncryptedPassword: String): Future[Option[BasicUserData]] =
+  def authenticate(email: String, nonEncryptedPassword: String): Future[Option[UserData]] =
     userDao
       .findByEmail(email)
-      .map(userOpt => userOpt.filter(u => User.passwordsMatch(nonEncryptedPassword, u)).map(BasicUserData.fromUser))
+      .map(userOpt => userOpt.filter(u => User.passwordsMatch(nonEncryptedPassword, u)).map(UserData.fromUser))
 
   def changeEmail(userId: UUID, newEmail: String): Future[Either[String, Unit]] =
     userDao.findByEmail(newEmail).flatMap {

@@ -61,7 +61,11 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
   }
 
   def getUserKey(userId: UUID, exchange: Exchange.Value): Future[Option[UserKey]] = {
-    userKeyDao.findByUserId(userId, exchange)
+    userKeyDao.findByUserIdEx(userId, exchange)
+  }
+
+  def getAllKeys(userId: UUID): Future[Seq[UserKey]] = {
+    userKeyDao.findByUserId(userId)
   }
 
   def getBalances(userId: UUID, auth: Auth) = {
