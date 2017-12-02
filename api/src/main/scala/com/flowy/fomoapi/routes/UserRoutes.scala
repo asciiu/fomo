@@ -74,18 +74,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     )
   }
 
-  @POST
-  @Path("/login")
-  @ApiOperation(value = "Login for user",
-    notes = "Returns set-authoriation and optional set-refresh-token headers. Subsequent requests will need these headers set for authentication.",
-    response = classOf[BasicUserData])
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "body", value = "login credentials", required = true,
-      dataTypeClass = classOf[LoginInput], paramType = "body")
-  ))
-  @ApiResponses(Array(
-    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
-  ))
   def loginUser =
     path("login") {
       post {
@@ -99,20 +87,13 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
               } else {
                 setSession(oneOff, usingHeaders, session)
               }) {
-                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("basicUserData") -> user).asJson))
+                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, BasicUserData](JsonKey("user") -> user).asJson))
               }
           }
         }
       }
     }
 
-  @GET
-  @Path("/logout")
-  @ApiOperation(value = "User logout",
-    response = classOf[JSendResponse])
-  @ApiResponses(Array(
-    new ApiResponse(code = 403, message = "The supplied authentication is not authorized to access this resource")
-  ))
   def logoutUser =
     path("logout") {
       get {
