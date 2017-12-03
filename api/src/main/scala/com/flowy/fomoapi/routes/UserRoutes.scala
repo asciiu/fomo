@@ -5,10 +5,10 @@ import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.flowy.fomoapi.services.UserKeyService
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.common.api.Bittrex.BalancesResponse
+import com.flowy.common.api.Bittrex.{BalanceResponse, BalancesResponse}
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.utils.Utils
-import com.flowy.common.models.{ApiKeyStatus, UserData, Exchange, UserKey}
+import com.flowy.common.models._
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api._
 import com.softwaremill.bootzooka.user.application.Session
@@ -18,10 +18,13 @@ import com.typesafe.scalalogging.StrictLogging
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 import javax.ws.rs.{GET, POST, Path}
+
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
 import io.swagger.annotations._
+
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 
 
@@ -69,9 +72,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     )
   }
   implicit val encodeExchange: Encoder[Exchange.Value] = new Encoder[Exchange.Value] {
-    final def apply(a: Exchange.Value): Json = Json.obj(
-      ("status", Json.fromString(a.toString))
-    )
+    final def apply(a: Exchange.Value): Json = Json.fromString(a.toString)
   }
 
   def loginUser =
@@ -81,13 +82,15 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           onSuccess(userService.authenticate(in.email, in.password)) {
             case None => reject(AuthorizationFailedRejection)
             case Some(user) =>
-              val session = Session(user.id)
-              (if (in.rememberMe.getOrElse(false)) {
-                setSession(refreshable, usingHeaders, session)
-              } else {
-                setSession(oneOff, usingHeaders, session)
-              }) {
-                complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user).asJson))
+              onSuccess(checkBalances(user.id)) { exchanges =>
+                val session = Session(user.id)
+                (if (in.rememberMe.getOrElse(false)) {
+                  setSession(refreshable, usingHeaders, session)
+                } else {
+                  setSession(oneOff, usingHeaders, session)
+                }) {
+                  complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user.copy(exchanges = exchanges)).asJson))
+                }
               }
           }
         }
@@ -247,26 +250,27 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  def checkBalances(userId: UUID) = {
-    userKeyService.getAllKeys(userId).map {
-      case keys: Seq[UserKey] if keys.nonEmpty =>
-        keys.foreach { k =>
+  def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
+    userKeyService.getAllKeys(userId).flatMap { keys =>
+      val futures = new ListBuffer[Future[BalancesResponse]]()
 
-          if (k.exchange == Exchange.Bittrex) {
-            bittrexClient.accountGetBalances(Auth(k.key, k.secret)).map (println)
+      keys.foreach { key =>
+        if (key.exchange == Exchange.Bittrex) {
+          futures.append(bittrexClient.accountGetBalances(Auth(key.key, key.secret)))
+        }
+      }
+
+      val exchanges = Future.sequence(futures.toList).map { listResponses =>
+        listResponses.map { std =>
+          std.result match {
+            case Some(balances) =>
+              ExchangeData(Exchange.Bittrex, balances)
+            case None =>
+              ExchangeData(Exchange.Bittrex, Seq.empty[Balance])
           }
         }
-      //auth
-      //onSuccess(bittrexClient.accountGetBalances(auth)) {
-      //  case balResponse: BalancesResponse =>
-      //   complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", balResponse.asJson))
-      //case _ =>
-      //   complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
-      //}
-      //}
-      case _ =>
-        //val reponseBody = ExchangeData()
-
+      }
+      exchanges
     }
   }
 
@@ -274,10 +278,10 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     path("session") {
       get {
         userFromSession { user =>
-          checkBalances(user.id)
-
-          setSession(refreshable, usingHeaders, Session(user.id)) {
-            complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user).asJson))
+          onSuccess(checkBalances(user.id)) { exchanges =>
+            setSession(refreshable, usingHeaders, Session(user.id)) {
+              complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user.copy(exchanges = exchanges)).asJson))
+            }
           }
         }
       }
