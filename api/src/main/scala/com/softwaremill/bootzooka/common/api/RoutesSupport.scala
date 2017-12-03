@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import akka.stream.Materializer
+import com.flowy.common.models.{ApiKeyStatus, Exchange, UserData}
 import com.softwaremill.bootzooka.common.api.`X-Content-Type-Options`.`nosniff`
 import com.softwaremill.bootzooka.common.api.`X-Frame-Options`.`DENY`
 import com.softwaremill.bootzooka.common.api.`X-XSS-Protection`.`1; mode=block`
@@ -49,6 +50,19 @@ trait RoutesSupport extends JsonSupport {
 
   //def completeOk = complete("ok")
   def completeOk = complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+
+
+  implicit val encodeStatus: Encoder[ApiKeyStatus.Value] = new Encoder[ApiKeyStatus.Value] {
+    final def apply(a: ApiKeyStatus.Value): Json = Json.obj(
+      ("status", Json.fromString(a.toString))
+    )
+  }
+
+  implicit val encodeExchange: Encoder[Exchange.Value] = new Encoder[Exchange.Value] {
+    final def apply(a: Exchange.Value): Json = Json.fromString(a.toString)
+  }
+
+  implicit val basicUserDataCbs = CanBeSerialized[UserData]
 }
 
 trait JsonSupport extends CirceEncoders {

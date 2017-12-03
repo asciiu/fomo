@@ -2,13 +2,14 @@ package com.flowy.fomoapi
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.Directives._
-import com.flowy.fomoapi.routes.{PasswordResetRoutes, TradeRoutes, UsersRoutes, VersionRoutes}
+import com.flowy.fomoapi.routes._
 import com.softwaremill.bootzooka.ServerConfig
 import com.softwaremill.bootzooka.common.api.RoutesRequestWrapper
 import com.softwaremill.bootzooka.swagger.SwaggerDocService
 
 
 trait Routes extends RoutesRequestWrapper
+  with ApiKeyRoutes
   with UsersRoutes
   with PasswordResetRoutes
   with VersionRoutes
@@ -19,10 +20,12 @@ trait Routes extends RoutesRequestWrapper
 
   lazy val routes = requestWrapper {
     pathPrefix("api") {
+      apiKeyRoutes ~
       passwordResetRoutes ~
       usersRoutes ~
       versionRoutes ~
       tradeRoutes
+
     } ~
     indexRoute ~
     swaggerDocs
