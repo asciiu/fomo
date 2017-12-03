@@ -79,7 +79,9 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
         userFromSession { user =>
           onSuccess(userKeyService.getUserKey(user.id, keyId)) {
             case Some(key) =>
-              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", key.asJson))
+              val lekey = UserKeyNoSecret.fromUserKey(key)
+
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserKeyNoSecret](JsonKey("key") -> lekey).asJson))
             case _ =>
               complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, s"key $keyId not found.", Json.Null))
           }
