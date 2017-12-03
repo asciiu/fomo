@@ -42,6 +42,10 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   def findByKeyPair(key: String, secret: String): Future[Option[UserKey]] =
     findOneWhere(r => r.key === key && r.secret === secret)
 
+  def findByUserId(userId: UUID, keyId: UUID): Future[Option[UserKey]] = {
+    findOneWhere(keyR => keyR.userId === userId && keyR.id === keyId)
+  }
+
   def findByUserId(userId: UUID, status: ApiKeyStatus.Value = ApiKeyStatus.Verified): Future[Seq[UserKey]] = {
     val query = userKeys.filter(k => k.userId === userId && k.status === status)
     db.run(query.result)

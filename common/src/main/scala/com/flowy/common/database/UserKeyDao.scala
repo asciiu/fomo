@@ -13,6 +13,8 @@ trait UserKeyDao {
 
   def findByKeyPair(key: String, secret: String): Future[Option[UserKey]]
 
+  def findByUserId(userId: UUID, keyId: UUID): Future[Option[UserKey]]
+
   def findByUserId(userId: UUID, status: ApiKeyStatus.Value = ApiKeyStatus.Verified): Future[Seq[UserKey]]
 
   def findByUserIdEx(userId: UUID, exchange: Exchange.Value): Future[Option[UserKey]]

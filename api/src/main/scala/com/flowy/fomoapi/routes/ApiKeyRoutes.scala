@@ -74,16 +74,14 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
 
   def getApiKey =
-    path("apikey") {
+    path(JavaUUID) { keyId =>
       get {
-        parameters('exchange) { exchangeName =>
-          userFromSession { user =>
-            onSuccess(userKeyService.getUserKey(user.id, Exchange.withName(exchangeName))) {
-              case Some(key) =>
-                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", key.asJson))
-              case _ =>
-                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "Exchange key not found. Try adding it.", Json.Null))
-            }
+        userFromSession { user =>
+          onSuccess(userKeyService.getUserKey(user.id, keyId)) {
+            case Some(key) =>
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", key.asJson))
+            case _ =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, s"key $keyId not found.", Json.Null))
           }
         }
       }

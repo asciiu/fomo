@@ -60,8 +60,13 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
     userKeyDao.remove(userId, exchange)
   }
 
+  // TODO this should return a list of keys for said exchange
   def getUserKey(userId: UUID, exchange: Exchange.Value): Future[Option[UserKey]] = {
     userKeyDao.findByUserIdEx(userId, exchange)
+  }
+
+  def getUserKey(userId: UUID, keyId: UUID): Future[Option[UserKey]] = {
+    userKeyDao.findByUserId(userId, keyId)
   }
 
   def getAllKeys(userId: UUID): Future[Seq[UserKey]] = {
