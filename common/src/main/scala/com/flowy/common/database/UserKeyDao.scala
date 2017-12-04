@@ -21,7 +21,7 @@ trait UserKeyDao {
 
   def findByUserIdAndKey(userId: UUID, key: String): Future[Option[UserKey]]
 
-  def updateKey(ukey: UserKey): Future[Boolean]
+  def updateKey(ukey: UserKey): Future[Option[UserKey]]
 
   def remove(userId: UUID, keyId: UUID): Future[Boolean]
 }

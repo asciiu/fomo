@@ -41,14 +41,18 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
     }
   }
 
-  def update(ukey: UserKey): Future[Boolean] = {
-    getBalances(ukey.userId, Auth(ukey.key, ukey.secret)).map { response =>
+  def update(ukey: UserKey): Future[Option[UserKey]] = {
+    getBalances(ukey.userId, Auth(ukey.key, ukey.secret)).flatMap { response =>
       response.message match {
-        case "APIKEY_INVALID" =>
-          false
-        case _ =>
+        case "APIKEY_INVALID" | "INVALID_SIGNATURE" =>
+          Future.successful(None)
+
+        case "" =>
+          // lets assume the DB write to status verified succeeds
           userKeyDao.updateKey(ukey.copy(status = ApiKeyStatus.Verified))
-          true
+
+        case _ =>
+          Future.successful(None)
       }
     }
   }

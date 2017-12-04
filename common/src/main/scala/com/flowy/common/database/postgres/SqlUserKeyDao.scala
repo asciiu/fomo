@@ -67,14 +67,14 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
     }
   }
 
-  def updateKey(ukey: UserKey): Future[Boolean] = {
+  def updateKey(ukey: UserKey): Future[Option[UserKey]] = {
     val updateAction = userKeys.filter(k => k.id === ukey.id && k.userId === ukey.userId && k.exchange === ukey.exchange)
           .map(lk => (lk.key, lk.secret, lk.description)).update((ukey.key, ukey.secret, ukey.description))
 
     db.run( updateAction.asTry ).map {result =>
       result match {
-        case Success(count) if count > 0 => true
-        case _ => false
+        case Success(count) if count > 0 => Some(ukey)
+        case _ => None
       }
     }
   }
