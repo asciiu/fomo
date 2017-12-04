@@ -37,8 +37,8 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   val apiKeyRoutes = logRequestResult("ApiKeyRoutes") {
     pathPrefix("keys") {
       getKey ~
-      removeApiKey ~
-      updateApiKey ~
+      deleteKey ~
+      updateKey ~
       listKeys ~
       postKey
     }
@@ -84,15 +84,16 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
           onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange), key.key, key.secret, key.description)) {
             case Left(msg) =>
               complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
-            case Right(_)  =>
+            case Right(key)  =>
+              val lekey = UserKeyNoSecret.fromUserKey(key)
 
-              completeOk
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserKeyNoSecret](JsonKey("key") -> lekey).asJson))
           }
         }
       }
     }
 
-  def removeApiKey = {
+  def deleteKey = {
     path(JavaUUID) { keyId =>
       delete {
         userFromSession { user =>
@@ -109,7 +110,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
   }
 
-  def updateApiKey = {
+  def updateKey = {
     path(JavaUUID) { keyId =>
       put {
         userFromSession { user =>
