@@ -53,9 +53,7 @@ trait RoutesSupport extends JsonSupport {
 
 
   implicit val encodeStatus: Encoder[ApiKeyStatus.Value] = new Encoder[ApiKeyStatus.Value] {
-    final def apply(a: ApiKeyStatus.Value): Json = Json.obj(
-      ("status", Json.fromString(a.toString))
-    )
+    final def apply(a: ApiKeyStatus.Value): Json = Json.fromString(a.toString)
   }
 
   implicit val encodeExchange: Encoder[Exchange.Value] = new Encoder[Exchange.Value] {

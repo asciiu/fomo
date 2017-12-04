@@ -1,31 +1,19 @@
 package com.flowy.fomoapi.routes
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.flowy.fomoapi.services.UserKeyService
-import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.common.api.Bittrex.{BalanceResponse, BalancesResponse}
-import com.flowy.common.api.{Auth, BittrexClient}
-import com.flowy.common.utils.Utils
+import com.flowy.fomoapi.services.UserService
+import com.flowy.common.api.BittrexClient
 import com.flowy.common.models._
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api._
-import com.softwaremill.bootzooka.user.application.Session
-import com.softwaremill.session.SessionDirectives._
-import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
-import java.time.{Instant, ZoneOffset}
-import java.util.UUID
-import javax.ws.rs.{GET, POST, Path}
-
-import io.circe.{Encoder, Json}
+import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.swagger.annotations._
-
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import java.time.{Instant, ZoneOffset}
+import java.util.UUID
 
 
 trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport {
@@ -34,8 +22,8 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
 
-  def convertToUkey(userId: UUID, request: UpdateApiKeyRequest): UserKey =
-    UserKey(request.id,
+  def convertToUkey(userId: UUID, keyId: UUID, request: UpdateApiKeyRequest): UserKey =
+    UserKey(keyId,
       userId,
       Exchange.withName(request.exchange),
       request.key,
@@ -124,11 +112,11 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def updateApiKey = {
-    path("apikey") {
+    path(JavaUUID) { keyId =>
       put {
         userFromSession { user =>
           entity(as[UpdateApiKeyRequest]) { ukey =>
-            onSuccess(userKeyService.update(convertToUkey(user.id, ukey))) {
+            onSuccess(userKeyService.update(convertToUkey(user.id, keyId, ukey))) {
               case true =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
               case false =>
@@ -143,5 +131,5 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
 
 case class ApiKey(exchange: String, key: String, secret: String, description: String)
-case class UpdateApiKeyRequest(id: UUID, exchange: String, key: String, secret: String, description: String)
+case class UpdateApiKeyRequest(exchange: String, key: String, secret: String, description: String)
 case class RemoveApiKeyRequest(exchange: String)
