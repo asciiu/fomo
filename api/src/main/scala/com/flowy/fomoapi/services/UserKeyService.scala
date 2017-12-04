@@ -53,9 +53,9 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
     }
   }
 
-  def remove(userId: UUID, exchange: Exchange.Value): Future[Boolean] = {
+  def remove(userId: UUID, keyId: UUID): Future[Boolean] = {
     // TODO cancel all trades
-    userKeyDao.remove(userId, exchange)
+    userKeyDao.remove(userId, keyId)
   }
 
   // TODO this should return a list of keys for said exchange

@@ -22,7 +22,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
 
-  def convertToUkey(userId: UUID, keyId: UUID, request: UpdateApiKeyRequest): UserKey =
+  def convertToUkey(userId: UUID, keyId: UUID, request: ApiKey): UserKey =
     UserKey(keyId,
       userId,
       Exchange.withName(request.exchange),
@@ -93,11 +93,11 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
 
   def removeApiKey = {
-    path("apikey") {
+    path(JavaUUID) { keyId =>
       delete {
         userFromSession { user =>
           entity(as[RemoveApiKeyRequest]) { request =>
-            onSuccess(userKeyService.remove(user.id, Exchange.withName(request.exchange))) {
+            onSuccess(userKeyService.remove(user.id, keyId)) {
               case true =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
               case false =>
@@ -113,7 +113,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     path(JavaUUID) { keyId =>
       put {
         userFromSession { user =>
-          entity(as[UpdateApiKeyRequest]) { ukey =>
+          entity(as[ApiKey]) { ukey =>
             onSuccess(userKeyService.update(convertToUkey(user.id, keyId, ukey))) {
               case true =>
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
@@ -129,5 +129,4 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
 
 case class ApiKey(exchange: String, key: String, secret: String, description: String)
-case class UpdateApiKeyRequest(exchange: String, key: String, secret: String, description: String)
 case class RemoveApiKeyRequest(exchange: String)

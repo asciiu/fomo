@@ -23,6 +23,6 @@ trait UserKeyDao {
 
   def updateKey(ukey: UserKey): Future[Boolean]
 
-  def remove(userId: UUID, exchange: Exchange.Value): Future[Boolean]
+  def remove(userId: UUID, keyId: UUID): Future[Boolean]
 }
 

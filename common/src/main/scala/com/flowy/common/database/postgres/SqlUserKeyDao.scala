@@ -57,8 +57,8 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   def findByUserIdAndKey(userId: UUID, key: String): Future[Option[UserKey]] =
     findOneWhere(r => r.userId === userId && r.key === key)
 
-  def remove(userId: UUID, exchange: Exchange.Value): Future[Boolean] = {
-    val query = userKeys.filter(r => r.userId === userId && r.exchange === exchange).delete
+  def remove(userId: UUID, keyId: UUID): Future[Boolean] = {
+    val query = userKeys.filter(keys => keys.userId === userId && keys.id === keyId).delete
     db.run( query.asTry ).map {result =>
       result match {
         case Success(count) if count > 0 => true
