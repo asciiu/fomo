@@ -36,32 +36,15 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   val apiKeyRoutes = logRequestResult("ApiKeyRoutes") {
     pathPrefix("keys") {
-      addApiKey ~
-      getApiKey ~
+      getKey ~
       removeApiKey ~
       updateApiKey ~
-      listApiKeys
+      listKeys ~
+      postKey
     }
   }
 
-  def addApiKey =
-    path("apikey"){
-      post {
-        userFromSession{ user =>
-          entity(as[ApiKey]) { key =>
-            onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange), key.key, key.secret, key.description)) {
-              case Left(msg) =>
-                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
-              case Right(_)  =>
-
-                completeOk
-            }
-          }
-        }
-      }
-    }
-
-  def getApiKey =
+  def getKey =
     path(JavaUUID) { keyId =>
       get {
         userFromSession { user =>
@@ -81,7 +64,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     * This route must come last in the list of apiKeyRoutes up top
     * @return
     */
-  def listApiKeys =
+  def listKeys =
       get {
         userFromSession { user =>
           onSuccess(userKeyService.getAllKeys(user.id)){ keys =>
@@ -92,6 +75,21 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
             complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Map[JsonKey, Seq[UserKeySimple]](JsonKey("keys") -> simpleKeys).asJson))
           }
         }
+    }
+
+  def postKey =
+    post {
+      userFromSession{ user =>
+        entity(as[ApiKey]) { key =>
+          onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange), key.key, key.secret, key.description)) {
+            case Left(msg) =>
+              complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
+            case Right(_)  =>
+
+              completeOk
+          }
+        }
+      }
     }
 
   def removeApiKey = {

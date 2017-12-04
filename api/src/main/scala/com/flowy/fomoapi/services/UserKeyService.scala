@@ -33,10 +33,8 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
                 userKeyDao.add(newUserKey)
                 Right(newUserKey)
 
-              case ("APIKEY_INVALID", None) =>
+              case (_, _) =>
                 Left("invalid key")
-
-              case (_, _) => ???
             }
           }
       }
