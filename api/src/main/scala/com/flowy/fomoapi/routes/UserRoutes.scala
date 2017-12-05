@@ -34,7 +34,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
-      balances ~
       changePassword ~
       changeUserEmail ~
       loginUser ~
@@ -103,28 +102,6 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
                 complete(StatusCodes.Forbidden, JSendResponse(JsonStatus.Fail, msg, Json.Null))
               case Right(_)  =>
                 completeOk
-            }
-          }
-        }
-      }
-    }
-
-  def balances =
-    path("balances") {
-      get {
-        parameters('exchange) { exchangeName =>
-          userFromSession { user =>
-            onSuccess(userKeyService.getUserKey(user.id, Exchange.withName(exchangeName))) {
-              case Some(ukey) =>
-                val auth = Auth(ukey.key, ukey.secret)
-                onSuccess(bittrexClient.accountGetBalances(auth)){
-                  case balResponse: BalancesResponse =>
-                    complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", balResponse.asJson))
-                  case _ =>
-                    complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
-                }
-              case _ =>
-                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
             }
           }
         }
