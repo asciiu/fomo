@@ -117,10 +117,10 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           onSuccess( redis.hget[String](key, "balance") ) {
             case Some(balance) if balance.toDouble > tradeRequest.quantity =>
 
-              onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
-                case true =>
-                  completeOk
-                case _ =>
+              onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]] ) {
+                case Some(trade) =>
+                  complete(StatusCodes.OK,  JSendResponse(JsonStatus.Success, "", trade.asJson))
+                case None =>
                   complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
               }
             case _ =>

@@ -117,9 +117,9 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
           log.warning(s"PostTrade - market not found! ${request.marketName}")
           senderOpt match {
             case Some(actor) =>
-              actor ! false
+              actor ! None
             case None =>
-              sender ! false
+              sender ! None
           }
       }
 

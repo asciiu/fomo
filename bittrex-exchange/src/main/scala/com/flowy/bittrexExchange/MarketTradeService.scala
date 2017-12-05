@@ -152,6 +152,13 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     buyConditions --= conditionsThatPass
   }
 
+  /**
+    * Add trade to DB and insert buy conditions.
+    * @param user
+    * @param request
+    * @param sender response to sender when finished with Some(trade) or None
+    * @return
+    */
   private def postTrade(user: UserData, request: TradeRequest, sender: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
 
@@ -161,9 +168,9 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
         buyConditions.append(TradeBuyCondition(trade.id, conditions))
 
-        sender ! true
+        sender ! Some(trade)
       } else {
-        sender ! false
+        sender ! None
       }
     }
   }
