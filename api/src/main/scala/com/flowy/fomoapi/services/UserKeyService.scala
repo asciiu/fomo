@@ -28,7 +28,7 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
             (response.message, response.result) match {
 
               case ("", Some(balances)) =>
-                mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId: UUID, balances))
+                mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
                 val newUserKey = UserKey.withRandomUUID(userId, exchange, key, secret, description, ApiKeyStatus.Verified)
                 userKeyDao.add(newUserKey)
                 Right(newUserKey)

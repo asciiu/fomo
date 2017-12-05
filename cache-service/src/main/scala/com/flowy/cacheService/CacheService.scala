@@ -23,7 +23,7 @@ object CacheService {
     Props(new CacheService(bagel, redis))
 
   case class CacheBittrexWallets(userId: UUID, auth: Auth)
-  case class CacheBittrexBalances(userId: UUID, balances: List[Balance])
+  case class CacheBittrexBalances(userId: UUID, balances: Seq[Balance])
 }
 
 /**
@@ -92,7 +92,7 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
 
   // TODO response to sender with boolean
-  private def cacheUserBalances(userId: UUID, balances: List[Balance]) = {
+  private def cacheUserBalances(userId: UUID, balances: Seq[Balance]) = {
     log.info(s"caching balances for userId: ${userId}")
 
     balances.foreach { currency =>

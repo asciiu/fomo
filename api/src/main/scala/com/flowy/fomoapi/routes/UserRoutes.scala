@@ -18,6 +18,10 @@ import com.typesafe.scalalogging.StrictLogging
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
+import akka.actor.ActorSystem
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import com.flowy.cacheService.CacheService.CacheBittrexBalances
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -28,9 +32,13 @@ import scala.concurrent.Future
 
 trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
+
+  def system: ActorSystem
   def userService: UserService
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
+
+  lazy val mediator = DistributedPubSub(system).mediator
 
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
@@ -129,7 +137,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
-  def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
+  private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
     userKeyService.getAllKeys(userId).flatMap { keys =>
       val futures = new ListBuffer[Future[BalancesResponse]]()
 
@@ -143,6 +151,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         listResponses.map { std =>
           std.result match {
             case Some(balances) =>
+              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
               ExchangeData(Exchange.Bittrex, balances)
             case None =>
               ExchangeData(Exchange.Bittrex, Seq.empty[Balance])

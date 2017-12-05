@@ -31,12 +31,12 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   // TODO
   // when a trade does not execute successfully you need an error log to tell you why
   val tradeRoutes = logRequestResult("TradeRoutes") {
-    pathPrefix("trade") {
+    pathPrefix("trades") {
       directory ~
       getTrade ~
-      listTrades ~
+      updateTrade ~
       postTrade ~
-      updateTrade
+      listTrades
     }
   }
 
@@ -76,16 +76,14 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
 
   def listTrades = {
-    path("list") {
-      get {
-        parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
-          userFromSession { user =>
-            onSuccess(bagel.findTradesByUserId(user.id, marketName, exchangeName, statusIter.toList).mapTo[Seq[Trade]]) {
-              case trades: Seq[Trade] =>
-                complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
-              case _ =>
-                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
-            }
+    get {
+      parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
+        userFromSession { user =>
+          onSuccess(bagel.findTradesByUserId(user.id, marketName, exchangeName, statusIter.toList).mapTo[Seq[Trade]]) {
+            case trades: Seq[Trade] =>
+              complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
+            case _ =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
           }
         }
       }
@@ -108,27 +106,25 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   }
 
   def postTrade = {
-    path("new") {
-      post {
-        userFromSession { user =>
-          entity(as[TradeRequest]) { tradeRequest =>
-            implicit val timeout = Timeout(1.second)
+    post {
+      userFromSession { user =>
+        entity(as[TradeRequest]) { tradeRequest =>
+          implicit val timeout = Timeout(1.second)
 
-            val currency = tradeRequest.marketName.split("-")(1)
-            val key = s"userId:${user.id}:bittrex:${currency}"
+          val currency = tradeRequest.marketName.split("-")(1)
+          val key = s"userId:${user.id}:bittrex:${currency}"
 
-            onSuccess( redis.hget[String](key, "balance") ) {
-              case Some(balance) if balance.toDouble > tradeRequest.quantity =>
+          onSuccess( redis.hget[String](key, "balance") ) {
+            case Some(balance) if balance.toDouble > tradeRequest.quantity =>
 
-                onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
-                  case true =>
-                    completeOk
-                  case _ =>
-                    complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
-                }
-              case _ =>
-                complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user balance for ${currency} is less than trade amount", Json.Null))
-            }
+              onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Boolean] ) {
+                case true =>
+                  completeOk
+                case _ =>
+                  complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+              }
+            case _ =>
+              complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user balance not tradable", Json.Null))
           }
         }
       }
