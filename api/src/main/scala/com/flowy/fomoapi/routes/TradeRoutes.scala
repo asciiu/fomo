@@ -1,12 +1,14 @@
 package com.flowy.fomoapi.routes
 
 import akka.actor.ActorRef
+import akka.actor.Status.Failure
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.StatusCodes.Success
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.flowy.bittrexExchange.ExchangeService.GetMarkets
-import com.flowy.bittrexExchange.MarketTradeService.PostTrade
+import com.flowy.bittrexExchange.MarketTradeService.{PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{Trade, TradeRequest}
@@ -135,16 +137,13 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     path(JavaUUID) { tradeId =>
       put {
         userFromSession { user =>
-          entity(as[Trade]) { trade =>
-            implicit val timeout = Timeout(1.second)
+          entity(as[TradeRequest]) { tradeRequest =>
 
-            // TODO update the active trade orders in the system
-
-            onSuccess( bagel.updateTrade(trade).mapTo[Boolean] ) {
-              case true =>
-                completeOk
-              case _ =>
-                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+            onSuccess( (bittrexService ? UpdateTrade(user, tradeId, tradeRequest))(1.second).mapTo[Option[Trade]] ) {
+              case Some(trade) =>
+                complete(StatusCodes.OK,  JSendResponse(JsonStatus.Success, "", trade.asJson))
+              case None =>
+                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "can't update trade", Json.Null))
             }
           }
         }

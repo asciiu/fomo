@@ -1,7 +1,8 @@
 package com.flowy.common.database
 
-import com.flowy.common.models.{Trade, TradeStatus, UserKey}
+import com.flowy.common.models.{Trade, TradeStatus}
 import java.util.UUID
+
 import scala.concurrent.Future
 
 

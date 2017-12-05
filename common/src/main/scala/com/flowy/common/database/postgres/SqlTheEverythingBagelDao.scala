@@ -6,7 +6,8 @@ import java.util.UUID
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.database.postgres.schema.SqlTrade
-import com.flowy.common.models.{Trade, TradeStatus}
+import com.flowy.common.models.{Trade, TradeRequest, TradeStatus}
+
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
 
@@ -53,11 +54,17 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   }
 
   def findTradeById(tradeId: UUID): Future[Option[Trade]] = {
-    db.run(trades.filter(_.id === tradeId).result.headOption)
+    db.run(trades.filter(t => t.id === tradeId).result.headOption)
   }
 
   def updateTrade(trade: Trade): Future[Option[Trade]] = {
     val updatedTrade = (trades returning trades).insertOrUpdate(trade)
-    db.run(updatedTrade)
+
+    // returns None if updated
+    // http://slick.lightbend.com/doc/3.2.0/queries.html#updating
+    db.run(updatedTrade).map {
+      case None => Some(trade)
+      case _ => None
+    }
   }
 }

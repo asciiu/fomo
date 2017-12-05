@@ -23,7 +23,7 @@ object MarketTradeService {
     Props(new MarketTradeService(marketName, bagel, redis))
 
   case class PostTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
-  case class UpdateTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
+  case class UpdateTrade(forUser: UserData, tradeId: UUID, request: TradeRequest, senderOpt: Option[ActorRef] = None)
 }
 
 
@@ -72,8 +72,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     case PostTrade(user, request, Some(sender)) =>
       postTrade(user, request, sender)
 
-    case UpdateTrade(user, request, Some(sender)) =>
-      updateTrade(user, request, sender)
+    case UpdateTrade(user, tradeId, request, Some(sender)) =>
+      updateTrade(user, tradeId, request, sender)
   }
 
 
@@ -175,8 +175,21 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     }
   }
 
-  private def updateTrade(user: UserData, request: TradeRequest, sender: ActorRef) = {
-    val trade = Trade.fromRequest(request, user.id)
+  private def updateTrade(user: UserData, tradeId: UUID, request: TradeRequest, sender: ActorRef) = {
+    bagel.findTradeById(tradeId).map {
+      // not permitted to change someone elses trade
+      case Some(trade) if trade.userId != user.id =>
+        sender ! None
+
+      // trade status pending update quantity and conditions
+      case Some(trade) if trade.status == TradeStatus.Pending =>
+        bagel.updateTrade(trade.copy(quantity = request.quantity, buyConditions = request.buyConditions, sellConditions = request.sellConditions)).map { updated =>
+          sender ! updated
+        }
+
+      case None =>
+        sender ! None
+    }
   }
 }
 
