@@ -34,8 +34,8 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   // when a trade does not execute successfully you need an error log to tell you why
   val tradeRoutes = logRequestResult("TradeRoutes") {
     pathPrefix("trades") {
-      directory ~
       getTrade ~
+      directory ~
       updateTrade ~
       postTrade ~
       listTrades

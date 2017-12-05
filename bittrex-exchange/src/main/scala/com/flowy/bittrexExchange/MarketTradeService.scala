@@ -187,6 +187,12 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
           sender ! updated
         }
 
+      // trade status bought update sellconditions only
+      case Some(trade) if trade.status == TradeStatus.Bought =>
+        bagel.updateTrade(trade.copy(sellConditions = request.sellConditions)).map { updated =>
+          sender ! updated
+        }
+
       case None =>
         sender ! None
     }
