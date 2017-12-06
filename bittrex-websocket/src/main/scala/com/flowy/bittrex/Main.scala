@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext
 
 object Main extends App {
   // Override the configuration of the port when specified as program argument
-  val port = if (args.isEmpty) "2551" else args(0)
+  val port = if (args.isEmpty) "2555" else args(0)
 
   lazy val config = new DatabaseConfig with ServerConfig {
     override def rootConfig = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").

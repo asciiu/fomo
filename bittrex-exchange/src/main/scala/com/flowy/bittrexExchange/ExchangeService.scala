@@ -152,6 +152,7 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
 
       // first time seeing this market name?
       if (!marketServices.contains(marketName)) {
+        println(update)
 
         // fire up a new actor for this market
         marketServices += marketName -> context.actorOf(MarketTradeService.props(marketName, bagel, redis), marketName)

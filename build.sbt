@@ -197,7 +197,7 @@ lazy val bittrexExchangeService: Project = (project in file("bittrex-exchange"))
     name := "bittrex-exchange",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
-  .dependsOn(common, trailingStopService)
+  .dependsOn(cacheService, common, trailingStopService, bittrexWebsocketClient)
 
 
 /****************************************************************
