@@ -181,11 +181,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
     // trade status pending update quantity and conditions
-    if (trade.status == TradeStatus.Pending) {
-      bagel.deleteTrade(trade).map { deleted =>
-        sender ! deleted
-      }
-    } else if (trade.status == TradeStatus.Bought) {
+    if (trade.status != TradeStatus.Sold) {
       bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map { updated =>
         sender ! updated
       }
