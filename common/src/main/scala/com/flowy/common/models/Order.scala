@@ -36,7 +36,8 @@ case class TradeRequest(
                  baseCurrencyName: Option[String],
                  quantity: Double,
                  buyConditions: String,
-                 sellConditions: Option[String]) {
+                 stopLossConditions: Option[String],
+                 takeProfitConditions: Option[String]) {
 }
 
 case class Trade(id: UUID,
@@ -58,7 +59,8 @@ case class Trade(id: UUID,
                  sellTime: Option[OffsetDateTime],
                  sellPrice: Option[Double],
                  sellCondition: Option[String],
-                 sellConditions: Option[String])
+                 stopLossConditions: Option[String],
+                 takeProfitConditions: Option[String])
 
 object Trade {
 
@@ -91,7 +93,11 @@ object Trade {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
-      val sellConditions = trade.sellConditions match {
+      val stopLossConditions = trade.stopLossConditions match {
+        case Some(conds) => Json.fromString(conds.toString)
+        case None => Json.Null
+      }
+      val takeProfitConditions = trade.takeProfitConditions match {
         case Some(conds) => Json.fromString(conds.toString)
         case None => Json.Null
       }
@@ -115,7 +121,8 @@ object Trade {
         ("sellTime", sellTime),
         ("sellPrice", sellPrice),
         ("sellCondition", sellCondition),
-        ("sellConditions", sellConditions)
+        ("stopLossConditions", stopLossConditions),
+        ("takeProfitConditions", takeProfitConditions)
       )
     }
   }
@@ -136,7 +143,8 @@ object Trade {
         createdOn <- c.downField("createdOn").as[String]
         updatedOn <- c.downField("updatedOn").as[String]
         buyConditions <- c.downField("buyConditions").as[String]
-        sellConditions <- c.downField("sellConditions").as[String]
+        stopLossConditions <- c.downField("stopLossConditions").as[String]
+        takeProfitConditions <- c.downField("takeProfitConditions").as[String]
       } yield {
         new Trade(UUID.fromString(id),
           UUID.fromString(userId),
@@ -157,7 +165,9 @@ object Trade {
           None,
           None,
           None,
-          Some(sellConditions))
+          Some(stopLossConditions),
+          Some(takeProfitConditions)
+        )
       }
   }
 
@@ -184,7 +194,8 @@ object Trade {
       None,
       None,
       None,
-      tradeRequest.sellConditions
+      tradeRequest.stopLossConditions,
+      tradeRequest.takeProfitConditions
     )
   }
 }

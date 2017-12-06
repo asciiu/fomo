@@ -132,7 +132,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
   }
-  
+
   def updateTrade = {
     path(JavaUUID) { tradeId =>
       put {

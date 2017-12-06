@@ -106,8 +106,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
               bagel.updateTrade(updatedTrade)
 
               // TODO this needs refinement
-              if (trade.sellConditions.isDefined) {
-                val sellConditions = trade.sellConditions.get
+              if (trade.stopLossConditions.isDefined) {
+                val sellConditions = trade.stopLossConditions.get
                 val conditions = sellConditions.split(" or ")
 
                 conditions.foreach{ c =>
@@ -183,13 +183,23 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
       // trade status pending update quantity and conditions
       case Some(trade) if trade.status == TradeStatus.Pending =>
-        bagel.updateTrade(trade.copy(quantity = request.quantity, buyConditions = request.buyConditions, sellConditions = request.sellConditions)).map { updated =>
+        bagel.updateTrade(
+          trade.copy(
+            quantity = request.quantity,
+            buyConditions = request.buyConditions,
+            stopLossConditions = request.stopLossConditions,
+            takeProfitConditions = request.takeProfitConditions)
+        ).map { updated =>
           sender ! updated
         }
 
       // trade status bought update sellconditions only
       case Some(trade) if trade.status == TradeStatus.Bought =>
-        bagel.updateTrade(trade.copy(sellConditions = request.sellConditions)).map { updated =>
+        bagel.updateTrade(
+          trade.copy(
+            stopLossConditions = request.stopLossConditions,
+            takeProfitConditions = request.takeProfitConditions)
+        ).map { updated =>
           sender ! updated
         }
 

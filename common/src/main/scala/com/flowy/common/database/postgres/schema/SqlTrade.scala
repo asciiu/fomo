@@ -38,7 +38,8 @@ trait SqlTrade {
     def sellTime = column[OffsetDateTime]("sell_time")
     def sellPrice = column[Double]("sell_price")
     def sellCondition = column[String]("sell_condition")
-    def sellConditions = column[String]("sell_conditions")
+    def stopLossConditions = column[String]("stop_loss_conditions")
+    def takeProfitConditions = column[String]("take_profit_conditions")
 
     def * = (id,
       userId,
@@ -59,7 +60,8 @@ trait SqlTrade {
       sellTime.?,
       sellPrice.?,
       sellCondition.?,
-      sellConditions.?) <>
+      stopLossConditions.?,
+      takeProfitConditions.?) <>
       ((Trade.apply _).tupled, Trade.unapply)
    }
 }
