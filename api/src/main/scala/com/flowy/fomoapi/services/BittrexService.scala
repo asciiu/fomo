@@ -5,7 +5,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
 import com.flowy.bittrexExchange.ExchangeService.GetMarkets
-import com.flowy.bittrexExchange.MarketTradeService.{PostTrade, UpdateTrade}
+import com.flowy.bittrexExchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.utils.sql.SqlDatabase
 import redis.RedisClient
 
@@ -48,5 +48,9 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
     case updateTrade: UpdateTrade =>
       log.info(s"update trade ${updateTrade}")
       mediator ! Publish("UpdateTrade", updateTrade.copy(senderOpt = Some(sender())))
+
+    case deleteTrade: DeleteTrade =>
+      log.info(s"delete trade ${deleteTrade}")
+      mediator ! Publish("DeleteTrade", deleteTrade.copy(senderOpt = Some(sender())))
   }
 }

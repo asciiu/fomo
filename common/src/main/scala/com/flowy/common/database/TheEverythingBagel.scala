@@ -20,4 +20,6 @@ trait TheEverythingBagelDao {
   def findTradeById(tradeId: UUID): Future[Option[Trade]]
 
   def updateTrade(trade: Trade): Future[Option[Trade]]
+
+  def deleteTrade(trade: Trade): Future[Option[Trade]]
 }

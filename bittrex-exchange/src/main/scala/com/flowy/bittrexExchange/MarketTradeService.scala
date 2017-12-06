@@ -22,6 +22,7 @@ object MarketTradeService {
   def props(marketName: String, bagel: TheEverythingBagelDao, redis: RedisClient)(implicit context: ExecutionContext) =
     Props(new MarketTradeService(marketName, bagel, redis))
 
+  case class DeleteTrade(trade: Trade, senderOpt: Option[ActorRef] = None)
   case class PostTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
   case class UpdateTrade(forUser: UserData, tradeId: UUID, request: TradeRequest, senderOpt: Option[ActorRef] = None)
 }
@@ -74,6 +75,9 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
     case UpdateTrade(user, tradeId, request, Some(sender)) =>
       updateTrade(user, tradeId, request, sender)
+
+    case DeleteTrade(trade, Some(sender)) =>
+      deleteTrade(trade, sender)
   }
 
 
@@ -172,6 +176,21 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       } else {
         sender ! None
       }
+    }
+  }
+
+  private def deleteTrade(trade: Trade, sender: ActorRef) = {
+    // trade status pending update quantity and conditions
+    if (trade.status == TradeStatus.Pending) {
+      bagel.deleteTrade(trade).map { deleted =>
+        sender ! deleted
+      }
+    } else if (trade.status == TradeStatus.Bought) {
+      bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map { updated =>
+        sender ! updated
+      }
+    } else {
+      sender ! None
     }
   }
 

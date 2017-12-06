@@ -11,6 +11,8 @@ import com.flowy.common.models.{Trade, TradeRequest, TradeStatus}
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
 
+import scala.util.Success
+
 
 class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
   extends TheEverythingBagelDao with SqlTrade {
@@ -21,6 +23,18 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   lazy val userKeyDao = new SqlUserKeyDao(database)
 
   implicit object SetUUID extends SetParameter[UUID] { def apply(v: UUID, pp: PositionedParameters) { pp.setObject(v, JDBCType.BINARY.getVendorTypeNumber) } }
+
+
+  def deleteTrade(trade: Trade): Future[Option[Trade]] = {
+    val action = trades.filter(_.id === trade.id).delete
+
+    db.run(action.asTry).map { result =>
+      result match {
+        case Success(count) if count > 0 => Some(trade)
+        case _ => None
+      }
+    }
+  }
 
   /**
     * Insert trade

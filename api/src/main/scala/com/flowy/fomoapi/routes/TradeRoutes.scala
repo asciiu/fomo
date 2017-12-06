@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.flowy.bittrexExchange.ExchangeService.GetMarkets
-import com.flowy.bittrexExchange.MarketTradeService.{PostTrade, UpdateTrade}
+import com.flowy.bittrexExchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{Trade, TradeRequest}
@@ -34,6 +34,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   // when a trade does not execute successfully you need an error log to tell you why
   val tradeRoutes = logRequestResult("TradeRoutes") {
     pathPrefix("trades") {
+      deleteTrade ~
       getTrade ~
       directory ~
       updateTrade ~
@@ -76,6 +77,26 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
   }
 
+  def deleteTrade = {
+    path(JavaUUID) { tradeId =>
+      delete {
+        userFromSession { user =>
+          onSuccess(bagel.findTradeById(tradeId)) {
+            case Some(trade) if (trade.userId == user.id) =>
+
+              onSuccess( (bittrexService ? DeleteTrade(trade))(2.second).mapTo[Option[Trade]] ) {
+                case Some(trade) =>
+                  complete(JSendResponse(JsonStatus.Success, "", trade.asJson))
+                case _ =>
+                  complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
+              }
+            case _ =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
+          }
+        }
+      }
+    }
+  }
 
   def listTrades = {
     get {

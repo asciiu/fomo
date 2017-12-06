@@ -62,6 +62,7 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
     mediator ! Subscribe("MarketUpdate", self)
     mediator ! Subscribe("PostTrade", self)
     mediator ! Subscribe("UpdateTrade", self)
+    mediator ! Subscribe("DeleteTrade", self)
   }
 
   override def postStop(): Unit = {
@@ -69,6 +70,7 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
     mediator ! Unsubscribe("MarketUpdate", self)
     mediator ! Unsubscribe("PostTrade", self)
     mediator ! Unsubscribe("UpdateTrade", self)
+    mediator ! Unsubscribe("DeleteTrade", self)
   }
 
   def receive = {
@@ -95,6 +97,25 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
         case _ =>
           log.warning("GetMarkets does not contain a sender ref!")
       }
+
+    /*********************************************************************
+      * Update a trade.
+      ********************************************************************/
+    case DeleteTrade(trade, senderOpt) =>
+      marketServices.get(trade.marketName) match {
+        case Some(actor) =>
+          actor ! DeleteTrade(trade, senderOpt)
+
+        case None =>
+          log.warning(s"DeleteTrade - market not found! ${trade.marketName}")
+          senderOpt match {
+            case Some(actor) =>
+              actor ! None
+            case None =>
+              sender ! None
+          }
+      }
+
 
     /*********************************************************************
       * Post a trade to the market.
