@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 object Main extends App with StrictLogging {
-  val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port = 2554").
+  val config = ConfigFactory.parseString(s"akka.remote.netty.tcp.port = 2552").
     withFallback(ConfigFactory.parseString("akka.cluster.roles = [api]")).
     withFallback(ConfigFactory.load())
 
