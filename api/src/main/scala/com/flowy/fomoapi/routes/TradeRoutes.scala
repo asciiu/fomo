@@ -1,9 +1,7 @@
 package com.flowy.fomoapi.routes
 
 import akka.actor.ActorRef
-import akka.actor.Status.Failure
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.StatusCodes.Success
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.pattern.ask
 import akka.util.Timeout
