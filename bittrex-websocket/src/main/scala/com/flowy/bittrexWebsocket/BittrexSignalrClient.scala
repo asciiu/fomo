@@ -1,4 +1,4 @@
-package com.flowy.bittrex
+package com.flowy.bittrexWebsocket
 
 import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}

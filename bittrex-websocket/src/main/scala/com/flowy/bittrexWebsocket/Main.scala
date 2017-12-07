@@ -1,4 +1,4 @@
-package com.flowy.bittrex
+package com.flowy.bittrexWebsocket
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer

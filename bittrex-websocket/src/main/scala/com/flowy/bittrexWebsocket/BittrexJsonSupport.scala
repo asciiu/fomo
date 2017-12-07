@@ -1,4 +1,4 @@
-package com.flowy.bittrex
+package com.flowy.bittrexWebsocket
 
 import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
