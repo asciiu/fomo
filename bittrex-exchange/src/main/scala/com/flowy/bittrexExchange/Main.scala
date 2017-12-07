@@ -2,7 +2,6 @@ package com.flowy.bittrexExchange
 
 import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
-import com.flowy.bittrexWebsocket.BittrexSignalrActor
 import com.flowy.cacheService.CacheService
 import com.flowy.common.utils.ServerConfig
 import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}

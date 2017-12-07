@@ -1,4 +1,4 @@
-package com.flowy.bittrexWebsocket
+package com.flowy.notification
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.server.Directives

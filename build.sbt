@@ -75,6 +75,8 @@ val sprayJson            = "com.typesafe.akka" %% "akka-http-spray-json" % akkaH
 val sigarLoders          = "io.kamon" % "sigar-loader" % "1.6.6-rev002"
 
 val akkaClusterStack     = Seq(akkaActor, akkaClustering, akkRemote, akkaStream, akkaClusterTools, akkaMultNode, scalatest)
+val mobilePush           = "com.malliina" %% "mobile-push" % "1.8.0"
+val apln                 = "org.mortbay.jetty.alpn" % "alpn-boot" % "8.1.11.v20170118" % Test
 
 // scalatrex
 val ws = "com.typesafe.play" %% "play-ahc-ws-standalone" % "1.1.3"
@@ -233,6 +235,20 @@ lazy val trailingStopService: Project = (project in file("trailing-stop"))
   )
   .dependsOn(common)
 
+/****************************************************************
+  * trailing stop
+  ***************************************************************/
+lazy val notification: Project = (project in file("notification"))
+  .settings(commonSettings: _*)
+  .settings(
+    assemblyJarName in assembly := "notification.jar",
+    name := "notification",
+    libraryDependencies ++= akkaClusterStack ++ Seq(mobilePush, apln),
+    // Adds ALPN to the boot classpath for Http2 support
+    javaOptions in reStart ++= addAlpnPath((managedClasspath in Runtime).value)
+  )
+  .dependsOn(common)
+
 
 lazy val ui = (project in file("ui"))
   .settings(commonSettings: _*)
@@ -248,6 +264,12 @@ lazy val uiTests = (project in file("ui-tests"))
   ) dependsOn api
 
 
-RenameProject.settings
+def addAlpnPath(attList : Keys.Classpath): Seq[String] = {
+  for {
+    file <- attList.map(_.data)
+    path = file.getAbsolutePath if path.contains("alpn-boot")
+  } yield { println(s"ALPN path: $path"); "-Xbootclasspath/p:" + path}
+}
 
+RenameProject.settings
 fork := true
