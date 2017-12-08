@@ -97,6 +97,10 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     }
   }
 
+  def findUserDevice(userId: UUID, deviceId: String): Future[Option[UserDevice]] = {
+    db.run(userDevices.filter(d => d.userId === userId && d.deviceId === deviceId).result.headOption)
+  }
+
   def findUserDevice(userId: UUID, deviceId: UUID): Future[Option[UserDevice]] = {
     db.run(userDevices.filter(d => d.userId === userId && d.id === deviceId).result.headOption)
   }

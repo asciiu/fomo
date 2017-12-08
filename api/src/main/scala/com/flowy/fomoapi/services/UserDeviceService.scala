@@ -16,9 +16,14 @@ class UserDeviceService(bagel: TheEverythingBagelDao)(implicit system: ActorSyst
   lazy val mediator = DistributedPubSub(system).mediator
 
   def addUserDevice(userDevice: UserDevice): Future[Option[UserDevice]] = {
-    bagel.insert(userDevice).map {
-      case 1 => Some(userDevice)
-      case _ => None
+    bagel.findUserDevice(userDevice.userId, userDevice.deviceId).flatMap {
+      case Some(device) =>
+        bagel.updateDevice(device.copy(deviceType = device.deviceType, deviceToken = device.deviceToken))
+      case None =>
+        bagel.insert(userDevice).map {
+          case 1 => Some(userDevice)
+          case _ => None
+        }
     }
   }
 
