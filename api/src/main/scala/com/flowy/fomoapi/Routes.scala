@@ -10,6 +10,7 @@ import com.softwaremill.bootzooka.swagger.SwaggerDocService
 
 trait Routes extends RoutesRequestWrapper
   with ApiKeyRoutes
+  with DeviceRoutes
   with UsersRoutes
   with PasswordResetRoutes
   with VersionRoutes
@@ -21,6 +22,7 @@ trait Routes extends RoutesRequestWrapper
   lazy val routes = requestWrapper {
     pathPrefix("api") {
       apiKeyRoutes ~
+      deviceRoutes ~
       passwordResetRoutes ~
       usersRoutes ~
       versionRoutes ~

@@ -37,8 +37,8 @@ case class TradeRequest(
                  quantity: Double,
                  buyConditions: String,
                  stopLossConditions: Option[String],
-                 takeProfitConditions: Option[String]) {
-}
+                 takeProfitConditions: Option[String])
+
 
 case class Trade(id: UUID,
                  userId: UUID,

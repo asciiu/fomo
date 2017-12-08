@@ -50,6 +50,16 @@ case class Balance(Currency: String,
 
 case class UserData(id: UserId, first: String, last: String, email: String, exchanges: Seq[ExchangeData])
 
+object DeviceType extends Enumeration {
+  val iPhone     = Value("iPhone")
+  val iPad       = Value("iPad")
+  val Android    = Value("android")
+  val Web        = Value("web")
+}
+
+
+case class UserDevice(id: UUID, deviceType: String, deviceId: String, deviceToken: String)
+
 case class ExchangeData(name: Exchange.Value, balances: Seq[Balance])
 
 object UserData {
