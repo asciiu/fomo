@@ -7,6 +7,10 @@ import akka.stream.ActorMaterializer
 import com.flowy.common.utils.ServerConfig
 import com.malliina.push.apns._
 import java.nio.file.Paths
+
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.{Subscribe, SubscribeAck, Unsubscribe}
+
 import scala.concurrent.ExecutionContext
 
 
@@ -25,6 +29,9 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
 
   import NotificationService._
 
+  // required for pub sub model so this service can subscribe to messages from the cluster
+  val mediator = DistributedPubSub(context.system).mediator
+
   val p8Path = config.getString("flowy.apns.p8Path")
   val url = getClass.getResource(p8Path)
   val keyId = config.getString("flowy.apns.keyId")
@@ -42,12 +49,15 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
 
   override def preStart() = {
     log.info("notification service started")
-    self ! ApplePushNotification("cdfa254c91e8ee7abe4aca89e4abc8b943c675672e8d7dab6814b23cfa517ef9", "Trade SBD-BTC sold at 0.00100000")
+    mediator ! Subscribe("ApplePushNotification", self)
+
+    //self ! ApplePushNotification("cdfa254c91e8ee7abe4aca89e4abc8b943c675672e8d7dab6814b23cfa517ef9", "Trade SBD-BTC sold at 0.00100000")
   }
 
 
   override def postStop() = {
     log.info("notification service shutdown")
+    mediator ! Unsubscribe("ApplePushNotification", self)
   }
 
 
@@ -68,6 +78,12 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
         case Right(ident) =>
           log.info(s"apns message to $tokie successful $ident")
       }
+
+    /**
+      * Acknowledge the subscribe
+      */
+    case SubscribeAck(Subscribe("ApplePushNotification", None, `self`)) =>
+      log.info("subscribed to ApplePushNotification commands")
 
     case x =>
       log.warning(s"notification service received unknown $x")

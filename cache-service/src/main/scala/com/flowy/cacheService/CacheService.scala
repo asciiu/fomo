@@ -70,11 +70,10 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
   def receive = {
 
-    case SubscribeAck(Subscribe("Wallet", None, `self`)) ⇒
-      log.info("subscribed to Wallet commands")
+    case SubscribeAck(Subscribe("CacheBittrexBalances", None, `self`)) ⇒
+      log.info("subscribed to CacheBittrexBalances commands")
 
-    case SubscribeAck(Subscribe("WalletReserve", None, `self`)) ⇒
-      log.info("subscribed to WalletReserve commands")
+
 
     /**
       * Cache the bittrex wallets.
