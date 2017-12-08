@@ -16,7 +16,7 @@ object NotificationService {
                                               system: ActorSystem, materializer: ActorMaterializer): Props =
     Props(new NotificationService(config))
 
-  case class SendAlert(tokie: String, msg: String)
+  case class ApplePushNotification(tokie: String, msg: String)
 }
 
 
@@ -24,7 +24,6 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
                           system: ActorSystem, materializer: ActorMaterializer) extends Directives with Actor with ActorLogging {
 
   import NotificationService._
-
 
   val p8Path = config.getString("flowy.apns.p8Path")
   val url = getClass.getResource(p8Path)
@@ -42,7 +41,8 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
   val topic = APNSTopic(bundleId)
 
   override def preStart() = {
-    self ! SendAlert("cdfa254c91e8ee7abe4aca89e4abc8b943c675672e8d7dab6814b23cfa517ef9", "Trade SBD-BTC sold at 0.00100000")
+    log.info("notification service started")
+    self ! ApplePushNotification("cdfa254c91e8ee7abe4aca89e4abc8b943c675672e8d7dab6814b23cfa517ef9", "Trade SBD-BTC sold at 0.00100000")
   }
 
 
@@ -53,18 +53,20 @@ class NotificationService(config: ServerConfig)(implicit executionContext: Execu
 
   def receive = {
     /**
-      * Send an alert to device with token
+      * Send an apple push notification to device
       */
-    case SendAlert(tokie, msg) =>
+    case ApplePushNotification(tokie, msg) =>
       val deviceToken: APNSToken = APNSToken.build(tokie).get
       val message = APNSMessage.simple(msg)
       val request = APNSRequest.withTopic(topic, message)
 
+      log.info(s"sending apns message to $tokie")
+
       client.push(deviceToken, request).map {
         case Left(error) =>
-          println(s"ERROR: $error")
+          log.error(s"apns message to $tokie failed $error")
         case Right(ident) =>
-          println(s"IDENT: $ident")
+          log.info(s"apns message to $tokie successful $ident")
       }
 
     case x =>
