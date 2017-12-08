@@ -177,7 +177,7 @@ lazy val api: Project = (project in file("api"))
       )
     }
   )
-  .dependsOn(common, bittrexExchangeService, cacheService, trailingStopService)
+  .dependsOn(common, bexchange, cache, trailstop)
 
 
 /****************************************************************
@@ -192,20 +192,20 @@ lazy val common = (project in file("common"))
   )
 
 
-lazy val bittrexExchangeService: Project = (project in file("bittrex-exchange"))
+lazy val bexchange: Project = (project in file("bittrex-exchange"))
   .settings(commonSettings: _*)
   .settings(
     assemblyJarName in assembly := "bittrexExchangeService.jar",
     name := "bittrex-exchange",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
-  .dependsOn(cacheService, common, trailingStopService, bittrexWebsocketClient)
+  .dependsOn(cache, common, trailstop, bfeed, notification)
 
 
 /****************************************************************
   * this is the bittrex signalr client
   ***************************************************************/
-lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket"))
+lazy val bfeed: Project = (project in file("bittrex-websocket"))
   .settings(commonSettings: _*)
   .settings(
     assemblyJarName in assembly := "bittrexWebsocketClient.jar",
@@ -214,7 +214,7 @@ lazy val bittrexWebsocketClient: Project = (project in file("bittrex-websocket")
   )
   .dependsOn(common)
 
-lazy val cacheService: Project = (project in file("cache-service"))
+lazy val cache: Project = (project in file("cache-service"))
   .settings(commonSettings: _*)
   .settings(
     assemblyJarName in assembly := "cacheService.jar",
@@ -226,7 +226,7 @@ lazy val cacheService: Project = (project in file("cache-service"))
 /****************************************************************
   * trailing stop
   ***************************************************************/
-lazy val trailingStopService: Project = (project in file("trailing-stop"))
+lazy val trailstop: Project = (project in file("trailing-stop"))
   .settings(commonSettings: _*)
   .settings(
     assemblyJarName in assembly := "trailingStopService.jar",

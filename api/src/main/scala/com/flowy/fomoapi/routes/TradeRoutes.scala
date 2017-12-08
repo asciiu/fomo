@@ -5,8 +5,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.flowy.bittrexExchange.ExchangeService.GetMarkets
-import com.flowy.bittrexExchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
+import com.flowy.bexchange.ExchangeService.GetMarkets
+import com.flowy.bexchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{Trade, TradeRequest}

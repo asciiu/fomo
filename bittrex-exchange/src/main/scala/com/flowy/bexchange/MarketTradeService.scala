@@ -1,4 +1,4 @@
-package com.flowy.bittrexExchange
+package com.flowy.bexchange
 
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import com.flowy.trailingStop.messages.TrailingStop
+import com.flowy.trailstop.TrailingStop
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._

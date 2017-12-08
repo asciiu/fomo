@@ -1,4 +1,4 @@
-package com.flowy.bittrexWebsocket
+package com.flowy.bfeed
 
 import java.util
 

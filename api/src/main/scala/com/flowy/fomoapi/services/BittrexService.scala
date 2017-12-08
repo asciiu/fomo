@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
-import com.flowy.bittrexExchange.ExchangeService.GetMarkets
-import com.flowy.bittrexExchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
+import com.flowy.bexchange.ExchangeService.GetMarkets
+import com.flowy.bexchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.utils.sql.SqlDatabase
 import redis.RedisClient
 

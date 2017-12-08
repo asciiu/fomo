@@ -1,4 +1,4 @@
-package com.flowy.bittrexExchange
+package com.flowy.bexchange
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSub

@@ -1,4 +1,4 @@
-package com.flowy.trailingStop
+package com.flowy.trailstop
 
 import akka.actor.{Actor, ActorLogging}
 import akka.cluster.Cluster
@@ -7,7 +7,6 @@ import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
 import com.flowy.common.models.MarketStructures.MarketUpdate
 
 import language.postfixOps
-import messages.{GetStopLosses, TrailingStop}
 
 class TrailingStopLossService extends Actor with ActorLogging{
   import DistributedPubSubMediator.{ Subscribe, SubscribeAck }

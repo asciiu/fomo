@@ -1,4 +1,4 @@
-package com.flowy.trailingStop.messages
+package com.flowy.trailstop
 
 import java.util.UUID
 

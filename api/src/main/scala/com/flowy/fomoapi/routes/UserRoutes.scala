@@ -21,7 +21,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import com.flowy.cacheService.CacheService.CacheBittrexBalances
+import com.flowy.cache.CacheService.CacheBittrexBalances
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._

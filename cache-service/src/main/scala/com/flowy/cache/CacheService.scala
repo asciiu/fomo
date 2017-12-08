@@ -1,4 +1,4 @@
-package com.flowy.cacheService
+package com.flowy.cache
 
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.cluster.Cluster

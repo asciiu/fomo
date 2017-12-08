@@ -1,7 +1,6 @@
-package com.flowy.trailingStop
+package com.flowy.trailstop
 
 import java.util.UUID
-import messages.TrailingStop
 
 class StopLossCollection(marketName: String, lprice: Double) {
   private val collection = new scala.collection.mutable.ListBuffer[TrailingStop]()

@@ -1,4 +1,4 @@
-package com.flowy.cacheService
+package com.flowy.cache
 
 import java.util.UUID
 
@@ -10,7 +10,7 @@ import akka.util.Timeout
 import com.flowy.common.api.Auth
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.postgres.SqlTheEverythingBagelDao
-import com.flowy.cacheService.CacheService.CacheBittrexWallets
+import com.flowy.cache.CacheService.CacheBittrexWallets
 import org.scalatest._
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import redis.RedisClient

@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
-import com.flowy.cacheService.CacheService.CacheBittrexBalances
+import com.flowy.cache.CacheService.CacheBittrexBalances
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.UserKeyDao
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}

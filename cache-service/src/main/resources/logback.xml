@@ -14,7 +14,7 @@
     <appender-ref ref="STDOUT" />
   </appender>
 
-  <logger name="com.flowy.cacheService" level="DEBUG" additivity="false">
+  <logger name="com.flowy.cache" level="DEBUG" additivity="false">
     <appender-ref ref="ASYNC" />
   </logger>
 

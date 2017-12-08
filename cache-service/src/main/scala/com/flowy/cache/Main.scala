@@ -1,4 +1,4 @@
-package com.flowy.cacheService
+package com.flowy.cache
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -17,7 +17,7 @@ object Main extends App {
 
   lazy val config = new DatabaseConfig with ServerConfig {
     override def rootConfig = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").
-      withFallback(ConfigFactory.parseString("akka.cluster.roles = [cache-service]")).
+      withFallback(ConfigFactory.parseString("akka.cluster.roles = [cache]")).
       withFallback(ConfigFactory.load())
   }
 
@@ -29,5 +29,5 @@ object Main extends App {
   lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
 
-  system.actorOf(CacheService.props(bagel, redis), name = "cache-service")
+  system.actorOf(CacheService.props(bagel, redis), name = "cache")
 }
