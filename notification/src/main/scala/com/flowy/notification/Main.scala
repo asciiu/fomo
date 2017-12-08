@@ -1,17 +1,12 @@
 package com.flowy.notification
 
-import java.nio.file.Paths
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.flowy.common.utils.ServerConfig
 import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
 import com.flowy.common.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
-import com.malliina.push.apns._
 import com.typesafe.config.ConfigFactory
-import scala.io.Source
-
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 object Main extends App {
   // Override the configuration of the port when specified as program argument
@@ -19,7 +14,7 @@ object Main extends App {
 
   lazy val config = new DatabaseConfig with ServerConfig {
     override def rootConfig = ConfigFactory.parseString(s"akka.remote.netty.tcp.port=$port").
-      withFallback(ConfigFactory.parseString("akka.cluster.roles = [bittrex-websocket]")).
+      withFallback(ConfigFactory.parseString("akka.cluster.roles = [notification-service]")).
       withFallback(ConfigFactory.load())
   }
 
@@ -31,24 +26,5 @@ object Main extends App {
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
   lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
 
-  val url = getClass.getResource("/AuthKey_LJCP6MGHV2.p8")
-  val conf = APNSTokenConf(
-    Paths.get(url.getPath()),
-    KeyId("RGWNJ3AJG7"),
-    TeamId("5MJU2NDS4K")
-  )
-
-  val client = APNSTokenClient(conf, isSandbox = false)
-  val topic = APNSTopic("com.fluidmarket.fluids")
-  val deviceToken: APNSToken = APNSToken.build("cdfa254c91e8ee7abe4aca89e4abc8b943c675672e8d7dab6814b23cfa517ef9").get
-  val message = APNSMessage.simple("Hey, sexy!")
-  val request = APNSRequest.withTopic(topic, message)
-    client.push(deviceToken, request).map {
-      case Left(error) =>
-        println(s"ERROR: $error")
-      case Right(ident) =>
-        println(s"IDENT: $ident")
-
-    }
-
+  system.actorOf(NotificationService.props(config), name = "notification-service")
 }
