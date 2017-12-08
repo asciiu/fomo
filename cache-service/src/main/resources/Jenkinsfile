@@ -11,19 +11,20 @@ node {
 
     stage('Building'){
       ansiColor('xterm') {
-        sh "${sbtHome}/bin/sbt 'project trailingStopService' assembly"
+        sh "${sbtHome}/bin/sbt 'project cache' assembly"
       }
     }
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r '/var/lib/jenkins/workspace/Fomo Trailing Stop/trailing-stop/target/scala-2.12/trailingStopService.jar' ubuntu@stage.fomo.exchange:~/"
+        sh "scp -r '/var/lib/jenkins/workspace/[Jenkins Project Here]/cache-service/target/scala-2.12/cache.jar' ubuntu@stage.fomo.exchange:~/"
       }
     }
 
     stage ('Restarting') {
       ansiColor('xterm') {
-        sh "ssh ubuntu@stage.fomo.exchange 'sudo systemctl restart btrailingstop'"
+        // TODO need cache script to start this service
+        sh "ssh ubuntu@stage.fomo.exchange 'sudo systemctl restart cache'"
       }
     }
   } catch (e) {

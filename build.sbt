@@ -195,7 +195,7 @@ lazy val common = (project in file("common"))
 lazy val bexchange: Project = (project in file("bittrex-exchange"))
   .settings(commonSettings: _*)
   .settings(
-    assemblyJarName in assembly := "bittrexExchangeService.jar",
+    assemblyJarName in assembly := "bexchange.jar",
     name := "bittrex-exchange",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
@@ -208,7 +208,7 @@ lazy val bexchange: Project = (project in file("bittrex-exchange"))
 lazy val bfeed: Project = (project in file("bittrex-websocket"))
   .settings(commonSettings: _*)
   .settings(
-    assemblyJarName in assembly := "bittrexWebsocketClient.jar",
+    assemblyJarName in assembly := "bfeed.jar",
     name := "bittrex-websocket",
     libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
   )
@@ -217,7 +217,7 @@ lazy val bfeed: Project = (project in file("bittrex-websocket"))
 lazy val cache: Project = (project in file("cache-service"))
   .settings(commonSettings: _*)
   .settings(
-    assemblyJarName in assembly := "cacheService.jar",
+    assemblyJarName in assembly := "cache.jar",
     name := "cache-service",
     libraryDependencies ++= akkaClusterStack
   )
@@ -229,7 +229,7 @@ lazy val cache: Project = (project in file("cache-service"))
 lazy val trailstop: Project = (project in file("trailing-stop"))
   .settings(commonSettings: _*)
   .settings(
-    assemblyJarName in assembly := "trailingStopService.jar",
+    assemblyJarName in assembly := "trailstop.jar",
     name := "trailing-stop",
     libraryDependencies ++= akkaClusterStack
   )

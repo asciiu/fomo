@@ -11,18 +11,19 @@ node {
 
     stage('Building'){
       ansiColor('xterm') {
-        sh "${sbtHome}/bin/sbt 'project bittrexExchangeService' assembly"
+        sh "${sbtHome}/bin/sbt 'project bexchange' assembly"
       }
     }
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r '/var/lib/jenkins/workspace/Fomo Bittrex Exchange/bittrex-exchange/target/scala-2.12/bittrexExchangeService.jar' ubuntu@s1.fomo.exchange:~/"
+        sh "scp -r '/var/lib/jenkins/workspace/Fomo Bittrex Exchange/bittrex-exchange/target/scala-2.12/bexchange.jar' ubuntu@s1.fomo.exchange:~/"
       }
     }
 
     stage ('Restarting') {
       ansiColor('xterm') {
+        // /usr/local/bin/bexchange.sh
         sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart bexchange'"
       }
     }

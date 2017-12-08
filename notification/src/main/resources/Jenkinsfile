@@ -11,20 +11,20 @@ node {
 
     stage('Building'){
       ansiColor('xterm') {
-        sh "${sbtHome}/bin/sbt 'project api' clean"
-        sh "${sbtHome}/bin/sbt 'project bittrexWebsocketClient' assembly"
+        sh "${sbtHome}/bin/sbt 'project notification' assembly"
       }
     }
 
     stage ('Deploy') {
       ansiColor('xterm') {
-        sh "scp -r '/var/lib/jenkins/workspace/Fomo Bittrex Websocket Client/bittrex-websocket/target/scala-2.12/bittrexWebsocketClient.jar' ubuntu@s1.fomo.exchange:~/"
+        sh "scp -r '/var/lib/jenkins/workspace/[Jenkins notification path]/notification/target/scala-2.12/notification.jar' ubuntu@s1.fomo.exchange:~/"
       }
     }
 
     stage ('Restarting') {
       ansiColor('xterm') {
-        sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart BittrexWebsocketClient'"
+        // /usr/local/bin/notification.sh  (NEEDED!)
+        sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart notification'"
       }
     }
   } catch (e) {
