@@ -23,6 +23,7 @@ node {
 
     stage ('Restarting') {
       ansiColor('xterm') {
+        // /etc/systemd/system/bexchange.service
         // /usr/local/bin/bexchange.sh
         sh "ssh ubuntu@s1.fomo.exchange 'sudo systemctl restart bexchange'"
       }
