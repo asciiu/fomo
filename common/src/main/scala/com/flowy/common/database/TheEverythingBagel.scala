@@ -19,6 +19,9 @@ trait TheEverythingBagelDao {
   def deleteTrade(trade: Trade): Future[Option[Trade]]
 
   // manage push tokens
-  def insert(userDevice: UserDevice): Future[Int]
+  def deleteDevice(device: UserDevice): Future[Option[UserDevice]]
+  def findUserDevice(userId: UUID, deviceId: UUID): Future[Option[UserDevice]]
   def findUserDevices(userId: UUID): Future[Seq[UserDevice]]
+  def insert(userDevice: UserDevice): Future[Int]
+  def updateDevice(userDevice: UserDevice): Future[Option[UserDevice]]
 }

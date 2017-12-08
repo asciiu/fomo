@@ -86,6 +86,25 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * User Device Stuff below here
     *****************************************************************************************/
 
+  def deleteDevice(userDevice: UserDevice): Future[Option[UserDevice]] = {
+    val action = userDevices.filter(_.id === userDevice.id).delete
+
+    db.run(action.asTry).map { result =>
+      result match {
+        case Success(count) if count > 0 => Some(userDevice)
+        case _ => None
+      }
+    }
+  }
+
+  def findUserDevice(userId: UUID, deviceId: UUID): Future[Option[UserDevice]] = {
+    db.run(userDevices.filter(d => d.userId === userId && d.id === deviceId).result.headOption)
+  }
+
+  def findUserDevices(userId: UUID): Future[Seq[UserDevice]] = {
+    db.run(userDevices.filter(d => d.userId === userId).result)
+  }
+
   /** insert a users device token
     * @param userDevice
     * @return
@@ -94,7 +113,16 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(userDevices += userDevice)
   }
 
-  def findUserDevices(userId: UUID): Future[Seq[UserDevice]] = {
-    db.run(userDevices.filter(d => d.userId === userId).result)
+  def updateDevice(userDevice: UserDevice): Future[Option[UserDevice]] = {
+    val updateDevice = (userDevices returning userDevices).insertOrUpdate(userDevice)
+
+    // returns None if updated
+    // http://slick.lightbend.com/doc/3.2.0/queries.html#updating
+    db.run(updateDevice).map {
+      case None => Some(userDevice)
+      case _ => None
+    }
   }
+
+
 }

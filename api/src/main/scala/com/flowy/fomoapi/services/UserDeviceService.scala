@@ -22,15 +22,20 @@ class UserDeviceService(bagel: TheEverythingBagelDao)(implicit system: ActorSyst
     }
   }
 
-  //def update(ukey: UserKey): Future[Option[UserKey]] = {
-  //}
+  def update(userDevice: UserDevice): Future[Option[UserDevice]] = {
+    bagel.updateDevice(userDevice)
+  }
 
-  //def remove(userId: UUID, keyId: UUID): Future[Boolean] = {
-  //}
+  def remove(userId: UUID, deviceId: UUID): Future[Option[UserDevice]] = {
+    getUserDevice(userId, deviceId).flatMap {
+      case Some(device) => bagel.deleteDevice(device)
+      case None => Future.successful(None)
+    }
+  }
 
-  //def getUserKey(userId: UUID, keyId: UUID): Future[Option[UserKey]] = {
-  //  userKeyDao.findByUserId(userId, keyId)
-  //}
+  def getUserDevice(userId: UUID, deviceId: UUID): Future[Option[UserDevice]] = {
+    bagel.findUserDevice(userId, deviceId)
+  }
 
   def getUserDevices(userId: UUID): Future[Seq[UserDevice]] = {
     bagel.findUserDevices(userId)

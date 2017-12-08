@@ -8,7 +8,6 @@ import com.flowy.fomoapi.services.UserDeviceService
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.generic.auto._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -26,7 +25,7 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   val deviceRoutes = logRequestResult("DeviceRoutes") {
     pathPrefix("devices") {
       deleteDevice ~
-      getDevice ~
+      getUserDevice ~
       updateDevice ~
       postDevice ~
       listDevices
@@ -37,9 +36,12 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     path(JavaUUID) { deviceId =>
       delete {
         userFromSession { user =>
-          completeOk
-          // TODO delete device in DB and in cache
-          //complete(JSendResponse(JsonStatus.Success, "", device.asJson))
+          onSuccess(deviceService.remove(user.id, deviceId)) {
+            case Some(device) =>
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", device.asJson))
+            case None =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "cannot find device", Json.Null))
+          }
         }
       }
     }
@@ -55,11 +57,16 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
   }
 
-  def getDevice = {
-    path(JavaUUID) { tradeId =>
+  def getUserDevice = {
+    path(JavaUUID) { deviceId =>
       get {
         userFromSession { user =>
-          completeOk
+          onSuccess(deviceService.getUserDevice(user.id, deviceId)) {
+            case Some(device) =>
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", device.asJson))
+            case None =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "not found", Json.Null))
+          }
         }
       }
     }
@@ -81,11 +88,16 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def updateDevice = {
-    path(JavaUUID) { tradeId =>
+    path(JavaUUID) { deviceId =>
       put {
         userFromSession { user =>
-          entity(as[UserDeviceRequest]) { userDevice =>
-            completeOk
+          entity(as[UserDeviceRequest]) { deviceReq =>
+            onSuccess(deviceService.update(UserDevice(deviceId, user.id, deviceReq.deviceType, deviceReq.deviceId, deviceReq.deviceToken))) {
+              case Some(device) =>
+                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", device.asJson))
+              case None =>
+                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "", Json.Null))
+            }
           }
         }
       }
