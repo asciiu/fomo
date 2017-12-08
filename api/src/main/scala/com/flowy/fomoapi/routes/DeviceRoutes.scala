@@ -1,21 +1,25 @@
 package com.flowy.fomoapi.routes
 
-import akka.actor.ActorRef
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.UserDevice
+import com.flowy.fomoapi.services.UserDeviceService
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
 import io.circe.generic.auto._
+import io.circe.Json
+import io.circe.generic.auto._
+import io.circe.syntax._
 import redis.RedisClient
 
 
 trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
-  def bittrexService: ActorRef
   def bagel: TheEverythingBagelDao
   def redis: RedisClient
+  def deviceService: UserDeviceService
 
   // TODO
   // when a trade does not execute successfully you need an error log to tell you why
@@ -62,8 +66,13 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def postDevice = {
     post {
       userFromSession { user =>
-        entity(as[UserDevice]) { userDevice =>
-          completeOk
+        entity(as[UserDeviceRequest]) { deviceReq =>
+          onSuccess(deviceService.addUserDevice(UserDevice(user.id, deviceReq.deviceType, deviceReq.deviceId, deviceReq.deviceToken))) {
+            case Some(device) =>
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", device.asJson))
+            case None =>
+              complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "", Json.Null))
+          }
         }
       }
     }
@@ -73,7 +82,7 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     path(JavaUUID) { tradeId =>
       put {
         userFromSession { user =>
-          entity(as[UserDevice]) { userDevice =>
+          entity(as[UserDeviceRequest]) { userDevice =>
             completeOk
           }
         }
@@ -81,3 +90,5 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
   }
 }
+
+case class UserDeviceRequest(deviceType: String, deviceId: String, deviceToken: String)

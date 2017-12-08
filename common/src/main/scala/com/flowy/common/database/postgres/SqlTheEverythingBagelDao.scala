@@ -5,8 +5,8 @@ import java.util.UUID
 
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.database.postgres.schema.SqlTrade
-import com.flowy.common.models.{Trade, TradeRequest, TradeStatus}
+import com.flowy.common.database.postgres.schema.{SqlTrade, SqlUserDeviceSchema}
+import com.flowy.common.models.{Trade, TradeStatus, UserDevice}
 
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
@@ -15,7 +15,7 @@ import scala.util.Success
 
 
 class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
-  extends TheEverythingBagelDao with SqlTrade {
+  extends TheEverythingBagelDao with SqlTrade with SqlUserDeviceSchema {
 
   import database._
   import database.driver.api._
@@ -80,5 +80,17 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
       case None => Some(trade)
       case _ => None
     }
+  }
+
+  /*******************************************************************************************
+    * User Device Stuff below here
+    *****************************************************************************************/
+
+  /** insert a users device token
+    * @param userDevice
+    * @return
+    */
+  def insert(userDevice: UserDevice): Future[Int] = {
+    db.run(userDevices += userDevice)
   }
 }

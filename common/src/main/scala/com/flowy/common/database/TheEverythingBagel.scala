@@ -1,6 +1,6 @@
 package com.flowy.common.database
 
-import com.flowy.common.models.{Trade, TradeStatus}
+import com.flowy.common.models.{Trade, TradeStatus, UserDevice}
 import java.util.UUID
 
 import scala.concurrent.Future
@@ -22,4 +22,7 @@ trait TheEverythingBagelDao {
   def updateTrade(trade: Trade): Future[Option[Trade]]
 
   def deleteTrade(trade: Trade): Future[Option[Trade]]
+
+  // manage push tokens
+  def insert(userDevice: UserDevice): Future[Int]
 }

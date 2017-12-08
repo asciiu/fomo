@@ -1,11 +1,13 @@
 package com.flowy.common.models
 
+import java.time.OffsetDateTime
 import java.util.UUID
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 import com.flowy.common.utils.Utils
 import com.flowy.common.models.User.UserId
+import org.joda.time.field.OffsetDateTimeField
 
 case class User(
                  id: UUID,
@@ -58,7 +60,16 @@ object DeviceType extends Enumeration {
 }
 
 
-case class UserDevice(id: UUID, deviceType: String, deviceId: String, deviceToken: String)
+case class UserDevice(id: UUID, userId: UUID, deviceType: String, deviceId: String, deviceToken: String)
+
+object UserDevice {
+  def apply(userId: UUID, deviceType: String, deviceId: String, deviceToken: String): UserDevice = {
+    UserDevice(UUID.randomUUID(), userId, deviceType, deviceId, deviceToken)
+  }
+  def applyWithId(id: UUID, userId: UUID, deviceType: String, deviceId: String, deviceToken: String): UserDevice = {
+    UserDevice(id, userId, deviceType, deviceId, deviceToken)
+  }
+}
 
 case class ExchangeData(name: Exchange.Value, balances: Seq[Balance])
 

@@ -69,6 +69,7 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
   )(serviceExecutionContext)
 
   lazy val userKeyService = new UserKeyService(userKeyDao)
+  lazy val deviceService = new UserDeviceService(bagel)
 
   lazy val refreshTokenStorage = new RefreshTokenStorageImpl(rememberMeTokenDao, system)(serviceExecutionContext)
 
