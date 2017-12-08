@@ -32,7 +32,7 @@ class UserDeviceService(bagel: TheEverythingBagelDao)(implicit system: ActorSyst
   //  userKeyDao.findByUserId(userId, keyId)
   //}
 
-  //def getAllKeys(userId: UUID): Future[Seq[UserKey]] = {
-  //  userKeyDao.findByUserId(userId)
-  //}
+  def getUserDevices(userId: UUID): Future[Seq[UserDevice]] = {
+    bagel.findUserDevices(userId)
+  }
 }

@@ -48,7 +48,9 @@ trait DeviceRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def listDevices = {
     get {
       userFromSession { user =>
-        completeOk
+        onSuccess(deviceService.getUserDevices(user.id)) { devices =>
+          complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", devices.asJson))
+        }
       }
     }
   }

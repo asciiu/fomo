@@ -93,4 +93,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   def insert(userDevice: UserDevice): Future[Int] = {
     db.run(userDevices += userDevice)
   }
+
+  def findUserDevices(userId: UUID): Future[Seq[UserDevice]] = {
+    db.run(userDevices.filter(d => d.userId === userId).result)
+  }
 }
