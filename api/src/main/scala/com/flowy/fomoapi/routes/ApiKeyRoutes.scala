@@ -16,6 +16,8 @@ import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 
+case class ApiKey(exchange: String, key: String, secret: String, description: String)
+
 trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def userService: UserService
@@ -97,13 +99,11 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     path(JavaUUID) { keyId =>
       delete {
         userFromSession { user =>
-          entity(as[RemoveApiKeyRequest]) { request =>
-            onSuccess(userKeyService.remove(user.id, keyId)) {
-              case true =>
-                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
-              case false =>
-                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user key not found", Json.Null))
-            }
+          onSuccess(userKeyService.remove(user.id, keyId)) {
+            case true =>
+              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
+            case false =>
+              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user key not found", Json.Null))
           }
         }
       }
@@ -129,7 +129,3 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     }
   }
 }
-
-
-case class ApiKey(exchange: String, key: String, secret: String, description: String)
-case class RemoveApiKeyRequest(exchange: String)

@@ -32,6 +32,7 @@ class UserDeviceService(bagel: TheEverythingBagelDao)(implicit system: ActorSyst
   }
 
   def remove(userId: UUID, deviceId: UUID): Future[Option[UserDevice]] = {
+    // TODDO when remove a key pause all trades with this key
     getUserDevice(userId, deviceId).flatMap {
       case Some(device) => bagel.deleteDevice(device)
       case None => Future.successful(None)
