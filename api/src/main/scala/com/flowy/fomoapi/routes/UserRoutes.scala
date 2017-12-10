@@ -22,6 +22,7 @@ import akka.actor.ActorSystem
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.flowy.cache.CacheService.CacheBittrexBalances
+import com.flowy.common.database.TheEverythingBagelDao
 import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -37,6 +38,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def userService: UserService
   def userKeyService: UserKeyService
   def bittrexClient: BittrexClient
+  def bagel: TheEverythingBagelDao
 
   lazy val mediator = DistributedPubSub(system).mediator
 
@@ -58,14 +60,23 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           onSuccess(userService.authenticate(in.email, in.password)) {
             case None => reject(AuthorizationFailedRejection)
             case Some(user) =>
-              onSuccess(checkBalances(user.id)) { exchanges =>
-                val session = Session(user.id)
+              val ex = checkBalances(user.id)
+              val dv = bagel.findUserDevices(user.id)
+
+              val future = for {
+                exs <- ex
+                dvs <- dv
+              } yield { user.copy(devices = dvs, exchanges = exs) }
+
+
+              onSuccess(future) { userData =>
+                val session = Session(userData.id)
                 (if (in.rememberMe.getOrElse(false)) {
                   setSession(refreshable, usingHeaders, session)
                 } else {
                   setSession(oneOff, usingHeaders, session)
                 }) {
-                  complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> user.copy(exchanges = exchanges)).asJson))
+                  complete(JSendResponse(JsonStatus.Success, "", Map[JsonKey, UserData](JsonKey("user") -> userData).asJson))
                 }
               }
           }

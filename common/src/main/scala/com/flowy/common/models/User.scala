@@ -50,7 +50,7 @@ case class Balance(Currency: String,
                    Pending: Double,
                    CryptoAddress: Option[String])
 
-case class UserData(id: UserId, first: String, last: String, email: String, exchanges: Seq[ExchangeData])
+case class UserData(id: UserId, first: String, last: String, email: String, devices: Seq[UserDevice], exchanges: Seq[ExchangeData])
 
 object DeviceType extends Enumeration {
   val iPhone     = Value("iPhone")
@@ -74,5 +74,5 @@ object UserDevice {
 case class ExchangeData(keyId: UUID, name: Exchange.Value, balances: Seq[Balance])
 
 object UserData {
-  def fromUser(user: User) = new UserData(user.id, user.firstName, user.lastName, user.email, Seq.empty)
+  def fromUser(user: User) = new UserData(user.id, user.firstName, user.lastName, user.email, Seq.empty, Seq.empty)
 }
