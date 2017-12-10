@@ -63,7 +63,7 @@ class BittrexClient(implicit context: ExecutionContext, materializer: ActorMater
     * @param auth
     * @return list of BalanceResult wrapped in future
     */
-  def accountGetBalances(auth: Auth): Future[BalancesResponse] = {
+  def accountGetBalances(auth: Auth): Future[BalancesAuthorization] = {
     val endpoint = "account/getbalances"
 
     val path = wsClient.url(s"$base_url/$endpoint")
@@ -74,7 +74,7 @@ class BittrexClient(implicit context: ExecutionContext, materializer: ActorMater
       .get()
       .flatMap { response =>
         Unmarshal(response.body).to[BalancesResponse]
-      }
+      }.map(thing => BalancesAuthorization(auth, thing))
   }
 
   /**

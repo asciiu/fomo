@@ -130,6 +130,7 @@ object Bittrex {
   // Standard bittrex response json has success, message, and option result
   case class StandardResponse[T](success: Boolean, message: String, result: Option[T])
   case class StandardNullResponse(success: Boolean, message: String)
+  case class BalancesAuthorization(auth: Auth, response: BalancesResponse)
 
   // All bittrex responses return some sort of result
   type BalanceResponse = StandardResponse[Balance]

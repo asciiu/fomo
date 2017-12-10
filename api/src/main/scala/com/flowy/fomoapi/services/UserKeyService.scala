@@ -7,6 +7,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import akka.stream.ActorMaterializer
 import com.flowy.cache.CacheService.CacheBittrexBalances
+import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse}
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.database.UserKeyDao
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
@@ -17,6 +18,7 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
 
   lazy val bittrexClient = new BittrexClient()
   lazy val mediator = DistributedPubSub(system).mediator
+  lazy val defaultApiKeyId = UUID.fromString("00000000-0000-0000-0000-000000000000")
 
   def addUserKey(userId: UUID, exchange: Exchange.Value, key: String, secret: String, description: String): Future[Either[String, UserKey]] = {
     userKeyDao.findByKeyPair(key, secret).flatMap { optKey =>
@@ -24,8 +26,9 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
         case Some(key) =>
           Future.successful(Left("user key already exists"))
         case None =>
-          getBalances(userId, Auth(key, secret)).map { response =>
-            (response.message, response.result) match {
+
+          getBalances(userId, Auth(defaultApiKeyId, key, secret)).map { balAuth =>
+            (balAuth.response.message, balAuth.response.result) match {
 
               case ("", Some(balances)) =>
                 mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
@@ -42,8 +45,8 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
   }
 
   def update(ukey: UserKey): Future[Option[UserKey]] = {
-    getBalances(ukey.userId, Auth(ukey.key, ukey.secret)).flatMap { response =>
-      response.message match {
+    getBalances(ukey.userId, Auth(ukey.id, ukey.key, ukey.secret)).flatMap { balAuth =>
+      balAuth.response.message match {
         case "APIKEY_INVALID" | "INVALID_SIGNATURE" =>
           Future.successful(None)
 
@@ -75,7 +78,7 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
     userKeyDao.findByUserId(userId)
   }
 
-  def getBalances(userId: UUID, auth: Auth) = {
+  def getBalances(userId: UUID, auth: Auth): Future[BalancesAuthorization] = {
     bittrexClient.accountGetBalances(auth)
   }
 }

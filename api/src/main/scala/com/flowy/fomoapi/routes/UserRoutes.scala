@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.flowy.fomoapi.services.UserKeyService
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.common.api.Bittrex.BalancesResponse
+import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse}
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.utils.Utils
 import com.flowy.common.models._
@@ -27,7 +27,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 
 trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
@@ -138,26 +138,59 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
 
   private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
+    // TODO move this to utils
+    def singleFuture[A](futures: List[Future[A]]): Future[List[A]] = {
+
+      val p = Promise[List[A]]()
+      p.success(List.empty[A])
+
+      val f = p.future // a future containing empty list.
+
+      futures.foldRight(f) {
+        (fut, accum) =>  // foldRight means accumulator is on right.
+
+          for {
+            list <- accum;  // take List[A] out of Future[List[A]]
+            a    <- fut     // take A out of Future[A]
+          }
+            yield (a :: list)   // A :: List[A]
+      }
+    }
+
     userKeyService.getAllKeys(userId).flatMap { keys =>
-      val futures = new ListBuffer[Future[BalancesResponse]]()
+      val futures = new ListBuffer[Future[BalancesAuthorization]]()
 
       keys.foreach { key =>
         if (key.exchange == Exchange.Bittrex) {
-          futures.append(bittrexClient.accountGetBalances(Auth(key.key, key.secret)))
+          val future = bittrexClient.accountGetBalances(Auth(key.id, key.key, key.secret))
+          futures.append(future)
         }
       }
 
-      val exchanges = Future.sequence(futures.toList).map { listResponses =>
-        listResponses.map { std =>
-          std.result match {
+      val exchanges = singleFuture[BalancesAuthorization](futures.toList).map { balAuth =>
+
+        balAuth.map { std =>
+          std.response.result match {
             case Some(balances) =>
               mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
-              ExchangeData(Exchange.Bittrex, balances)
+              ExchangeData(std.auth.apiKeyId, Exchange.Bittrex, balances)
             case None =>
-              ExchangeData(Exchange.Bittrex, Seq.empty[Balance])
+              ExchangeData(std.auth.apiKeyId, Exchange.Bittrex, Seq.empty[Balance])
           }
         }
       }
+
+//      val exchanges = Future.sequence(futures.toList).map { listResponses =>
+//        listResponses.map { std =>
+//          std.result match {
+//            case Some(balances) =>
+//              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
+//              ExchangeData(Exchange.Bittrex, balances)
+//            case None =>
+//              ExchangeData(Exchange.Bittrex, Seq.empty[Balance])
+//          }
+//        }
+//      }
       exchanges
     }
   }

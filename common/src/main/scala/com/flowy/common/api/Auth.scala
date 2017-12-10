@@ -1,5 +1,6 @@
 package com.flowy.common.api
 
+import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -8,7 +9,7 @@ import play.api.libs.ws.StandaloneWSRequest
 /**
   * Created by bishop on 9/7/16.
   */
-case class Auth(val apiKey: String, secretKey: String) {
+case class Auth(val apiKeyId: UUID, val apiKey: String, secretKey: String) {
 
   require(secretKey.length > 0, "Secret cannot be empty")
 

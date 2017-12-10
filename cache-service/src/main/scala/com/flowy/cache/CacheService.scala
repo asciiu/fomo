@@ -116,10 +116,10 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
   // TODO response to sender with boolean
   private def cacheUserWallets(ukey: UserKey) = {
-    val auth = Auth(ukey.key, ukey.secret)
+    val auth = Auth(ukey.id, ukey.key, ukey.secret)
 
-    bittrexClient.accountGetBalances(auth).map { response =>
-      response.result match {
+    bittrexClient.accountGetBalances(auth).map { authResponse =>
+      authResponse.response.result match {
         case Some(balances) =>
           log.info(s"verified bittrex key for userId: ${ukey.userId}")
 
