@@ -184,9 +184,9 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           std.response.result match {
             case Some(balances) =>
               mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
-              ExchangeData(std.auth.apiKeyId, Exchange.Bittrex, balances)
+              ExchangeData(std.auth.apiKey, Exchange.Bittrex, balances)
             case None =>
-              ExchangeData(std.auth.apiKeyId, Exchange.Bittrex, Seq.empty[Balance])
+              ExchangeData(std.auth.apiKey, Exchange.Bittrex, Seq.empty[Balance])
           }
         }
       }
