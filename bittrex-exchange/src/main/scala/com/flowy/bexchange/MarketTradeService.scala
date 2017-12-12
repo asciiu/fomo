@@ -166,21 +166,23 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     * Add trade to DB and insert buy conditions.
     * @param user
     * @param request
-    * @param sender response to sender when finished with Some(trade) or None
+    * @param senderRef response to sender when finished with Some(trade) or None
     * @return
     */
-  private def postTrade(user: UserData, request: TradeRequest, sender: ActorRef) = {
+  private def postTrade(user: UserData, request: TradeRequest, senderRef: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
 
+    println("here")
     bagel.insert(trade).map { result =>
+      println(result)
       if (result > 0) {
         val conditions = trade.buyConditions
 
         buyConditions.append(TradeBuyCondition(trade.id, conditions))
 
-        sender ! Some(trade)
+        senderRef ! Some(trade)
       } else {
-        sender ! None
+        senderRef ! None
       }
     }
   }
