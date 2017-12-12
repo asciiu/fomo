@@ -40,7 +40,14 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * Insert trade
     */
   def insert(trade: Trade): Future[Int] = {
-    db.run(trades += trade)
+    db.run((trades += trade).asTry).map { result =>
+      result match {
+        case Success(count) if count > 0 => count
+        case x =>
+          println(x)
+          0
+      }
+    }
   }
 
   def findTradesByUserId(userId: UUID,
