@@ -71,12 +71,15 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       updateState(update)
 
     case PostTrade(user, request, Some(sender)) =>
+      log.info(s"PostTrade $user $request $sender")
       postTrade(user, request, sender)
 
     case UpdateTrade(user, tradeId, request, Some(sender)) =>
+      log.info(s"UpdateTrade $user $tradeId $request $sender")
       updateTrade(user, tradeId, request, sender)
 
     case DeleteTrade(trade, Some(sender)) =>
+      log.info(s"DeleteTrade $trade $sender")
       deleteTrade(trade, sender)
 
     case x =>
