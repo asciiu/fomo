@@ -78,6 +78,9 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
     case DeleteTrade(trade, Some(sender)) =>
       deleteTrade(trade, sender)
+
+    case x =>
+      log.warning(s"received unknown message - $x")
   }
 
 
