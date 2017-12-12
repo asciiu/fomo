@@ -173,6 +173,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     val trade = Trade.fromRequest(request, user.id)
 
     bagel.insert(trade).map { result =>
+      println(result)
       if (result > 0) {
         val conditions = trade.buyConditions
 
