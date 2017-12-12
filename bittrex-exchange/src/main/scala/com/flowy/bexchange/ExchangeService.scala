@@ -123,6 +123,10 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
     case PostTrade(user, request, senderOpt) =>
       (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
         case (Some(mResult), Some(actor)) =>
+
+          println(mResult)
+          println(actor)
+          println(senderOpt)
           // we must match on Some(mResult), Some(actor) to ensure we have the correct
           // resources for the marketservice
 
