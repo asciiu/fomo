@@ -23,7 +23,7 @@ object MarketTradeService {
     Props(new MarketTradeService(marketName, bagel, redis))
 
   case class DeleteTrade(trade: Trade, senderOpt: Option[ActorRef] = None)
-  case class PostTrade(forUser: UserData, request: TradeRequest, sender: Option[ActorRef] = None)
+  case class PostTrade(forUser: UserData, request: TradeRequest, senderOpt: Option[ActorRef] = None)
   case class UpdateTrade(forUser: UserData, tradeId: UUID, request: TradeRequest, senderOpt: Option[ActorRef] = None)
 }
 

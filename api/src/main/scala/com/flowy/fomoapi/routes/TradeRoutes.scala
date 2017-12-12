@@ -130,7 +130,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     post {
       userFromSession { user =>
         entity(as[TradeRequest]) { tradeRequest =>
-          implicit val timeout = Timeout(2.second)
+          implicit val timeout = Timeout(1.second)
 
           val currency = tradeRequest.marketName.split("-")(1)
           val key = s"userId:${user.id}:bittrex:${currency}"

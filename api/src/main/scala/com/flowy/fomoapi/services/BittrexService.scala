@@ -39,11 +39,12 @@ class BittrexService(sqlDatabase: SqlDatabase, redis: RedisClient)(implicit exec
 
   def receive = {
     case getMarkets: GetMarkets =>
+      log.info(s"get markets")
       mediator ! Publish("GetMarkets", getMarkets.copy(leSender = Some(sender())))
 
     case postTrade: PostTrade =>
       log.info(s"post trade ${postTrade}")
-      mediator ! Publish("PostTrade", postTrade.copy(sender = Some(sender())))
+      mediator ! Publish("PostTrade", postTrade.copy(senderOpt = Some(sender())))
 
     case updateTrade: UpdateTrade =>
       log.info(s"update trade ${updateTrade}")
