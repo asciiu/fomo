@@ -53,15 +53,15 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
   override def preStart() = {
     // load pending conditions from bagel
-    bagel.findTradesByStatus(marketName, TradeStatus.Pending).map { pendingTrades =>
-      if (pendingTrades.length > 0) {
-        // map all the conditions into a single collection
-        val pendingConditions = pendingTrades.map( t => TradeBuyCondition(t.id, t.buyConditions) )
+    //bagel.findTradesByStatus(marketName, TradeStatus.Pending).map { pendingTrades =>
+    //  if (pendingTrades.length > 0) {
+    //    // map all the conditions into a single collection
+    //    val pendingConditions = pendingTrades.map( t => TradeBuyCondition(t.id, t.buyConditions) )
 
-        log.info(s"$marketName loading pending trades")
-        buyConditions.append(pendingConditions: _*)
-      }
-    }
+    //    log.info(s"$marketName loading pending trades")
+    //    buyConditions.append(pendingConditions: _*)
+    //  }
+    //}
 
     log.info(s"$marketName actor started")
   }
