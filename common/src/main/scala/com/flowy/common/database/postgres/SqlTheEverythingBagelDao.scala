@@ -11,7 +11,7 @@ import com.flowy.common.models.{Trade, TradeStatus, UserDevice}
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 
 class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
@@ -40,7 +40,12 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * Insert trade
     */
   def insert(trade: Trade): Future[Int] = {
-    db.run(trades += trade)
+    db.run(trades += trade).andThen {
+      case Success(x) =>
+        println(s"SUCCESS $x")
+      case Failure(e) =>
+        println(s"Failure $e")
+    }
   }
 
   def findTradesByUserId(userId: UUID,
