@@ -102,7 +102,7 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
   private def publishSummary(json: String): Unit = {
     Unmarshal(json).to[BittrexSummary].map { summary =>
       summary.A.foreach { nonce =>
-        //marketUpdateDao.insert(nonce.Deltas)
+        marketUpdateDao.insert(nonce.Deltas)
 
         publishDeltas(nonce.Deltas)
       }

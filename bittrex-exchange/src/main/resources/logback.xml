@@ -24,7 +24,7 @@
     <appender-ref ref="ASYNC" />
   </root>
 
-  <logger name="slick.basic.BasicBackend.action" level="DEBUG" />
+  <logger name="slick.basic.BasicBackend.action" level="INFO" />
   <logger name="slick.compiler.InsertCompiler" level="${log.qcomp.insertCompiler:-inherited}" />
 
 
