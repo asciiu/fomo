@@ -71,15 +71,12 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       updateState(update)
 
     case PostTrade(user, request, Some(sender)) =>
-      log.info(s"PostTrade $user $request $sender")
       postTrade(user, request, sender)
 
     case UpdateTrade(user, tradeId, request, Some(sender)) =>
-      log.info(s"UpdateTrade $user $tradeId $request $sender")
       updateTrade(user, tradeId, request, sender)
 
     case DeleteTrade(trade, Some(sender)) =>
-      log.info(s"DeleteTrade $trade $sender")
       deleteTrade(trade, sender)
 
     case x =>
@@ -172,11 +169,15 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
   private def postTrade(user: UserData, request: TradeRequest, senderRef: ActorRef) = {
     val trade = Trade.fromRequest(request, user.id)
 
+    log.info(s"MarketTradeService.postTrade - $request")
+
     bagel.insert(trade).map { result =>
       if (result > 0) {
         val conditions = trade.buyConditions
 
         buyConditions.append(TradeBuyCondition(trade.id, conditions))
+
+        log.info(s"MarketTradeService.postTrade - responding to $senderRef")
 
         senderRef ! Some(trade)
       } else {
