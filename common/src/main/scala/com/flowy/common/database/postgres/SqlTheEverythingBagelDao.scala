@@ -40,11 +40,15 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     * Insert trade
     */
   def insert(trade: Trade): Future[Int] = {
-    db.run((trades += trade).asTry).map { result =>
-      result match {
-        case Success(count) if count > 0 => count
-        case x => 0
-      }
+    db.run((trades += trade).asTry).map{
+      case Success(count) if count > 0 =>
+        println(s"Success $count")
+        count
+
+      case x =>
+        println("HERE")
+        println(x)
+        0
     }
   }
 
