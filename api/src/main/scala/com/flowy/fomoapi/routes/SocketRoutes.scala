@@ -25,7 +25,7 @@ trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   }
 
   def marketUpdates =
-    path("market") {
+    path("markets") {
       get {
         handleWebSocketMessages(subscribe)
       }
