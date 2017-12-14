@@ -4,9 +4,7 @@ import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Subscribe, Unsubscribe}
 import com.flowy.common.models.MarketStructures.MarketUpdate
-import com.flowy.common.models.Trade
 import io.circe.{Encoder, Json}
-import io.circe.generic.auto._
 import io.circe.syntax._
 
 

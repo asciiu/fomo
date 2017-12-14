@@ -43,7 +43,7 @@ trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
       }.to(Sink.actorRef[Subscriber.IncomingMessage](subscriber, PoisonPill))
 
     val outgoingMessages: Source[Message, NotUsed] =
-      Source.actorRef[Subscriber.OutgoingMessage](10, OverflowStrategy.fail)
+      Source.actorRef[Subscriber.OutgoingMessage](1000, OverflowStrategy.fail)
         .mapMaterializedValue { outActor =>
           // give the user actor a way to send messages out
           subscriber ! Subscriber.Connected(outActor)
