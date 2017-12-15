@@ -96,12 +96,12 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
     balances.foreach { currency =>
 
-      val key = s"userId:${userId}:bittrex:${currency.Currency}"
+      val key = s"userId:${userId}:bittrex:${currency.currency}"
       val futureStatus = redis.hmset[String](key,
-        Map("balance" -> currency.Balance.toString,
-          "available" -> currency.Available.toString,
-          "pending" -> currency.Pending.toString,
-          "address" -> currency.CryptoAddress.toString))
+        Map("balance" -> currency.balance.toString,
+          "available" -> currency.available.toString,
+          "pending" -> currency.pending.toString,
+          "address" -> currency.cryptoAddress.toString))
 
       futureStatus.map{
         case true =>

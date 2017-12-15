@@ -79,6 +79,9 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
   }
 
   def getBalances(userId: UUID, auth: Auth): Future[BalancesAuthorization] = {
-    bittrexClient.accountGetBalances(auth)
+    bittrexClient.accountGetBalances(auth).map { result =>
+      println(result)
+      result
+    }
   }
 }

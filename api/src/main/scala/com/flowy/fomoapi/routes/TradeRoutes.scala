@@ -58,11 +58,11 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
             onSuccess(marketResults) {
               case list: List[MarketResult] =>
                 val info = list.map(x =>
-                  MarketBasicInfo(x.MarketName,
-                    x.MarketCurrency,
-                    x.MarketCurrencyLong,
-                    x.BaseCurrency,
-                    x.BaseCurrencyLong,
+                  MarketBasicInfo(x.marketName,
+                    x.marketCurrency,
+                    x.marketCurrencyLong,
+                    x.baseCurrency,
+                    x.baseCurrencyLong,
                     "Bittrex"))
 
                 complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", info.asJson))

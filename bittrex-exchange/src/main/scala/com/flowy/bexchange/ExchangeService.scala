@@ -84,15 +84,15 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
       (filterOpt, senderOpt) match {
         case (Some(filter), Some(s)) =>
           val mrks = marketList.filter( m =>
-            m.MarketCurrency.toLowerCase().contains(filter.toLowerCase()) ||
-            m.MarketCurrencyLong.toLowerCase().contains(filter.toLowerCase()) ||
-            m.MarketName.toLowerCase().contains(filter.toLowerCase())
+            m.marketCurrency.toLowerCase().contains(filter.toLowerCase()) ||
+            m.marketCurrencyLong.toLowerCase().contains(filter.toLowerCase()) ||
+            m.marketName.toLowerCase().contains(filter.toLowerCase())
           )
           // only send markets that we have market actors for
-          s ! mrks.filter( m => marketServices.contains(m.MarketName))
+          s ! mrks.filter( m => marketServices.contains(m.marketName))
 
         case (None, Some(s)) =>
-          s ! marketList.filter( m => marketServices.contains(m.MarketName))
+          s ! marketList.filter( m => marketServices.contains(m.marketName))
 
         case _ =>
           log.warning("GetMarkets does not contain a sender ref!")
@@ -121,15 +121,15 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
       * Post a trade to the market.
       ********************************************************************/
     case PostTrade(user, request, senderOpt) =>
-      (marketList.find( m => m.MarketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
+      (marketList.find( m => m.marketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
         case (Some(mResult), Some(actor)) =>
           // we must match on Some(mResult), Some(actor) to ensure we have the correct
           // resources for the marketservice
 
-          val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.BaseCurrency),
-            baseCurrencyName = Some(mResult.BaseCurrencyLong),
-            marketCurrencyAbbrev = Some(mResult.MarketCurrency),
-            marketCurrencyName = Some(mResult.MarketCurrencyLong)
+          val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.baseCurrency),
+            baseCurrencyName = Some(mResult.baseCurrencyLong),
+            marketCurrencyAbbrev = Some(mResult.marketCurrency),
+            marketCurrencyName = Some(mResult.marketCurrencyLong)
           )
 
           // send the request with completed names to the market service

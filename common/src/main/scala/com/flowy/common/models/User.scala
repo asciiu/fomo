@@ -44,11 +44,11 @@ object User {
     )
 }
 
-case class Balance(Currency: String,
-                   Balance: Double,
-                   Available: Double,
-                   Pending: Double,
-                   CryptoAddress: Option[String])
+case class Balance(currency: String,
+                   balance: Double,
+                   available: Double,
+                   pending: Double,
+                   cryptoAddress: Option[String])
 
 case class UserData(id: UserId, first: String, last: String, email: String, devices: Seq[UserDevice], exchanges: Seq[ExchangeData])
 
