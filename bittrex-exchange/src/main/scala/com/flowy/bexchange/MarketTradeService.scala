@@ -96,7 +96,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
           val trade = t.get
 
           val currency = trade.marketName.split("-")(1)
-          val key = s"userId:${trade.userId}:bittrex:${trade.marketCurrencyAbbrev}"
+          val key = s"userId:${trade.userId}:bittrex:${trade.marketCurrency}"
 
           redis.hget[String](key, "balance").map {
             case Some(balance) if balance.toDouble > trade.quantity => ???
