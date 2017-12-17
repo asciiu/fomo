@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.flowy.fomoapi.services.UserKeyService
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse}
+import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse, ExchangeBalance}
 import com.flowy.common.api.{Auth, BittrexClient}
 import com.flowy.common.utils.Utils
 import com.flowy.common.models._
@@ -41,6 +41,20 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def bagel: TheEverythingBagelDao
 
   lazy val mediator = DistributedPubSub(system).mediator
+
+  implicit def exchangeBalConversion(exbs: List[ExchangeBalance]): List[Balance] = {
+    exbs.map { exb =>
+      val exchangeAvailable = exb.exchangeAvailableBalance
+
+      Balance(currency = exb.currency,
+        availableBalance = exchangeAvailable,
+        exchangeTotalBalance = exb.exchangeTotalBalance,
+        exchangeAvailableBalance = exchangeAvailable,
+        pending = exb.pending,
+        cryptoAddress = exb.cryptoAddress)
+    }
+  }
+
 
   val usersRoutes = logRequestResult("UserRoutes") {
     pathPrefix("user") {
@@ -182,26 +196,15 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
         balAuth.map { std =>
           std.response.result match {
-            case Some(balances) =>
-              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
-              ExchangeData(std.auth.apiKey, Exchange.Bittrex, balances)
+            case Some(exBalances) =>
+              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, exBalances))
+
+              ExchangeData(std.auth.apiKey, Exchange.Bittrex, exBalances)
             case None =>
               ExchangeData(std.auth.apiKey, Exchange.Bittrex, Seq.empty[Balance])
           }
         }
       }
-
-//      val exchanges = Future.sequence(futures.toList).map { listResponses =>
-//        listResponses.map { std =>
-//          std.result match {
-//            case Some(balances) =>
-//              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
-//              ExchangeData(Exchange.Bittrex, balances)
-//            case None =>
-//              ExchangeData(Exchange.Bittrex, Seq.empty[Balance])
-//          }
-//        }
-//      }
       exchanges
     }
   }

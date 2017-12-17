@@ -45,8 +45,9 @@ object User {
 }
 
 case class Balance(currency: String,
-                   balance: Double,
-                   available: Double,
+                   availableBalance: Double,
+                   exchangeTotalBalance: Double,
+                   exchangeAvailableBalance: Double,
                    pending: Double,
                    cryptoAddress: Option[String])
 

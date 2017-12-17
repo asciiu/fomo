@@ -10,6 +10,8 @@ import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.{ApiKeyStatus, Balance, UserKey}
 import java.util.UUID
 
+import com.flowy.common.api.Bittrex.ExchangeBalance
+
 import language.postfixOps
 import redis.RedisClient
 
@@ -23,7 +25,7 @@ object CacheService {
     Props(new CacheService(bagel, redis))
 
   case class CacheBittrexWallets(userId: UUID, auth: Auth)
-  case class CacheBittrexBalances(userId: UUID, balances: Seq[Balance])
+  case class CacheBittrexBalances(userId: UUID, balances: Seq[ExchangeBalance])
 }
 
 /**
@@ -49,6 +51,18 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
   // list of redis keys
   val cachedKeys = scala.collection.mutable.ListBuffer[String]()
+
+  // converts exchange balance auto magically to Fomo internal Balance
+//  private def exchangeBalConvert(exb: ExchangeBalance): Balance = {
+//    val exchangeAvailable = exb.exchangeAvailableBalance
+//
+//    Balance(currency = exb.currency,
+//      availableBalance = exchangeAvailable,
+//      exchangeTotalBalance = exb.exchangeTotalBalance,
+//      exchangeAvailableBalance = exchangeAvailable,
+//      pending = exb.pending,
+//      cryptoAddress = exb.cryptoAddress)
+//  }
 
   override def preStart(): Unit = {
     // subscribe to cluster messages
@@ -91,17 +105,18 @@ class CacheService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit ex
 
 
   // TODO response to sender with boolean
-  private def cacheUserBalances(userId: UUID, balances: Seq[Balance]) = {
+  private def cacheUserBalances(userId: UUID, exchangeBalances: Seq[ExchangeBalance]) = {
     log.info(s"caching balances for userId: ${userId}")
 
-    balances.foreach { currency =>
+    exchangeBalances.foreach { bal =>
 
-      val key = s"userId:${userId}:bittrex:${currency.currency}"
+      val key = s"userId:${userId}:bittrex:${bal.currency}"
+      val exchangeAvailable = bal.exchangeAvailableBalance
       val futureStatus = redis.hmset[String](key,
-        Map("balance" -> currency.balance.toString,
-          "available" -> currency.available.toString,
-          "pending" -> currency.pending.toString,
-          "address" -> currency.cryptoAddress.toString))
+        Map("availableBalance" -> exchangeAvailable.toString,
+          "exchangeBalance" -> bal.exchangeTotalBalance.toString,
+          "exchangeAvailableBalance" -> exchangeAvailable.toString,
+          "address" -> bal.cryptoAddress.toString))
 
       futureStatus.map{
         case true =>

@@ -7,6 +7,12 @@ import spray.json.DefaultJsonProtocol
 object Bittrex {
 
   // Results
+  case class ExchangeBalance(currency: String,
+                     exchangeTotalBalance: Double,
+                     exchangeAvailableBalance: Double,
+                     pending: Double,
+                     cryptoAddress: Option[String])
+
   case class DepositAddressResult(currency: String, address: Option[String])
 
   case class OrderHistoryResult(orderUuid: String,
@@ -133,8 +139,8 @@ object Bittrex {
   case class BalancesAuthorization(auth: Auth, response: BalancesResponse)
 
   // All bittrex responses return some sort of result
-  type BalanceResponse = StandardResponse[Balance]
-  type BalancesResponse = StandardResponse[List[Balance]]
+  type BalanceResponse = StandardResponse[ExchangeBalance]
+  type BalancesResponse = StandardResponse[List[ExchangeBalance]]
   type DepositAddressResponse = StandardResponse[DepositAddressResult]
   type OrderHistoryResponse = StandardResponse[List[OrderHistoryResult]]
   type GetOpenOrdersResponse = StandardResponse[List[OrderResult]]
@@ -155,7 +161,7 @@ trait BittrexJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   import Bittrex._
 
   // result formatters
-  implicit val balanceResult          = jsonFormat(Balance, "Currency", "Balance", "Available", "Pending", "CryptoAddress")
+  implicit val balanceResult          = jsonFormat(ExchangeBalance, "Currency", "Balance", "Available", "Pending", "CryptoAddress")
   implicit val depositAddressResult   = jsonFormat(DepositAddressResult, "Currency", "Address")
   implicit val orderHistoryResult     = jsonFormat(OrderHistoryResult, "OrderUuid", "Exchange", "TimeStamp", "OrderType", "Limit", "Quantity", "QuantityRemaining", "Commission", "Price" , "PricePerUnit", "IsConditional", "Condition", "ImmediateOrCancel" ,"Closed")
   implicit val openOrderResult        = jsonFormat(OrderResult, "OrderUuid", "Exchange", "OrderType", "Limit", "Quantity", "QuantityRemaining", "CommissionPaid", "Price", "CancelInitiated", "Opened", "ImmediateOrCancel", "IsConditional")
@@ -172,8 +178,8 @@ trait BittrexJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val marketHistoryResult    = jsonFormat(MarketHistoryResult, "Id", "TimeStamp", "Quantity", "Price", "Total", "FillType", "OrderType")
 
   // formatters for bittrex responses requires result formatters above
-  implicit val balanceReponse         = jsonFormat3(StandardResponse[Balance])
-  implicit val balancesResponse       = jsonFormat3(StandardResponse[List[Balance]])
+  implicit val balanceReponse         = jsonFormat3(StandardResponse[ExchangeBalance])
+  implicit val balancesResponse       = jsonFormat3(StandardResponse[List[ExchangeBalance]])
   implicit val depositAddressResponse = jsonFormat3(StandardResponse[DepositAddressResult])
   implicit val orderHistResponse      = jsonFormat3(StandardResponse[List[OrderHistoryResult]])
   implicit val openOrderResponse      = jsonFormat3(StandardResponse[List[OrderResult]])
