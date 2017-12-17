@@ -39,16 +39,10 @@ class BalanceService(bagel: TheEverythingBagelDao)(implicit ec: ExecutionContext
     }
   }
 
-  // balance layout:
-  // exchange
-  // currency
-  // available
-  // exchangeTotal
-  // exchangeAvailable
-  // pending
-  // cryptoAddress
-
   // when a new trade is posted update the available balance
+  def updateBalance(balance: Balance) = {
+    bagel.updateBalance(balance)
+  }
 
   // when a trade is deleted update the available balance
 

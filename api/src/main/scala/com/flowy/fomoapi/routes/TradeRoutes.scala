@@ -1,5 +1,7 @@
 package com.flowy.fomoapi.routes
 
+import java.util.UUID
+
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{pathPrefix, _}
@@ -19,6 +21,7 @@ import io.circe.syntax._
 import redis.RedisClient
 
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try}
 
 trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
@@ -132,21 +135,25 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         entity(as[TradeRequest]) { tradeRequest =>
           implicit val timeout = Timeout(1.second)
 
-          // check base currency balance
-          val currency = tradeRequest.marketName.split("-")(0)
-          val key = s"userId:${user.id}:bittrex:${currency}"
+          Try(UUID.fromString(tradeRequest.apiKeyId)) match {
 
-          onSuccess( redis.hget[String](key, "availableBalance") ) {
-            case Some(available) if available.toDouble > tradeRequest.baseQuantity =>
+            case Success(apiKeyId) =>
+              val currencyName = tradeRequest.marketName.split("-")(0)
+              // check base currency balance
+              onSuccess(bagel.findBalance(user.id, apiKeyId, currencyName)) {
+                case Some(balance) if balance.availableBalance > tradeRequest.baseQuantity =>
 
-              onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]] ) {
-                case Some(trade) =>
-                  complete(StatusCodes.OK,  JSendResponse(JsonStatus.Success, "", trade.asJson))
-                case None =>
-                  complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+                  onSuccess((bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]]) {
+                    case Some(trade) =>
+                      complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", trade.asJson))
+                    case None =>
+                      complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
+                  }
+                case _ =>
+                  complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user available balance is less than baseQuantity", Json.Null))
               }
-            case _ =>
-              complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user available balance is less than baseQuantity", Json.Null))
+            case Failure(_) =>
+              complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"invalid api key", Json.Null))
           }
         }
       }

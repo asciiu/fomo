@@ -1,6 +1,5 @@
 package com.flowy.common.models
 
-import java.time.OffsetDateTime
 import java.util.UUID
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -8,7 +7,7 @@ import javax.crypto.spec.PBEKeySpec
 import com.flowy.common.utils.Utils
 import com.flowy.common.models.User.UserId
 import io.circe.{Encoder, Json}
-import org.joda.time.field.OffsetDateTimeField
+
 
 case class User(
                  id: UUID,
