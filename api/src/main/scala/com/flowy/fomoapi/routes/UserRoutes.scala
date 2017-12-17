@@ -168,52 +168,62 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
 
   // TODO rewrite this to pull from local balances
-  private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
-    // TODO move this to utils
-    def singleFuture[A](futures: List[Future[A]]): Future[List[A]] = {
+//  private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
+//    // TODO move this to utils
+//    def singleFuture[A](futures: List[Future[A]]): Future[List[A]] = {
+//
+//      val p = Promise[List[A]]()
+//      p.success(List.empty[A])
+//
+//      val f = p.future // a future containing empty list.
+//
+//      futures.foldRight(f) {
+//        (fut, accum) =>  // foldRight means accumulator is on right.
+//
+//          for {
+//            list <- accum;  // take List[A] out of Future[List[A]]
+//            a    <- fut     // take A out of Future[A]
+//          }
+//            yield (a :: list)   // A :: List[A]
+//      }
+//    }
+//
+//    userKeyService.getAllKeys(userId).flatMap { keys =>
+//      val futures = new ListBuffer[Future[BalancesAuthorization]]()
+//
+//      keys.foreach { key =>
+//        if (key.exchange == Exchange.Bittrex) {
+//          val future = bittrexClient.accountGetBalances(Auth(key.id, key.key, key.secret))
+//          futures.append(future)
+//        }
+//      }
+//
+//      val exchanges = singleFuture[BalancesAuthorization](futures.toList).map { balAuth =>
+//
+//        balAuth.map { std =>
+//          std.response.result match {
+//            case Some(exBalances) =>
+//              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, exBalances))
+//
+//              ExchangeData(std.auth.apiKey, Exchange.Bittrex, exBalances)
+//            case None =>
+//              ExchangeData(std.auth.apiKey, Exchange.Bittrex, Seq.empty[Balance])
+//          }
+//        }
+//      }
+//      exchanges
+//    }
+//  }
 
-      val p = Promise[List[A]]()
-      p.success(List.empty[A])
+    private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
+      bagel.findBalancesByUserId(userId).map { balances =>
+        val balByEx = balances.groupBy(_.exchange)
 
-      val f = p.future // a future containing empty list.
-
-      futures.foldRight(f) {
-        (fut, accum) =>  // foldRight means accumulator is on right.
-
-          for {
-            list <- accum;  // take List[A] out of Future[List[A]]
-            a    <- fut     // take A out of Future[A]
-          }
-            yield (a :: list)   // A :: List[A]
+        balByEx.map { case (exchange, balances) =>
+          ExchangeData("somekey", exchange, balances)
+        }.toList
       }
     }
-
-    userKeyService.getAllKeys(userId).flatMap { keys =>
-      val futures = new ListBuffer[Future[BalancesAuthorization]]()
-
-      keys.foreach { key =>
-        if (key.exchange == Exchange.Bittrex) {
-          val future = bittrexClient.accountGetBalances(Auth(key.id, key.key, key.secret))
-          futures.append(future)
-        }
-      }
-
-      val exchanges = singleFuture[BalancesAuthorization](futures.toList).map { balAuth =>
-
-        balAuth.map { std =>
-          std.response.result match {
-            case Some(exBalances) =>
-              mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, exBalances))
-
-              ExchangeData(std.auth.apiKey, Exchange.Bittrex, exBalances)
-            case None =>
-              ExchangeData(std.auth.apiKey, Exchange.Bittrex, Seq.empty[Balance])
-          }
-        }
-      }
-      exchanges
-    }
-  }
 
   def session =
     path("session") {

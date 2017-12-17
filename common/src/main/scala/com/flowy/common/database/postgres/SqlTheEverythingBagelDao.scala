@@ -44,7 +44,11 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     }
   }
 
-  def findBalancesByUserId(userId: UUID, exchange: Exchange.Value): Future[Seq[Balance]] = {
+  def findBalancesByUserId(userId: UUID): Future[Seq[Balance]] = {
+    db.run(balances.filter(b => b.userId === userId).result)
+  }
+
+  def findBalancesByUserIdAndEx(userId: UUID, exchange: Exchange.Value): Future[Seq[Balance]] = {
     db.run(balances.filter(b => b.userId === userId && b.exchangeName === exchange).result)
   }
 
