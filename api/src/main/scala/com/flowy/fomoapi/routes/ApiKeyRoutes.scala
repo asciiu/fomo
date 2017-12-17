@@ -15,6 +15,8 @@ import io.circe.syntax._
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
+import com.flowy.common.services.BalanceService
+
 
 case class ApiKey(exchange: String, key: String, secret: String, description: String)
 
@@ -22,6 +24,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   def userService: UserService
   def userKeyService: UserKeyService
+  def userBalanceService: BalanceService
   def bittrexClient: BittrexClient
 
   def convertToUkey(userId: UUID, keyId: UUID, request: ApiKey): UserKey =

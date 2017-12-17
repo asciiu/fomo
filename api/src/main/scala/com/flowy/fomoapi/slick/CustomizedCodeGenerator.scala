@@ -32,8 +32,6 @@ object CustomizedCodeGenerator {
       future,
       20.seconds
     )
-
-    println(future)
   }
 
   val config = ConfigFactory.parseFile(new File("backend/src/main/resources/application.conf"))

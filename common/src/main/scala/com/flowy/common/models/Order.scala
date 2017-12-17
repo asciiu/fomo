@@ -7,9 +7,9 @@ import io.circe.generic.semiauto._
 
 
 object Exchange extends Enumeration {
-  val Bittrex   = Value("bittrex")
-  val GDax      = Value("gdax")
-  val Poloniex  = Value("poloniex")
+  val Bittrex   = Value("Bittrex")
+  val GDax      = Value("GDax")
+  val Poloniex  = Value("Poloniex")
 }
 
 object ApiKeyStatus extends Enumeration {

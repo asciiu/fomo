@@ -1,10 +1,8 @@
 package com.flowy.common.database.postgres.schema
 
-import java.time.OffsetDateTime
-import java.util.UUID
-
 import com.flowy.common.models._
 import com.flowy.common.utils.sql.SqlDatabase
+import java.util.UUID
 
 
 trait SqlUserbalance {
@@ -13,12 +11,16 @@ trait SqlUserbalance {
   import com.flowy.common.slick.MyPostgresDriver.api._
   import database._
 
+  implicit val exMapper = MappedColumnType.base[Exchange.Value, String](
+    { os => os.toString }, { str => Exchange.withName(str) }
+  )
+
   protected val balances = TableQuery[UserBalances]
 
   class UserBalances(tag: Tag) extends Table[Balance](tag, "user_balances") {
     def id = column[UUID]("id", O.PrimaryKey)
     def userId = column[UUID]("user_id")
-    def exchangeName = column[String]("exchange_name")
+    def exchangeName = column[Exchange.Value]("exchange_name")
     def currencyName = column[String]("currency_name")
     def currencyNameLong = column[String]("currency_name_long")
     def address = column[String]("blockchain_address")

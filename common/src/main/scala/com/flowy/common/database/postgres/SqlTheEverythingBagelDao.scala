@@ -5,8 +5,8 @@ import java.util.UUID
 
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.database.postgres.schema.{SqlTrade, SqlUserDeviceSchema}
-import com.flowy.common.models.{Trade, TradeStatus, UserDevice}
+import com.flowy.common.database.postgres.schema.{SqlTrade, SqlUserDeviceSchema, SqlUserbalance}
+import com.flowy.common.models._
 
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
@@ -15,7 +15,10 @@ import scala.util.{Failure, Success}
 
 
 class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val ec: ExecutionContext)
-  extends TheEverythingBagelDao with SqlTrade with SqlUserDeviceSchema {
+  extends TheEverythingBagelDao
+    with SqlTrade
+    with SqlUserDeviceSchema
+    with SqlUserbalance {
 
   import database._
   import database.driver.api._
@@ -24,6 +27,42 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
 
   implicit object SetUUID extends SetParameter[UUID] { def apply(v: UUID, pp: PositionedParameters) { pp.setObject(v, JDBCType.BINARY.getVendorTypeNumber) } }
 
+
+  /*******************************************************************************************
+    * Balance Stuff
+    *****************************************************************************************/
+
+  /**
+    * Insert balances
+    * @param userBalances
+    * @return
+    */
+  def insert(userBalances: Seq[Balance]): Future[Int] = {
+    db.run(balances ++= userBalances).map {
+      case Some(count) => count
+      case None => 0
+    }
+  }
+
+  def findBalancesByUserId(userId: UUID, exchange: Exchange.Value): Future[Seq[Balance]] = {
+    db.run(balances.filter(b => b.userId === userId && b.exchangeName === exchange).result)
+  }
+
+  def updateBalance(balance: Balance): Future[Option[Balance]] = {
+    val updatedBal = (balances returning balances).insertOrUpdate(balance)
+
+    // returns None if updated
+    // http://slick.lightbend.com/doc/3.2.0/queries.html#updating
+    db.run(updatedBal).map {
+      case None => Some(balance)
+      case _ => None
+    }
+  }
+
+
+  /*******************************************************************************************
+    * Trade Stuff
+    *****************************************************************************************/
 
   def deleteTrade(trade: Trade): Future[Option[Trade]] = {
     val action = trades.filter(_.id === trade.id).delete
@@ -41,10 +80,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     */
   def insert(trade: Trade): Future[Int] = {
     db.run(trades += trade).andThen {
-      case Success(x) =>
-        println(s"SUCCESS $x")
-      case Failure(e) =>
-        println(s"Failure $e")
+      case Success(x) => x
+      case Failure(e) => 0
     }
   }
 

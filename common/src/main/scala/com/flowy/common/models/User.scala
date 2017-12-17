@@ -46,7 +46,7 @@ object User {
 
 case class Balance(id: UUID,
                    userId: UUID,
-                   exchangeName: String,
+                   exchange: Exchange.Value,
                    currencyName: String,
                    currencyNameLong: String,
                    blockchainAddress: Option[String],

@@ -20,6 +20,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import com.flowy.fomoapi.database.postgres.{SqlPasswordResetCodeDao, SqlRememberMeTokenDao, SqlUserDao}
 import com.flowy.common.api.BittrexClient
+import com.flowy.common.services.BalanceService
 import redis.RedisClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -68,8 +69,9 @@ abstract class DependencyWiring()(implicit materializer: ActorMaterializer) exte
     config
   )(serviceExecutionContext)
 
-  lazy val userKeyService = new UserKeyService(userKeyDao)
+  lazy val userKeyService = new UserKeyService(bagel)
   lazy val deviceService = new UserDeviceService(bagel)
+  lazy val userBalanceService = new BalanceService(bagel)
 
   lazy val refreshTokenStorage = new RefreshTokenStorageImpl(rememberMeTokenDao, system)(serviceExecutionContext)
 

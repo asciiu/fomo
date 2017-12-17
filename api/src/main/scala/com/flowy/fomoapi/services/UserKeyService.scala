@@ -9,16 +9,19 @@ import akka.stream.ActorMaterializer
 import com.flowy.cache.CacheService.CacheBittrexBalances
 import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse}
 import com.flowy.common.api.{Auth, BittrexClient}
-import com.flowy.common.database.UserKeyDao
+import com.flowy.common.database.{TheEverythingBagelDao, UserKeyDao}
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
+import com.flowy.common.services.BalanceService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: ExecutionContext, materializer: ActorMaterializer) {
+class UserKeyService(bagel: TheEverythingBagelDao)(implicit system: ActorSystem, ec: ExecutionContext, materializer: ActorMaterializer) {
 
   lazy val bittrexClient = new BittrexClient()
   lazy val mediator = DistributedPubSub(system).mediator
   lazy val defaultApiKeyId = UUID.fromString("00000000-0000-0000-0000-000000000000")
+  lazy val userKeyDao = bagel.userKeyDao
+  lazy val userBalanceService = new BalanceService(bagel)
 
   def addUserKey(userId: UUID, exchange: Exchange.Value, key: String, secret: String, description: String): Future[Either[String, UserKey]] = {
     userKeyDao.findByKeyPair(key, secret).flatMap { optKey =>
@@ -31,7 +34,10 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
             (balAuth.response.message, balAuth.response.result) match {
 
               case ("", Some(balances)) =>
-                mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
+                // TODO check if safe was completed
+                // assume safe persistence here
+                userBalanceService.populateBalances(userId, exchange, balances)
+                //mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
                 val newUserKey = UserKey.withRandomUUID(userId, exchange, key, secret, description, ApiKeyStatus.Verified)
                 userKeyDao.add(newUserKey)
                 Right(newUserKey)
@@ -80,7 +86,6 @@ class UserKeyService(userKeyDao: UserKeyDao)(implicit system: ActorSystem, ec: E
 
   def getBalances(userId: UUID, auth: Auth): Future[BalancesAuthorization] = {
     bittrexClient.accountGetBalances(auth).map { result =>
-      println(result)
       result
     }
   }

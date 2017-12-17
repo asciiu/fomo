@@ -1,6 +1,6 @@
 package com.flowy.common.database
 
-import com.flowy.common.models.{Trade, TradeStatus, UserDevice}
+import com.flowy.common.models._
 import java.util.UUID
 
 import scala.concurrent.Future
@@ -9,6 +9,11 @@ import scala.concurrent.Future
 trait TheEverythingBagelDao {
 
   def userKeyDao: UserKeyDao
+
+  // manage balances
+  def insert(balances: Seq[Balance]): Future[Int]
+  def findBalancesByUserId(userId: UUID, exchange: Exchange.Value): Future[Seq[Balance]]
+  def updateBalance(balance: Balance): Future[Option[Balance]]
 
   // manage trades
   def insert(trade: Trade): Future[Int]

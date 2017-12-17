@@ -49,7 +49,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       Balance(
         id = UUID.randomUUID(),
         userId = UUID.randomUUID(),
-        exchangeName = "Bittrex",
+        exchange = Exchange.withName("Bittrex"),
         currencyName = exb.currency,
         currencyNameLong = "",
         availableBalance = exchangeAvailable,
