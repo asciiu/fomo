@@ -95,8 +95,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
         if (t.isDefined) {
           val trade = t.get
 
-          val currency = trade.marketName.split("-")(1)
-          val key = s"userId:${trade.userId}:bittrex:${trade.marketCurrency}"
+          val currency = trade.info.marketName.split("-")(1)
+          val key = s"userId:${trade.userId}:bittrex:${trade.info.marketCurrency}"
 
           redis.hget[String](key, "balance").map {
             case Some(balance) if balance.toDouble > trade.baseQuantity => ???
@@ -104,12 +104,13 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
               val updatedTrade = t.get.copy(
                 // TODO the buyPrice should be the actual price you may need to read this from bittrex
-                buyPrice = Some(lastPrice),
-                buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC)),
+                stat = TradeStat(
+                  buyPrice = Some(lastPrice),
+                  buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
                 status = TradeStatus.Bought
               )
 
-              log.info(s"buy ${trade.baseQuantity} ${trade.marketName} for user: ${trade.userId}")
+              log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
               bagel.updateTrade(updatedTrade)
 
               // TODO this needs refinement
@@ -122,8 +123,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
                     val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
                     c match {
                       case extractParams(percent, refPrice) =>
-                        val trailStop = TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble)
-                        mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.marketName, percent.toDouble, refPrice.toDouble))
+                        val trailStop = TrailingStop(trade.userId, tradeId, trade.info.marketName, percent.toDouble, refPrice.toDouble)
+                        mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.info.marketName, percent.toDouble, refPrice.toDouble))
                         log.info(s"sending trailing stop $trailStop")
                       case _ =>
                       // do nothing

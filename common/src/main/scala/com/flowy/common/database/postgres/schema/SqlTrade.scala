@@ -21,6 +21,7 @@ trait SqlTrade {
   class Trades(tag: Tag) extends Table[Trade](tag, "trades") {
     def id = column[UUID]("id", O.PrimaryKey)
     def userId = column[UUID]("user_id")
+    def apiKeyId = column[UUID]("user_api_key_id")
     def exchangeName = column[String]("exchange_name")
     def marketName = column[String]("market_name")
     def marketCurrencyAbbrev = column[String]("market_currency")
@@ -42,26 +43,33 @@ trait SqlTrade {
     def stopLossConditions = column[String]("stop_loss_conditions")
     def takeProfitConditions = column[String]("take_profit_conditions")
 
-    def * = (id,
-      userId,
+    def marketInfoColumns = (
       exchangeName,
       marketName,
       marketCurrencyAbbrev,
       marketCurrencyName,
       baseCurrencyAbbrev,
-      baseCurrencyName,
-      bQuantity,
-      mQuantity.?,
-      status,
-      createdOn,
-      updatedOn,
+      baseCurrencyName) <>((MarketInfo.apply _).tupled, MarketInfo.unapply)
+
+    def tradeStatColumns = (
       buyTime.?,
       buyPrice.?,
       buyCondition.?,
-      buyConditions,
       sellTime.?,
       sellPrice.?,
       sellCondition.?,
+      mQuantity.?) <>((TradeStat.apply _).tupled, TradeStat.unapply)
+
+    def * = (id,
+      userId,
+      apiKeyId,
+      marketInfoColumns,
+      tradeStatColumns,
+      bQuantity,
+      status,
+      createdOn,
+      updatedOn,
+      buyConditions,
       stopLossConditions.?,
       takeProfitConditions.?) <>
       ((Trade.apply _).tupled, Trade.unapply)

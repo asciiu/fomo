@@ -20,6 +20,7 @@ trait SqlUserbalance {
   class UserBalances(tag: Tag) extends Table[Balance](tag, "user_balances") {
     def id = column[UUID]("id", O.PrimaryKey)
     def userId = column[UUID]("user_id")
+    def apiKeyId = column[UUID]("user_api_key_id")
     def exchangeName = column[Exchange.Value]("exchange_name")
     def currencyName = column[String]("currency_name")
     def currencyNameLong = column[String]("currency_name_long")
@@ -31,6 +32,7 @@ trait SqlUserbalance {
 
     def * = (id,
       userId,
+      apiKeyId,
       exchangeName,
       currencyName,
       currencyNameLong,

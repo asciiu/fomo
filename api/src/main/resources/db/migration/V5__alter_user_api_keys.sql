@@ -2,7 +2,7 @@
 DROP TABLE IF EXISTS "user_api_keys";
 
 CREATE TABLE "user_api_keys"(
-  "id" UUID NOT NULL,
+  "id" UUID PRIMARY KEY NOT NULL,
   "user_id" UUID NOT NULL,
   "exchange" VARCHAR NOT NULL,
   "api_key" VARCHAR NOT NULL,

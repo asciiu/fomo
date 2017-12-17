@@ -34,12 +34,14 @@ class UserKeyService(bagel: TheEverythingBagelDao)(implicit system: ActorSystem,
             (balAuth.response.message, balAuth.response.result) match {
 
               case ("", Some(balances)) =>
-                // TODO check if safe was completed
-                // assume safe persistence here
-                userBalanceService.populateBalances(userId, exchange, balances)
-                //mediator ! Publish("CacheBittrexBalances", CacheBittrexBalances(userId, balances))
                 val newUserKey = UserKey.withRandomUUID(userId, exchange, key, secret, description, ApiKeyStatus.Verified)
-                userKeyDao.add(newUserKey)
+
+                userKeyDao.add(newUserKey).map { keyOpt =>
+                  if (keyOpt.isDefined) {
+                    userBalanceService.populateBalances(userId, exchange, keyOpt.get.id, balances)
+                  }
+                }
+
                 Right(newUserKey)
 
               case (_, _) =>

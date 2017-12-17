@@ -3,6 +3,7 @@
 CREATE TABLE "user_balances" (
  "id" UUID PRIMARY KEY NOT NULL,
  "user_id" UUID NOT NULL,
+ "user_api_key_id" UUID NOT NULL,
  "exchange_name" text NOT NULL,
  "currency_name" text NOT NULL,
  "currency_name_long" text NOT NULL,
@@ -17,3 +18,7 @@ CREATE TABLE "user_balances" (
 
 ALTER TABLE "user_balances" ADD CONSTRAINT "user_balance_fk"
   FOREIGN KEY("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+ALTER TABLE "user_balances" ADD CONSTRAINT "user_balance_api_key_fk"
+  FOREIGN KEY("user_api_key_id") REFERENCES "user_api_keys"("id") ON DELETE CASCADE ON UPDATE CASCADE;

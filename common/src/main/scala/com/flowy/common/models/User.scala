@@ -46,6 +46,7 @@ object User {
 
 case class Balance(id: UUID,
                    userId: UUID,
+                   apiKeyId: UUID,
                    exchange: Exchange.Value,
                    currencyName: String,
                    currencyNameLong: String,
@@ -76,7 +77,7 @@ object UserDevice {
   }
 }
 
-case class ExchangeData(apiKey: String, name: Exchange.Value, balances: Seq[Balance])
+case class ExchangeData(apiKeyId: String, name: Exchange.Value, balances: Seq[Balance])
 
 object UserData {
   def fromUser(user: User) = new UserData(user.id, user.firstName, user.lastName, user.email, Seq.empty, Seq.empty)

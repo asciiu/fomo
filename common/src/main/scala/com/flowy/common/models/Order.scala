@@ -29,6 +29,7 @@ case class Condition(id: Option[UUID], conditionType: String, indicator: String,
 case class ConditionArray(collectionType: String, conditions: List[Condition])
 case class TradeRequest(
                          exchangeName: String,
+                         apiKeyId: String,
                          marketName: String,
                          marketCurrency: Option[String],
                          marketCurrencyLong: Option[String],
@@ -40,26 +41,59 @@ case class TradeRequest(
                          takeProfitConditions: Option[String])
 
 
+//case class Trade(id: UUID,
+//                 userId: UUID,
+//                 apiKeyId: UUID,
+//                 exchangeName: String,
+//                 marketName: String,
+//                 marketCurrency: String,
+//                 marketCurrencyLong: String,
+//                 baseCurrency: String,
+//                 baseCurrencyLong: String,
+//                 baseQuantity: Double,
+//                 marketQuantity: Option[Double],
+//                 status: TradeStatus.Value,
+//                 createdOn: OffsetDateTime,
+//                 updatedOn: OffsetDateTime,
+//                 buyTime: Option[OffsetDateTime],
+//                 buyPrice: Option[Double],
+//                 buyCondition: Option[String],
+//                 buyConditions: String,
+//                 sellTime: Option[OffsetDateTime],
+//                 sellPrice: Option[Double],
+//                 sellCondition: Option[String],
+//                 stopLossConditions: Option[String],
+//                 takeProfitConditions: Option[String])
+
+case class MarketInfo(exchangeName: String,
+                      marketName: String,
+                      marketCurrency: String,
+                      marketCurrencyLong: String,
+                      baseCurrency: String,
+                      baseCurrencyLong: String)
+
+case class TradeStat(buyTime: Option[OffsetDateTime] = None,
+                     buyPrice: Option[Double] = None,
+                     buyCondition: Option[String] = None,
+                     sellTime: Option[OffsetDateTime] = None,
+                     sellPrice: Option[Double] = None,
+                     sellCondition: Option[String] = None,
+                     marketQuantity: Option[Double] = None)
+
+object TradeStat {
+  def empty(): TradeStat = TradeStat()
+}
+
 case class Trade(id: UUID,
                  userId: UUID,
-                 exchangeName: String,
-                 marketName: String,
-                 marketCurrency: String,
-                 marketCurrencyLong: String,
-                 baseCurrency: String,
-                 baseCurrencyLong: String,
+                 apiKeyId: UUID,
+                 info: MarketInfo,
+                 stat: TradeStat,
                  baseQuantity: Double,
-                 marketQuantity: Option[Double],
                  status: TradeStatus.Value,
                  createdOn: OffsetDateTime,
                  updatedOn: OffsetDateTime,
-                 buyTime: Option[OffsetDateTime],
-                 buyPrice: Option[Double],
-                 buyCondition: Option[String],
                  buyConditions: String,
-                 sellTime: Option[OffsetDateTime],
-                 sellPrice: Option[Double],
-                 sellCondition: Option[String],
                  stopLossConditions: Option[String],
                  takeProfitConditions: Option[String])
 
@@ -70,31 +104,31 @@ object Trade {
 
   implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
     final def apply(trade: Trade): Json = {
-      val marketQuantity = trade.marketQuantity match {
+      val marketQuantity = trade.stat.marketQuantity match {
         case Some(q) => Json.fromDoubleOrNull(q)
         case None => Json.Null
       }
-      val buyPrice = trade.buyPrice match {
+      val buyPrice = trade.stat.buyPrice match {
         case Some(price) => Json.fromDoubleOrNull(price)
         case None => Json.Null
       }
-      val buyTime = trade.buyTime match {
+      val buyTime = trade.stat.buyTime match {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val buyCondition = trade.buyCondition match {
+      val buyCondition = trade.stat.buyCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
-      val sellPrice = trade.sellPrice match {
+      val sellPrice = trade.stat.sellPrice match {
         case Some(price) => Json.fromDoubleOrNull(price)
         case None => Json.Null
       }
-      val sellTime = trade.sellTime match {
+      val sellTime = trade.stat.sellTime match {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val sellCondition = trade.sellCondition match {
+      val sellCondition = trade.stat.sellCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
@@ -109,12 +143,13 @@ object Trade {
       Json.obj(
         ("id", Json.fromString(trade.id.toString)),
         ("userId", Json.fromString(trade.userId.toString)),
-        ("exchangeName", Json.fromString(trade.exchangeName)),
-        ("marketName", Json.fromString(trade.marketName)),
-        ("marketCurrency", Json.fromString(trade.marketCurrency)),
-        ("marketCurrencyLong", Json.fromString(trade.marketCurrencyLong)),
-        ("baseCurrency", Json.fromString(trade.baseCurrency)),
-        ("baseCurrencyLong", Json.fromString(trade.baseCurrencyLong)),
+        ("apiKeyId", Json.fromString(trade.apiKeyId.toString)),
+        ("exchangeName", Json.fromString(trade.info.exchangeName)),
+        ("marketName", Json.fromString(trade.info.marketName)),
+        ("marketCurrency", Json.fromString(trade.info.marketCurrency)),
+        ("marketCurrencyLong", Json.fromString(trade.info.marketCurrencyLong)),
+        ("baseCurrency", Json.fromString(trade.info.baseCurrency)),
+        ("baseCurrencyLong", Json.fromString(trade.info.baseCurrencyLong)),
         ("baseQuantity", Json.fromDoubleOrNull(trade.baseQuantity)),
         ("marketQuantity", marketQuantity),
         ("status", Json.fromString(trade.status.toString)),
@@ -138,6 +173,7 @@ object Trade {
       for {
         id <- c.downField("id").as[String]
         userId <- c.downField("userId").as[String]
+        apiKeyId <- c.downField("apiKeyId").as[String]
         exchangeName <- c.downField("exchangeName").as[String]
         marketName <- c.downField("marketName").as[String]
         marketCurrency <- c.downField("marketCurrency").as[String]
@@ -155,24 +191,19 @@ object Trade {
       } yield {
         new Trade(UUID.fromString(id),
           UUID.fromString(userId),
-          exchangeName,
-          marketName,
-          marketCurrency,
-          marketCurrencyLong,
-          baseCurrency,
-          baseCurrencyLong,
+          UUID.fromString(apiKeyId),
+          MarketInfo(exchangeName,
+                     marketName,
+                     marketCurrency,
+                     marketCurrencyLong,
+                     baseCurrency,
+                     baseCurrencyLong),
+          TradeStat.empty(),
           baseQuantity,
-          Some(marketQuantity),
           TradeStatus.withName(status),
           OffsetDateTime.parse(createdOn),
           OffsetDateTime.parse(updatedOn),
-          None,
-          None,
-          None,
           buyConditions,
-          None,
-          None,
-          None,
           Some(stopLossConditions),
           Some(takeProfitConditions)
         )
@@ -185,24 +216,21 @@ object Trade {
 
     Trade(tradeId,
       forUserId,
-      tradeRequest.exchangeName,
-      tradeRequest.marketName,
-      tradeRequest.marketCurrency.getOrElse(""),
-      tradeRequest.marketCurrencyLong.getOrElse(""),
-      tradeRequest.baseCurrency.getOrElse(""),
-      tradeRequest.baseCurrencyLong.getOrElse(""),
+      UUID.fromString(tradeRequest.apiKeyId),
+      MarketInfo(
+                 tradeRequest.exchangeName,
+                 tradeRequest.marketName,
+                 tradeRequest.marketCurrency.getOrElse(""),
+                 tradeRequest.marketCurrencyLong.getOrElse(""),
+                 tradeRequest.baseCurrency.getOrElse(""),
+                 tradeRequest.baseCurrencyLong.getOrElse(""),
+      ),
+      TradeStat.empty(),
       tradeRequest.baseQuantity,
-      None,
       TradeStatus.Pending,
       now,
       now,
-      None,
-      None,
-      None,
       tradeRequest.buyConditions,
-      None,
-      None,
-      None,
       tradeRequest.stopLossConditions,
       tradeRequest.takeProfitConditions
     )

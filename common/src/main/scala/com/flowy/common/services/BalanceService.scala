@@ -12,7 +12,7 @@ class BalanceService(bagel: TheEverythingBagelDao)(implicit ec: ExecutionContext
 
   // when a new user adds their key pull the balances from the exchange and
   // populate the user's internal balance
-  def populateBalances(userId: UUID, exchange: Exchange.Value, exBalances: Seq[ExchangeBalance]): Future[Seq[Balance]] = {
+  def populateBalances(userId: UUID, exchange: Exchange.Value, apiKeyId: UUID, exBalances: Seq[ExchangeBalance]): Future[Seq[Balance]] = {
     // convert balances here
     val balances = exBalances.map{ exb =>
       val exchangeAvailable = exb.exchangeAvailableBalance
@@ -20,6 +20,7 @@ class BalanceService(bagel: TheEverythingBagelDao)(implicit ec: ExecutionContext
       Balance(
         id = UUID.randomUUID(),
         userId = userId,
+        apiKeyId = apiKeyId,
         exchange = exchange,
         currencyName = exb.currency,
         currencyNameLong = "",

@@ -42,13 +42,14 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   lazy val mediator = DistributedPubSub(system).mediator
 
-  implicit def exchangeBalConversion(exbs: List[ExchangeBalance]): List[Balance] = {
+  def exchangeBalConversion(apiKeyId: UUID, exbs: List[ExchangeBalance]): List[Balance] = {
     exbs.map { exb =>
       val exchangeAvailable = exb.exchangeAvailableBalance
 
       Balance(
         id = UUID.randomUUID(),
         userId = UUID.randomUUID(),
+        apiKeyId = apiKeyId,
         exchange = Exchange.withName("Bittrex"),
         currencyName = exb.currency,
         currencyNameLong = "",
@@ -217,10 +218,10 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
     private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
       bagel.findBalancesByUserId(userId).map { balances =>
-        val balByEx = balances.groupBy(_.exchange)
+        val balByEx = balances.groupBy(bal => (bal.exchange, bal.apiKeyId))
 
-        balByEx.map { case (exchange, balances) =>
-          ExchangeData("somekey", exchange, balances)
+        balByEx.map { case (tupe, balances) =>
+          ExchangeData(tupe._2.toString, tupe._1, balances)
         }.toList
       }
     }

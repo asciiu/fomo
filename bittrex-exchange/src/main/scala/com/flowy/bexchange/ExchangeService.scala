@@ -102,12 +102,12 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
       * Update a trade.
       ********************************************************************/
     case DeleteTrade(trade, senderOpt) =>
-      marketServices.get(trade.marketName) match {
+      marketServices.get(trade.info.marketName) match {
         case Some(actor) =>
           actor ! DeleteTrade(trade, senderOpt)
 
         case None =>
-          log.warning(s"DeleteTrade - market not found! ${trade.marketName}")
+          log.warning(s"DeleteTrade - market not found! ${trade.info.marketName}")
           senderOpt match {
             case Some(actor) =>
               actor ! None
