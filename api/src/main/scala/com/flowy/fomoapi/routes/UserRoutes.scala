@@ -5,8 +5,8 @@ import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.Directives._
 import com.flowy.fomoapi.services.UserKeyService
 import com.flowy.fomoapi.services.{UserRegisterResult, UserService}
-import com.flowy.common.api.Bittrex.{BalancesAuthorization, BalancesResponse, ExchangeBalance}
-import com.flowy.common.api.{Auth, BittrexClient}
+import com.flowy.common.api.Bittrex.ExchangeBalance
+import com.flowy.common.api.BittrexClient
 import com.flowy.common.utils.Utils
 import com.flowy.common.models._
 import com.softwaremill.bootzooka.common.api.RoutesSupport
@@ -15,24 +15,20 @@ import com.softwaremill.bootzooka.user.application.Session
 import com.softwaremill.session.SessionDirectives._
 import com.softwaremill.session.SessionOptions._
 import com.typesafe.scalalogging.StrictLogging
-import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import com.flowy.cache.CacheService.CacheBittrexBalances
 import com.flowy.common.database.TheEverythingBagelDao
-import io.circe.{Encoder, Json}
+import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
-
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 
 trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
+  import Balance._
 
   def system: ActorSystem
   def userService: UserService

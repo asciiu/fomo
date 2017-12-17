@@ -7,6 +7,7 @@ import javax.crypto.spec.PBEKeySpec
 
 import com.flowy.common.utils.Utils
 import com.flowy.common.models.User.UserId
+import io.circe.{Encoder, Json}
 import org.joda.time.field.OffsetDateTimeField
 
 case class User(
@@ -55,6 +56,25 @@ case class Balance(id: UUID,
                    exchangeTotalBalance: Double,
                    exchangeAvailableBalance: Double,
                    pending: Option[Double])
+
+object Balance {
+  implicit val encodeBalance: Encoder[Balance] = new Encoder[Balance] {
+    final def apply(balance: Balance): Json = {
+      val pending = balance.pending match {
+        case Some(bal) => Json.fromDoubleOrNull(bal)
+        case None => Json.Null
+      }
+
+      Json.obj(
+        ("currencyName", Json.fromString(balance.currencyName)),
+        ("availableBalance", Json.fromDoubleOrNull(balance.availableBalance)),
+        ("exchangeTotalBalance", Json.fromDoubleOrNull(balance.exchangeTotalBalance)),
+        ("exchangeAvailableBalance", Json.fromDoubleOrNull(balance.exchangeAvailableBalance)),
+        ("pending", pending)
+      )
+    }
+  }
+}
 
 case class UserData(id: UserId, first: String, last: String, email: String, devices: Seq[UserDevice], exchanges: Seq[ExchangeData])
 
