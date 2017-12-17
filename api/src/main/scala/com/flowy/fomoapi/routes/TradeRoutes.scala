@@ -136,8 +136,8 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           val currency = tradeRequest.marketName.split("-")(0)
           val key = s"userId:${user.id}:bittrex:${currency}"
 
-          onSuccess( redis.hget[String](key, "balance") ) {
-            case Some(balance) if balance.toDouble > tradeRequest.baseQuantity =>
+          onSuccess( redis.hget[String](key, "availableBalance") ) {
+            case Some(available) if available.toDouble > tradeRequest.baseQuantity =>
 
               onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]] ) {
                 case Some(trade) =>
@@ -146,7 +146,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
                   complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
               }
             case _ =>
-              complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user balance not tradable", Json.Null))
+              complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user available balance is less than baseQuantity", Json.Null))
           }
         }
       }
