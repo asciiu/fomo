@@ -99,7 +99,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
           val key = s"userId:${trade.userId}:bittrex:${trade.marketCurrency}"
 
           redis.hget[String](key, "balance").map {
-            case Some(balance) if balance.toDouble > trade.quantity => ???
+            case Some(balance) if balance.toDouble > trade.baseQuantity => ???
               // TODO this is where the order shall be executed via the BittrexClient
 
               val updatedTrade = t.get.copy(
@@ -109,7 +109,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
                 status = TradeStatus.Bought
               )
 
-              log.info(s"buy ${trade.quantity} ${trade.marketName} for user: ${trade.userId}")
+              log.info(s"buy ${trade.baseQuantity} ${trade.marketName} for user: ${trade.userId}")
               bagel.updateTrade(updatedTrade)
 
               // TODO this needs refinement
@@ -211,7 +211,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       case Some(trade) if trade.status == TradeStatus.Pending =>
         bagel.updateTrade(
           trade.copy(
-            quantity = request.quantity,
+            baseQuantity = request.baseQuantity,
             buyConditions = request.buyConditions,
             stopLossConditions = request.stopLossConditions,
             takeProfitConditions = request.takeProfitConditions)

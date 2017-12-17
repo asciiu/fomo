@@ -132,11 +132,12 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         entity(as[TradeRequest]) { tradeRequest =>
           implicit val timeout = Timeout(1.second)
 
-          val currency = tradeRequest.marketName.split("-")(1)
+          // check bace currency balance
+          val currency = tradeRequest.marketName.split("-")(0)
           val key = s"userId:${user.id}:bittrex:${currency}"
 
           onSuccess( redis.hget[String](key, "balance") ) {
-            case Some(balance) if balance.toDouble > tradeRequest.quantity =>
+            case Some(balance) if balance.toDouble > tradeRequest.baseQuantity =>
 
               onSuccess( (bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]] ) {
                 case Some(trade) =>

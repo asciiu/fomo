@@ -28,16 +28,16 @@ object TradeStatus extends Enumeration {
 case class Condition(id: Option[UUID], conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
 case class ConditionArray(collectionType: String, conditions: List[Condition])
 case class TradeRequest(
-                 exchangeName: String,
-                 marketName: String,
-                 marketCurrencyAbbrev: Option[String],
-                 marketCurrencyName: Option[String],
-                 baseCurrencyAbbrev: Option[String],
-                 baseCurrencyName: Option[String],
-                 quantity: Double,
-                 buyConditions: String,
-                 stopLossConditions: Option[String],
-                 takeProfitConditions: Option[String])
+                         exchangeName: String,
+                         marketName: String,
+                         marketCurrency: Option[String],
+                         marketCurrencyLong: Option[String],
+                         baseCurrency: Option[String],
+                         baseCurrencyLong: Option[String],
+                         baseQuantity: Double,
+                         buyConditions: String,
+                         stopLossConditions: Option[String],
+                         takeProfitConditions: Option[String])
 
 
 case class Trade(id: UUID,
@@ -48,7 +48,8 @@ case class Trade(id: UUID,
                  marketCurrencyLong: String,
                  baseCurrency: String,
                  baseCurrencyLong: String,
-                 quantity: Double,
+                 baseQuantity: Double,
+                 marketQuantity: Option[Double],
                  status: TradeStatus.Value,
                  createdOn: OffsetDateTime,
                  updatedOn: OffsetDateTime,
@@ -69,6 +70,10 @@ object Trade {
 
   implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
     final def apply(trade: Trade): Json = {
+      val marketQuantity = trade.marketQuantity match {
+        case Some(q) => Json.fromDoubleOrNull(q)
+        case None => Json.Null
+      }
       val buyPrice = trade.buyPrice match {
         case Some(price) => Json.fromDoubleOrNull(price)
         case None => Json.Null
@@ -110,7 +115,8 @@ object Trade {
         ("marketCurrencyLong", Json.fromString(trade.marketCurrencyLong)),
         ("baseCurrency", Json.fromString(trade.baseCurrency)),
         ("baseCurrencyLong", Json.fromString(trade.baseCurrencyLong)),
-        ("quantity", Json.fromDoubleOrNull(trade.quantity)),
+        ("baseQuantity", Json.fromDoubleOrNull(trade.baseQuantity)),
+        ("marketQuantity", marketQuantity),
         ("status", Json.fromString(trade.status.toString)),
         ("createdOn", Json.fromString(trade.createdOn.toString)),
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),
@@ -134,11 +140,12 @@ object Trade {
         userId <- c.downField("userId").as[String]
         exchangeName <- c.downField("exchangeName").as[String]
         marketName <- c.downField("marketName").as[String]
-        marketCurrencyAbbrev <- c.downField("marketCurrencyAbbrev").as[String]
-        marketCurrencyName <- c.downField("marketCurrencyName").as[String]
-        baseCurrencyAbbrev <- c.downField("baseCurrencyAbbrev").as[String]
-        baseCurrencyName <- c.downField("baseCurrencyName").as[String]
-        quantity <- c.downField("quantity").as[Double]
+        marketCurrency <- c.downField("marketCurrency").as[String]
+        marketCurrencyLong <- c.downField("marketCurrencyLong").as[String]
+        baseCurrency <- c.downField("baseCurrency").as[String]
+        baseCurrencyLong <- c.downField("baseCurrencyLong").as[String]
+        baseQuantity <- c.downField("quantity").as[Double]
+        marketQuantity <- c.downField("marketQuantity").as[Double]
         status <- c.downField("status").as[String]
         createdOn <- c.downField("createdOn").as[String]
         updatedOn <- c.downField("updatedOn").as[String]
@@ -150,11 +157,12 @@ object Trade {
           UUID.fromString(userId),
           exchangeName,
           marketName,
-          marketCurrencyAbbrev,
-          marketCurrencyName,
-          baseCurrencyAbbrev,
-          baseCurrencyName,
-          quantity,
+          marketCurrency,
+          marketCurrencyLong,
+          baseCurrency,
+          baseCurrencyLong,
+          baseQuantity,
+          Some(marketQuantity),
           TradeStatus.withName(status),
           OffsetDateTime.parse(createdOn),
           OffsetDateTime.parse(updatedOn),
@@ -179,11 +187,12 @@ object Trade {
       forUserId,
       tradeRequest.exchangeName,
       tradeRequest.marketName,
-      tradeRequest.marketCurrencyAbbrev.getOrElse(""),
-      tradeRequest.marketCurrencyName.getOrElse(""),
-      tradeRequest.baseCurrencyAbbrev.getOrElse(""),
-      tradeRequest.baseCurrencyName.getOrElse(""),
-      tradeRequest.quantity,
+      tradeRequest.marketCurrency.getOrElse(""),
+      tradeRequest.marketCurrencyLong.getOrElse(""),
+      tradeRequest.baseCurrency.getOrElse(""),
+      tradeRequest.baseCurrencyLong.getOrElse(""),
+      tradeRequest.baseQuantity,
+      None,
       TradeStatus.Pending,
       now,
       now,

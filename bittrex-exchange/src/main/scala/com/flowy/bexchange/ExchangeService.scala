@@ -126,10 +126,10 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
           // we must match on Some(mResult), Some(actor) to ensure we have the correct
           // resources for the marketservice
 
-          val newRequest = request.copy(baseCurrencyAbbrev = Some(mResult.baseCurrency),
-            baseCurrencyName = Some(mResult.baseCurrencyLong),
-            marketCurrencyAbbrev = Some(mResult.marketCurrency),
-            marketCurrencyName = Some(mResult.marketCurrencyLong)
+          val newRequest = request.copy(baseCurrency = Some(mResult.baseCurrency),
+            baseCurrencyLong = Some(mResult.baseCurrencyLong),
+            marketCurrency = Some(mResult.marketCurrency),
+            marketCurrencyLong = Some(mResult.marketCurrencyLong)
           )
 
           // send the request with completed names to the market service

@@ -23,11 +23,12 @@ trait SqlTrade {
     def userId = column[UUID]("user_id")
     def exchangeName = column[String]("exchange_name")
     def marketName = column[String]("market_name")
-    def marketCurrencyAbbrev = column[String]("market_currency_abbrev")
-    def marketCurrencyName = column[String]("market_currency_name")
-    def baseCurrencyAbbrev = column[String]("base_currency_abbrev")
-    def baseCurrencyName = column[String]("base_currency_name")
-    def quantity = column[Double]("quantity")
+    def marketCurrencyAbbrev = column[String]("market_currency")
+    def marketCurrencyName = column[String]("market_currency_long")
+    def baseCurrencyAbbrev = column[String]("base_currency")
+    def baseCurrencyName = column[String]("base_currency_long")
+    def bQuantity = column[Double]("base_quantity")
+    def mQuantity = column[Double]("market_quantity")
     def status = column[TradeStatus.Value]("status")
     def createdOn = column[OffsetDateTime]("created_on")
     def updatedOn = column[OffsetDateTime]("updated_on")
@@ -49,7 +50,8 @@ trait SqlTrade {
       marketCurrencyName,
       baseCurrencyAbbrev,
       baseCurrencyName,
-      quantity,
+      bQuantity,
+      mQuantity.?,
       status,
       createdOn,
       updatedOn,
