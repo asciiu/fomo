@@ -16,6 +16,7 @@ import scala.concurrent.ExecutionContext
 import redis.RedisClient
 
 import scala.tools.reflect.ToolBox
+import scala.util.{Failure, Success}
 
 
 object MarketTradeService {
@@ -172,19 +173,40 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
     log.info(s"MarketTradeService.postTrade - $request")
 
-    bagel.insert(trade).map { result =>
-      if (result > 0) {
-        val conditions = trade.buyConditions
+    val stuff = for {
+      result <- bagel.insert(trade)
+      balance <- bagel.findBalance(user.id, trade.apiKeyId, trade.info.baseCurrency)
+    } yield (result, balance)
 
-        buyConditions.append(TradeBuyCondition(trade.id, conditions))
-
-        log.info(s"MarketTradeService.postTrade - responding to $senderRef")
-
+    stuff.onComplete {
+      // result of trade insert must be > 0 for success
+      // and balance must be > base quantity
+      case Success((result, Some(balance))) if (result > 0 && balance.availableBalance > trade.baseQuantity) =>
+        val newBalance = balance.copy(availableBalance = balance.availableBalance - trade.baseQuantity)
+        bagel.updateBalance(newBalance)
         senderRef ! Some(trade)
-      } else {
+      case _ =>
         senderRef ! None
-      }
     }
+
+    //bagel.insert(trade).map { result =>
+    //  if (result > 0) {
+    //    val conditions = trade.buyConditions
+
+    //    buyConditions.append(TradeBuyCondition(trade.id, conditions))
+    //
+    //    bagel.findBalance(user.id, request.apiKeyId, trade.info.baseCurrency).map {
+    //      case Some(balance)
+    //      case None =>
+    //    }
+
+    //    log.info(s"MarketTradeService.postTrade - responding to $senderRef")
+
+    //    senderRef ! Some(trade)
+    //  } else {
+    //    senderRef ! None
+     // }
+    //}
   }
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
