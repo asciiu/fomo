@@ -46,12 +46,17 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     exbs.map { exb =>
       val exchangeAvailable = exb.exchangeAvailableBalance
 
-      Balance(currency = exb.currency,
+      Balance(
+        id = UUID.randomUUID(),
+        userId = UUID.randomUUID(),
+        exchangeName = "Bittrex",
+        currencyName = exb.currency,
+        currencyNameLong = "",
         availableBalance = exchangeAvailable,
         exchangeTotalBalance = exb.exchangeTotalBalance,
         exchangeAvailableBalance = exchangeAvailable,
-        pending = exb.pending,
-        cryptoAddress = exb.cryptoAddress)
+        pending = Some(exb.pending),
+        blockchainAddress = exb.cryptoAddress)
     }
   }
 
@@ -162,6 +167,7 @@ trait UsersRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       }
     }
 
+  // TODO rewrite this to pull from local balances
   private def checkBalances(userId: UUID): Future[List[ExchangeData]] = {
     // TODO move this to utils
     def singleFuture[A](futures: List[Future[A]]): Future[List[A]] = {
