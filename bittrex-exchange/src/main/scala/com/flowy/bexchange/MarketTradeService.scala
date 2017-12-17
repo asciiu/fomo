@@ -187,13 +187,17 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
   }
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
-    // trade status pending update quantity and conditions
-    if (trade.status != TradeStatus.Sold) {
-      bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map { updated =>
-        sender ! updated
-      }
-    } else {
-      sender ! None
+    // cannot cancel a sold trade because it is already finished.
+    trade.status match {
+      case TradeStatus.Sold => sender ! None
+
+        // delete the trade from the system if pending
+      case TradeStatus.Pending =>
+        bagel.deleteTrade(trade).map (sender ! _)
+
+        // all other trades statii are cancellable
+      case _ =>
+        bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map (sender ! _)
     }
   }
 

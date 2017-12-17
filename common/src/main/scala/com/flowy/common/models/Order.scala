@@ -116,11 +116,11 @@ object Trade {
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),
         ("buyTime", buyTime),
         ("buyPrice", buyPrice),
-        ("buyCondition", buyCondition),
+        ("boughtCondition", buyCondition),
         ("buyConditions", Json.fromString(trade.buyConditions)),
         ("sellTime", sellTime),
         ("sellPrice", sellPrice),
-        ("sellCondition", sellCondition),
+        ("soldCondition", sellCondition),
         ("stopLossConditions", stopLossConditions),
         ("takeProfitConditions", takeProfitConditions)
       )
