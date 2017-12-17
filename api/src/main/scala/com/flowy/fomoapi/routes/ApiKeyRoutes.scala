@@ -86,7 +86,7 @@ trait ApiKeyRoutes extends RoutesSupport with StrictLogging with SessionSupport 
     post {
       userFromSession{ user =>
         entity(as[ApiKey]) { key =>
-          onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange), key.key, key.secret, key.description)) {
+          onSuccess(userKeyService.addUserKey(user.id, Exchange.withName(key.exchange.toLowerCase()), key.key, key.secret, key.description)) {
             case Left(msg) =>
               complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, msg, Json.Null))
             case Right(key)  =>
