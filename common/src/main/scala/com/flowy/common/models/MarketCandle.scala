@@ -1,6 +1,7 @@
 package com.flowy.common.models
 
 import java.time.OffsetDateTime
+import java.util.UUID
 
 import MarketStructures.ClosePrice
 import com.flowy.common.Util
@@ -8,6 +9,15 @@ import com.flowy.common.Util
 /**
   * Created by bishop on 10/18/16.
   */
+
+case class Market(id: UUID,
+                  exchangeName: Exchange.Value,
+                  marketName: String,
+                  marketCurrency: String,
+                  marketCurrencyLong: String,
+                  baseCurrency: String,
+                  baseCurrencyLong: String)
+
 class MarketCandle (timestamp: OffsetDateTime,
                     val timePeriodMinutes: Int) {
 

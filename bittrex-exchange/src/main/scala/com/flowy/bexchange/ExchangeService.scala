@@ -1,5 +1,7 @@
 package com.flowy.bexchange
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Subscribe, Unsubscribe}
@@ -7,8 +9,10 @@ import akka.stream.ActorMaterializer
 import com.flowy.common.api.Bittrex.{MarketResponse, MarketResult}
 import com.flowy.common.api.BittrexClient
 import com.flowy.common.database.TheEverythingBagelDao
+import com.flowy.common.models.{Exchange, Market}
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import redis.RedisClient
+
 import scala.concurrent.ExecutionContext
 
 
@@ -42,7 +46,7 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
   val bittrexClient = new BittrexClient()
 
   // a list of open and available trading markets on Bittrex
-  var marketList: List[MarketResult] = List[MarketResult]()
+  var marketList: List[Market] = List[Market]()
 
   // map of marketName (BTC-ANT) to actor ref for MarketService
   val marketServices = scala.collection.mutable.Map[String, ActorRef]()
@@ -50,19 +54,13 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
   val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart = {
-    bittrexClient.publicGetMarkets().map { response: MarketResponse =>
-      response.result match {
-        case Some(list) =>
-          marketList = list
-        case None =>
-          log.warning("could not receive market list from bittrex")
-      }
-    }
     mediator ! Subscribe("GetMarkets", self)
     mediator ! Subscribe("MarketUpdate", self)
     mediator ! Subscribe("PostTrade", self)
     mediator ! Subscribe("UpdateTrade", self)
     mediator ! Subscribe("DeleteTrade", self)
+
+    queryBittrexMarkets()
   }
 
   override def postStop(): Unit = {
@@ -71,6 +69,46 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
     mediator ! Unsubscribe("PostTrade", self)
     mediator ! Unsubscribe("UpdateTrade", self)
     mediator ! Unsubscribe("DeleteTrade", self)
+  }
+
+  private def queryBittrexMarkets() = {
+    bittrexClient.publicGetMarkets().map { response: MarketResponse =>
+      response.result match {
+        case Some(list) =>
+
+          list.foreach{ marketResult =>
+
+            val marketName = marketResult.marketName
+
+            if (!marketServices.contains(marketName)) {
+              // fire up a new actor for this market
+              marketServices += marketName -> context.actorOf(MarketTradeService.props(marketName, bagel, redis), marketName)
+
+              // add this market to our lookup table if it does not already exist
+              bagel.findMarketByName(Exchange.Bittrex, marketName).map { mOpt =>
+                if (!mOpt.isDefined) {
+                  bagel.insert(
+                    Market(
+                      UUID.randomUUID(),
+                      Exchange.Bittrex,
+                      marketName,
+                      marketResult.baseCurrency,
+                      marketResult.baseCurrencyLong,
+                      marketResult.marketCurrency,
+                      marketResult.marketCurrencyLong
+                    )
+                  )
+                }
+              }
+
+              log.info(s"MarketTradeService started for ${marketName}")
+            }
+          }
+
+        case None =>
+          log.warning("could not receive market list from bittrex")
+      }
+    }
   }
 
   def receive = {
@@ -173,19 +211,11 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
 
       // first time seeing this market name?
       if (!marketServices.contains(marketName)) {
-
-        // fire up a new actor for this market
-        marketServices += marketName -> context.actorOf(MarketTradeService.props(marketName, bagel, redis), marketName)
-
-        log.info(s"MarketTradeService started for ${marketName}")
-
-        // send a message to the retriever to get the candle data from Poloniex
-        // if the 24 hour baseVolume from this update is greater than our threshold
-        //eventBus.publish(MarketEvent(NewMarket, QueueMarket(marketName)))
-        //candleService ! QueueMarket(marketName)
+        // startup new actor if we can
+        queryBittrexMarkets()
+      } else {
+        //forward message to market service actor
+        marketServices(marketName) ! update
       }
-
-      //forward message to market service actor
-      marketServices(marketName) ! update
   }
 }

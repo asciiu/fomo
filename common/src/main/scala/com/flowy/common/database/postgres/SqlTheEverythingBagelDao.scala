@@ -5,7 +5,7 @@ import java.util.UUID
 
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.database.postgres.schema.{SqlTrade, SqlUserDeviceSchema, SqlUserbalance}
+import com.flowy.common.database.postgres.schema._
 import com.flowy.common.models._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,7 +18,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   extends TheEverythingBagelDao
     with SqlTrade
     with SqlUserDeviceSchema
-    with SqlUserbalance {
+    with SqlUserbalance
+    with SqlMarket {
 
   import database._
   import database.driver.api._
@@ -178,5 +179,18 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     }
   }
 
+  /*******************************************************************************************
+    * Market management below here
+    *****************************************************************************************/
+  def insert(market: Market): Future[Int] = {
+    db.run(markets += market)
+  }
 
+  def findAllMarkets(exchange: Exchange.Value): Future[Seq[Market]] = {
+    db.run(markets.filter(_.exchangeName === exchange).result)
+  }
+
+  def findMarketByName(exchange: Exchange.Value, marketName: String): Future[Option[Market]] = {
+    db.run(markets.filter(m => m.exchangeName === exchange && m.marketName === marketName).result.headOption)
+  }
 }
