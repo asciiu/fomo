@@ -188,38 +188,34 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       case _ =>
         senderRef ! None
     }
-
-    //bagel.insert(trade).map { result =>
-    //  if (result > 0) {
-    //    val conditions = trade.buyConditions
-
-    //    buyConditions.append(TradeBuyCondition(trade.id, conditions))
-    //
-    //    bagel.findBalance(user.id, request.apiKeyId, trade.info.baseCurrency).map {
-    //      case Some(balance)
-    //      case None =>
-    //    }
-
-    //    log.info(s"MarketTradeService.postTrade - responding to $senderRef")
-
-    //    senderRef ! Some(trade)
-    //  } else {
-    //    senderRef ! None
-     // }
-    //}
   }
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
     // cannot cancel a sold trade because it is already finished.
     trade.status match {
-      case TradeStatus.Sold => sender ! None
+      case TradeStatus.Sold =>
+        // cannot cancel a sold trade because it is already finished.
+        sender ! None
 
-        // delete the trade from the system if pending
       case TradeStatus.Pending =>
-        bagel.deleteTrade(trade).map (sender ! _)
+        println("Hello")
+        // delete the trade from the system if pending
+        for {
+          deletedOpt <- bagel.deleteTrade(trade)
+          balanceOpt <- bagel.findBalance(trade.userId, trade.apiKeyId, trade.info.baseCurrency)
+        } yield {
 
-        // all other trades statii are cancellable
+          (deletedOpt, balanceOpt) match {
+            case (Some(deleted), Some(balance)) =>
+              bagel.updateBalance(balance.copy(availableBalance = balance.availableBalance + deleted.baseQuantity)).map ( _ => sender ! deleted)
+
+            case _ =>
+              sender ! None
+          }
+        }
+
       case _ =>
+        // all other trades statuses are cancellable
         bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map (sender ! _)
     }
   }
