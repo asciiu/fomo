@@ -13,6 +13,7 @@ import com.flowy.common.models.{Exchange, Market}
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import redis.RedisClient
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 
 
@@ -46,7 +47,7 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
   val bittrexClient = new BittrexClient()
 
   // a list of open and available trading markets on Bittrex
-  var marketList: List[Market] = List[Market]()
+  val marketList: ListBuffer[Market] = new ListBuffer()
 
   // map of marketName (BTC-ANT) to actor ref for MarketService
   val marketServices = scala.collection.mutable.Map[String, ActorRef]()
@@ -54,13 +55,13 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
   val mediator = DistributedPubSub(context.system).mediator
 
   override def preStart = {
+    queryBittrexMarkets()
+
     mediator ! Subscribe("GetMarkets", self)
     mediator ! Subscribe("MarketUpdate", self)
     mediator ! Subscribe("PostTrade", self)
     mediator ! Subscribe("UpdateTrade", self)
     mediator ! Subscribe("DeleteTrade", self)
-
-    queryBittrexMarkets()
   }
 
   override def postStop(): Unit = {
@@ -85,20 +86,23 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
               marketServices += marketName -> context.actorOf(MarketTradeService.props(marketName, bagel, redis), marketName)
 
               // add this market to our lookup table if it does not already exist
-              bagel.findMarketByName(Exchange.Bittrex, marketName).map { mOpt =>
-                if (!mOpt.isDefined) {
-                  bagel.insert(
-                    Market(
-                      UUID.randomUUID(),
-                      Exchange.Bittrex,
-                      marketName,
-                      marketResult.baseCurrency,
-                      marketResult.baseCurrencyLong,
-                      marketResult.marketCurrency,
-                      marketResult.marketCurrencyLong
-                    )
+              bagel.findMarketByName(Exchange.Bittrex, marketName).map {
+                case Some(market) =>
+                  marketList += market
+
+                case None =>
+                  val market = Market(
+                    UUID.randomUUID(),
+                    Exchange.Bittrex,
+                    marketName,
+                    marketResult.marketCurrency,
+                    marketResult.marketCurrencyLong,
+                    marketResult.baseCurrency,
+                    marketResult.baseCurrencyLong
                   )
-                }
+
+                  bagel.insert(market)
+                  marketList += market
               }
 
               log.info(s"MarketTradeService started for ${marketName}")
@@ -159,23 +163,25 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
       * Post a trade to the market.
       ********************************************************************/
     case PostTrade(user, request, senderOpt) =>
-      (marketList.find( m => m.marketName.toLowerCase() == request.marketName.toLowerCase()), marketServices.get(request.marketName)) match {
-        case (Some(mResult), Some(actor)) =>
+      val marketName = request.marketName
+
+      marketList.find(_.marketName == marketName) match {
+        case Some(lookup) =>
           // we must match on Some(mResult), Some(actor) to ensure we have the correct
           // resources for the marketservice
 
-          val newRequest = request.copy(baseCurrency = Some(mResult.baseCurrency),
-            baseCurrencyLong = Some(mResult.baseCurrencyLong),
-            marketCurrency = Some(mResult.marketCurrency),
-            marketCurrencyLong = Some(mResult.marketCurrencyLong)
+          val newRequest = request.copy(baseCurrency = Some(lookup.baseCurrency),
+            baseCurrencyLong = Some(lookup.baseCurrencyLong),
+            marketCurrency = Some(lookup.marketCurrency),
+            marketCurrencyLong = Some(lookup.marketCurrencyLong)
           )
 
           // send the request with completed names to the market service
           val newTrade = PostTrade(user, newRequest, senderOpt)
-          actor ! newTrade
+          marketServices(marketName) ! newTrade
 
         case _ =>
-          log.warning(s"PostTrade - ${request.marketName} not found!")
+          log.warning(s"PostTrade - ${marketName} not found!")
           senderOpt match {
             case Some(actor) =>
               actor ! None

@@ -198,7 +198,6 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
         sender ! None
 
       case TradeStatus.Pending =>
-        println("Hello")
         // delete the trade from the system if pending
         for {
           deletedOpt <- bagel.deleteTrade(trade)
@@ -207,7 +206,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
           (deletedOpt, balanceOpt) match {
             case (Some(deleted), Some(balance)) =>
-              bagel.updateBalance(balance.copy(availableBalance = balance.availableBalance + deleted.baseQuantity)).map ( _ => sender ! deleted)
+              bagel.updateBalance(balance.copy(availableBalance = balance.availableBalance + deleted.baseQuantity)).map ( _ => sender ! Some(deleted))
 
             case _ =>
               sender ! None
