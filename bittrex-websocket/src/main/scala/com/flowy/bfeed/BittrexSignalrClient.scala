@@ -71,8 +71,6 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
     Source.maybe[Message])(Keep.right)
 
   private var connected = false
-  //val upgradeResponse = Promise[WebSocketUpgradeResponse]()
-  //val closed = Promise[Done]()
 
   override def preStart() = {
     system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
