@@ -5,15 +5,19 @@ import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
+import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest, WebSocketUpgradeResponse}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import com.flowy.common.database.MarketUpdateDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
+
+import scala.concurrent.duration._
 import com.google.gson.JsonElement
 import microsoft.aspnet.signalr.client.Action
+
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
 
@@ -23,6 +27,8 @@ object BittrexSignalrActor {
                                               system: ActorSystem,
                                               materializer: ActorMaterializer): Props =
     Props(new BittrexSignalrActor(marketUpdateDao))
+
+  object ConnectFeed
 }
 
 
@@ -33,6 +39,7 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
   with BittrexJsonSupport with Actor with ActorLogging with SignalRSupport {
 
   import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+  import BittrexSignalrActor._
 
   val cluster = Cluster(context.system)
 
@@ -63,12 +70,13 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
     incoming,
     Source.maybe[Message])(Keep.right)
 
-  val (upgradeResponse, promise) =
-    Http().singleWebSocketRequest(
-      WebSocketRequest("ws://localhost:9090"),
-      flow)
+  private var connected = false
+  //val upgradeResponse = Promise[WebSocketUpgradeResponse]()
+  //val closed = Promise[Done]()
 
   override def preStart() = {
+    system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
+
     // TODO this is broken because of cloudfare
     // reference https://github.com/n0mad01/node.bittrex.api/issues/67
 //    connectSignalR { connection =>
@@ -85,17 +93,43 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
 //    }
   }
 
+  // override postRestart so we don't call preStart and schedule a new message
+  override def postRestart(reason: Throwable) = {}
 
   override def postStop() = {
     //disconnectSignalR()
     log.info("closed bittrex websocket")
   }
 
-
   // implements empty receive for actor
   def receive = {
+    case ConnectFeed =>
+      checkConnected()
+
     case x =>
       log.warning(s"received unknown $x")
+  }
+
+  private def checkConnected() = {
+    if (!connected) {
+      log.info("connecting to resident bittrex feed")
+      val (upgradeResponse, closed) = Http().singleWebSocketRequest(
+        WebSocketRequest("ws://localhost:9090"),
+        flow)
+
+      closed.future.map { c =>
+        log.info("not connected retrying in 10 seconds")
+        system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
+        connected = false
+      }
+
+      upgradeResponse.map { r =>
+        if (r.response.status == StatusCodes.SwitchingProtocols) {
+          log.info("connected to resident bittrex feed")
+          connected = true
+        }
+      }
+    }
   }
 
 
