@@ -11,7 +11,7 @@ import com.flowy.bexchange.ExchangeService.GetMarkets
 import com.flowy.bexchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.{Trade, TradeRequest}
+import com.flowy.common.models.{Market, Trade, TradeRequest}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
@@ -57,10 +57,10 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
         parameters('name.?) { name =>
           userFromSession { user =>
             implicit val timeout = Timeout(2.second)
-            val marketResults = (bittrexService ? GetMarkets(name)).mapTo[List[MarketResult]]
+            val marketResults = (bittrexService ? GetMarkets(name)).mapTo[Seq[Market]]
             onSuccess(marketResults) {
-              case list: List[MarketResult] =>
-                val info = list.map(x =>
+              case seq: Seq[Market] =>
+                val info = seq.map(x =>
                   MarketBasicInfo(x.marketName,
                     x.marketCurrency,
                     x.marketCurrencyLong,
