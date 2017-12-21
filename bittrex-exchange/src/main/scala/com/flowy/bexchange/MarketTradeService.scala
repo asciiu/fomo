@@ -12,7 +12,7 @@ import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import redis.RedisClient
 
 import scala.tools.reflect.ToolBox
@@ -45,7 +45,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
   case class TradeBuyCondition(tradeId: UUID, conditionEx: String)
 
-  val buyConditions = collection.mutable.ListBuffer[TradeBuyCondition]()
+  val trades = collection.mutable.ListBuffer[Trade]()
 
   val dynamic = currentMirror.mkToolBox()
 
@@ -55,13 +55,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
   override def preStart() = {
     // load pending conditions from bagel
     bagel.findTradesByStatus(marketName, TradeStatus.Pending).map { pendingTrades =>
-      if (pendingTrades.length > 0) {
-        // map all the conditions into a single collection
-        val pendingConditions = pendingTrades.map( t => TradeBuyCondition(t.id, t.buyConditions) )
-
-        log.info(s"$marketName loading pending trades")
-        buyConditions.append(pendingConditions: _*)
-      }
+      trades ++= pendingTrades
     }
 
     log.info(s"$marketName actor started")
@@ -84,60 +78,85 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
       log.warning(s"received unknown message - $x")
   }
 
+  private def executeBuyTrades(lastPrice: Double) = {
+    val buyTrades = trades.filter { trade =>
+      val condition = trade.buyConditions.replace("price", lastPrice.toString)
+      dynamic.eval(dynamic.parse(s"$condition")) == true
+    }.filter { trade =>
+      trade.status == TradeStatus.Pending
+    }
 
-  private def executeTrades(lastPrice: Double, conditions: List[TradeBuyCondition]) = {
-    val sellConditions = scala.collection.mutable.Seq[TradeBuyCondition]()
+    buyTrades.foreach { trade =>
+      // TODO this is where the order shall be executed via the BittrexClient
 
-    conditions.foreach { condish =>
-      val tradeId = condish.tradeId
+      // TODO the buyPrice should be the actual price you may need to read this from bittrex
+      log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
+      val updatedTrade = trade.copy(
+        stat = TradeStat(
+          buyPrice = Some(lastPrice),
+          buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
+        status = TradeStatus.Bought
+      )
 
-      bagel.findTradeById(tradeId).map { t =>
+      // TODO don't assume this update succeeded
+      bagel.updateTrade(updatedTrade)
+      trades -= trade
 
-        if (t.isDefined) {
-          val trade = t.get
-
-          val currency = trade.info.marketName.split("-")(1)
-          val key = s"userId:${trade.userId}:bittrex:${trade.info.marketCurrency}"
-
-          redis.hget[String](key, "balance").map {
-            case Some(balance) if balance.toDouble > trade.baseQuantity => ???
-              // TODO this is where the order shall be executed via the BittrexClient
-
-              val updatedTrade = t.get.copy(
-                // TODO the buyPrice should be the actual price you may need to read this from bittrex
-                stat = TradeStat(
-                  buyPrice = Some(lastPrice),
-                  buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
-                status = TradeStatus.Bought
-              )
-
-              log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
-              bagel.updateTrade(updatedTrade)
-
-              // TODO this needs refinement
-              if (trade.stopLossConditions.isDefined) {
-                val sellConditions = trade.stopLossConditions.get
-                val conditions = sellConditions.split(" or ")
-
-                conditions.foreach{ c =>
-                  if (c.contains("TrailingStop")) {
-                    val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
-                    c match {
-                      case extractParams(percent, refPrice) =>
-                        val trailStop = TrailingStop(trade.userId, tradeId, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-                        mediator ! Publish("TrailingStop", TrailingStop(trade.userId, tradeId, trade.info.marketName, percent.toDouble, refPrice.toDouble))
-                        log.info(s"sending trailing stop $trailStop")
-                      case _ =>
-                      // do nothing
-                    }
-                  }
-                }
-              }
-            case _ =>
-              log.info(s"Canceling trade ${trade.id} due to insufficient balance")
+      trade.stopLossConditions.map { sellConditions =>
+        sellConditions.split(" or ").foreach { c =>
+          if (c.contains("TrailingStop")) {
+            // TODO regex pattern for simple price conditions
+            val extractParams =
+              """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+            c match {
+              case extractParams(percent, refPrice) =>
+                val trailStop = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
+                mediator ! Publish("TrailingStop", TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble))
+                log.info(s"sending trailing stop $trailStop")
+              case _ =>
+                log.warning(s"Leo is sent in an invalid format for the TrailingStop got: $c should be TrailingStop(percent, startTopPriceAt)")
+            }
+          } else {
+            // assume simple conditions here
+            trades.append(updatedTrade)
           }
         }
+
+        // no need to return anything from this map
+        Unit
       }
+    }
+  }
+
+  private def executeSellTrades(lastPrice: Double) = {
+    val sellTrades = trades.filter { trade =>
+      val stopLoss = trade.stopLossConditions.getOrElse("").replace("price", lastPrice.toString)
+      val stopProfit = trade.takeProfitConditions.getOrElse("").replace("price", lastPrice.toString)
+
+      (stopLoss != "" && dynamic.eval(dynamic.parse(s"$stopLoss")) == true) ||
+      (stopProfit != "" && dynamic.eval(dynamic.parse(s"$stopProfit")) == true)
+    }.filter { trade =>
+      trade.status == TradeStatus.Bought
+    }
+
+    sellTrades.foreach { trade =>
+      // TODO this is where the order shall be executed via the BittrexClient
+
+      // TODO the sellPrice should be the actual price you may need to read this from bittrex
+      log.info(s"sell ${trade.info.marketName} for user: ${trade.userId}")
+      val updatedTrade = trade.copy(
+        stat = TradeStat(
+          sellPrice = Some(lastPrice),
+          sellTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
+        status = TradeStatus.Sold
+      )
+
+      // TODO don't assume this update succeeded
+      bagel.updateTrade(updatedTrade)
+      trades -= trade
+
+      // TODO may need to communicate this to cancel trailing stop
+      //mediator ! Publish("CancelTrailingStop", TrailingStop(trade.userId, trade.id, trade.info.marketName))
     }
   }
 
@@ -147,18 +166,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     * @return
     */
   private def updateState(update: MarketUpdate) = {
-    val lastPrice = update.Last
-
-    // get all buy conditions that pass
-    val conditionsThatPass = buyConditions.filter { cond =>
-      val condition = cond.conditionEx.replace("price", lastPrice.toString)
-      dynamic.eval(dynamic.parse(s"$condition")) == true
-    }
-
-    executeTrades(lastPrice, conditionsThatPass.toList)
-
-    // remove the conditions that have passed
-    buyConditions --= conditionsThatPass
+    Future(executeBuyTrades(update.Last))
+    Future(executeSellTrades(update.Last))
   }
 
   /**
@@ -179,11 +188,15 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     } yield (result, balance)
 
     stuff.onComplete {
-      // result of trade insert must be > 0 for success
+      // trade insert result willl be > 0 for success
       // and balance must be > base quantity
       case Success((result, Some(balance))) if (result > 0 && balance.availableBalance > trade.baseQuantity) =>
         val newBalance = balance.copy(availableBalance = balance.availableBalance - trade.baseQuantity)
         bagel.updateBalance(newBalance)
+
+        trades.append(trade)
+
+        // send trade response to sender
         senderRef ! Some(trade)
       case _ =>
         senderRef ! None
