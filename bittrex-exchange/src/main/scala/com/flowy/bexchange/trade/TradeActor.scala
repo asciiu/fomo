@@ -17,8 +17,8 @@ object TradeActor {
   def props(trade: Trade, bagel: TheEverythingBagelDao)(implicit context: ExecutionContext) =
     Props(new TradeActor(trade, bagel))
 
-  case class Buy(price: Double)
-  case class Sell(price: Double)
+  case class Buy(price: Double, atCondition: String)
+  case class Sell(price: Double, atCondition: String)
   case class DeleteTrade(senderOpt: Option[ActorRef] = None)
   case class UpdateTrade(request: TradeRequest, senderOpt: Option[ActorRef] = None)
 }
@@ -92,21 +92,23 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       // TODO
       deleteTrade(sender)
 
-    case Buy(price) =>
-      executeBuy(price)
+    case Buy(price, condition) =>
+      executeBuy(price, condition)
 
-    case Sell(price) =>
+    case Sell(price, condition) =>
+      executeSell(price, condition)
 
     case x =>
       log.warning(s"received unknown message - $x")
   }
 
 
-  private def executeBuy(price: Double) = {
+  private def executeBuy(price: Double, condition: String) = {
     log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
 
     val updatedTrade = trade.copy(
       stat = TradeStat(
+        buyCondition = Some(condition),
         buyPrice = Some(price),
         buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Bought
@@ -137,10 +139,13 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     val stopProfit = trade.takeProfitConditions.getOrElse("")
   }
 
-  private def executeSell(price: Double) = {
+  private def executeSell(price: Double, condition: String) = {
+    // TODO execute sell logic here
+
     log.info(s"sell ${trade.info.marketName} for user: ${trade.userId}")
     val updatedTrade = trade.copy(
       stat = TradeStat(
+        sellCondition = Some(condition),
         sellPrice = Some(price),
         sellTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Sold

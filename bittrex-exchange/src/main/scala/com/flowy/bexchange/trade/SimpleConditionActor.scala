@@ -1,9 +1,7 @@
 package com.flowy.bexchange.trade
 
-import java.time.{Instant, ZoneOffset}
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, PoisonPill}
+import akka.actor.{Actor, ActorLogging, Props, PoisonPill}
 import com.flowy.common.models.MarketStructures.MarketUpdate
-import com.flowy.common.models._
 import scala.concurrent.{ExecutionContext}
 import scala.tools.reflect.ToolBox
 
@@ -23,6 +21,8 @@ object SimpleConditionActor {
 class SimpleConditionActor(condition: String) extends Actor
   with ActorLogging {
 
+  import TradeActor._
+
   import SimpleConditionActor._
   import scala.reflect.runtime.currentMirror
 
@@ -33,28 +33,21 @@ class SimpleConditionActor(condition: String) extends Actor
 
   def receive: Receive = {
     case update: MarketUpdate =>
-      updateState(update)
+      val lastPrice = update.Last
+
+      val expString = expression.replace("price", lastPrice.toString)
+
+      // if true tell parent to buy and exit
+      if (dynamic.eval(dynamic.parse(s"$expString")) == true) {
+        context.parent ! Buy(lastPrice, expString)
+        self ! PoisonPill
+      }
 
     case UpdateCondition(newCondition) =>
       expression = condition
 
     case x =>
       log.warning(s"received unknown message - $x")
-  }
-
-  /**
-    * Updates the internal state of this service.
-    * @param update
-    * @return
-    */
-  private def updateState(update: MarketUpdate) = {
-    val lastPrice = update.Last
-
-    val expString = expression.replace("price", lastPrice.toString)
-
-    if (dynamic.eval(dynamic.parse(s"$expString")) == true) {
-      context.parent ! expString
-    }
   }
 }
 
