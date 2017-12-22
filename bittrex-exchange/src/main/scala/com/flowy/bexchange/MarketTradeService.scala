@@ -6,7 +6,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
-import com.flowy.trailstop.TrailingStop
+import com.flowy.bexchange.trade.TradeActor
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
