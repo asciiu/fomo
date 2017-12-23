@@ -127,7 +127,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   private def executeSell(price: Double, condition: String) = {
     // TODO execute sell logic here
 
-    log.info(s"sell ${trade.info.marketName} for user: ${trade.userId}")
+    log.info(s"sell ${trade.info.marketName} condition: $condition for user: ${trade.userId}")
     val updatedTrade = trade.copy(
       stat = TradeStat(
         sellCondition = Some(condition),
