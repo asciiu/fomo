@@ -55,7 +55,6 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
     // load pending conditions from bagel
     bagel.findTradesByStatus(marketName, Seq(TradeStatus.Pending, TradeStatus.Bought)).map { pendingTrades =>
       pendingTrades.foreach { trade =>
-        println(trade)
         trades += trade.id -> context.actorOf(TradeActor.props(trade, bagel), trade.id.toString)
       }
     }
