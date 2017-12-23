@@ -25,6 +25,12 @@ object TradeStatus extends Enumeration {
   val Cancelled  = Value("cancelled")
 }
 
+object TradeAction extends Enumeration {
+  val Buy    = Value("buy")
+  val Sell   = Value("sell")
+  val Cancel = Value("cancel")
+}
+
 case class Condition(id: Option[UUID], conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
 case class ConditionArray(collectionType: String, conditions: List[Condition])
 case class TradeRequest(

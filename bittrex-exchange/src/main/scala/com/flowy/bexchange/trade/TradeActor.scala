@@ -3,7 +3,6 @@ package com.flowy.bexchange.trade
 import java.time.{Instant, ZoneOffset}
 
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
-import com.flowy.bexchange.MarketTradeService
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
@@ -17,6 +16,7 @@ object TradeActor {
   def props(trade: Trade, bagel: TheEverythingBagelDao)(implicit context: ExecutionContext) =
     Props(new TradeActor(trade, bagel))
 
+  case class Trigger(action: TradeAction.Value, price: Double, condition: String)
   case class Buy(price: Double, atCondition: String)
   case class Sell(price: Double, atCondition: String)
   case class DeleteTrade(senderOpt: Option[ActorRef] = None)
@@ -45,30 +45,14 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
   override def preStart() = {
 
+    // this actor can start a trade from any status
     status match {
       case TradeStatus.Pending =>
-        context.actorOf(SimpleConditionActor.props(trade.buyConditions))
+        // pending trade must monitor buy conditions
+        context.actorOf(SimpleConditionActor.props(TradeAction.Buy, trade.buyConditions))
       case TradeStatus.Bought =>
-        // TODO start the simple condition actors for sells, stop sells, etc
-        //trade.stopLossConditions.map { sellConditions =>
-        // send each conditional to its own actor to watch over
-        // send messages back to this actor
-        //          sellConditions.split(" or ").foreach { c =>
-        //            if (c.contains("TrailingStop")) {
-        //              // TODO regex pattern for simple price conditions
-        //              val extractParams =
-        //                """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
-        //              c match {
-        //                case extractParams(percent, refPrice) =>
-        //                  val trailStop = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-        //                  mediator ! Publish("TrailingStop", TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble))
-        //                          //              // assume simple conditions here
-        //              trades.append(updatedTrade)
-        //            }
-        //          }
-        val stopLoss = trade.stopLossConditions.getOrElse("")
-        val stopProfit = trade.takeProfitConditions.getOrElse("")
-
+        // bought trade must monitor sell conditions
+        loadSellConditions()
       case _ =>
         log.warning(s"encountered a trade status of ${status}")
     }
@@ -76,9 +60,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     log.info(s"${trade.id} trade actor started")
   }
 
-  override def postStop() = {
-
-  }
+  override def postStop() = {}
 
   def receive: Receive = {
     case update: MarketUpdate =>
@@ -92,10 +74,10 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       // TODO
       deleteTrade(sender)
 
-    case Buy(price, condition) =>
+    case Trigger(TradeAction.Buy, price, condition) =>
       executeBuy(price, condition)
 
-    case Sell(price, condition) =>
+    case Trigger(TradeAction.Sell, price, condition) =>
       executeSell(price, condition)
 
     case x =>
@@ -105,6 +87,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
   private def executeBuy(price: Double, condition: String) = {
     log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
+    status = TradeStatus.Bought
 
     val updatedTrade = trade.copy(
       stat = TradeStat(
@@ -114,29 +97,31 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       status = TradeStatus.Bought
     )
 
-    // TODO don't assume this update succeeded
-    bagel.updateTrade(updatedTrade)
+    bagel.updateTrade(updatedTrade).map(_ => loadSellConditions() )
+  }
 
-    // TODO next we need to activate the actors for the sell conditions here
-    //trade.stopLossConditions.map { sellConditions =>
-      // send each conditional to its own actor to watch over
-      // send messages back to this actor
-      //          sellConditions.split(" or ").foreach { c =>
-      //            if (c.contains("TrailingStop")) {
-      //              // TODO regex pattern for simple price conditions
-      //              val extractParams =
-      //                """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
-      //              c match {
-      //                case extractParams(percent, refPrice) =>
-      //                  val trailStop = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-      //                  mediator ! Publish("TrailingStop", TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble))
-      //                          //              // assume simple conditions here
-      //              trades.append(updatedTrade)
-      //            }
-      //          }
+  private def loadSellConditions() = {
+    def parseConditions(conditions: String) = {
+      conditions.split(" or ").foreach { cond =>
+          val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+          cond match {
+            case extractParams(percent, refPrice) =>
+              println(s"loading TrailingStop($percent, $refPrice")
+            case sellConditions =>
+              context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions))
+          }
+      }
+    }
 
     val stopLoss = trade.stopLossConditions.getOrElse("")
+    if (stopLoss != "") {
+      parseConditions(stopLoss)
+    }
+
     val stopProfit = trade.takeProfitConditions.getOrElse("")
+    if (stopProfit != "") {
+       parseConditions(stopProfit)
+    }
   }
 
   private def executeSell(price: Double, condition: String) = {

@@ -1,14 +1,16 @@
 package com.flowy.bexchange.trade
 
-import akka.actor.{Actor, ActorLogging, Props, PoisonPill}
+import akka.actor.{Actor, ActorLogging, PoisonPill, Props}
 import com.flowy.common.models.MarketStructures.MarketUpdate
-import scala.concurrent.{ExecutionContext}
+import com.flowy.common.models.TradeAction
+
+import scala.concurrent.ExecutionContext
 import scala.tools.reflect.ToolBox
 
 
 object SimpleConditionActor {
-  def props(condition: String)(implicit context: ExecutionContext) =
-    Props(new SimpleConditionActor(condition))
+  def props(action: TradeAction.Value, condition: String)(implicit context: ExecutionContext) =
+    Props(new SimpleConditionActor(action, condition))
 
   case class UpdateCondition(condition: String)
 }
@@ -18,7 +20,7 @@ object SimpleConditionActor {
   * Keeps track of simple conditions based upon an expression e.g. (price > 0.999)
   * @param condition
   */
-class SimpleConditionActor(condition: String) extends Actor
+class SimpleConditionActor(action: TradeAction.Value, condition: String) extends Actor
   with ActorLogging {
 
   import TradeActor._
@@ -31,6 +33,10 @@ class SimpleConditionActor(condition: String) extends Actor
 
   private val dynamic = currentMirror.mkToolBox()
 
+  override def preStart = {
+    log.info(s"$action $condition started")
+  }
+
   def receive: Receive = {
     case update: MarketUpdate =>
       val lastPrice = update.Last
@@ -39,7 +45,7 @@ class SimpleConditionActor(condition: String) extends Actor
 
       // if true tell parent to buy and exit
       if (dynamic.eval(dynamic.parse(s"$expString")) == true) {
-        context.parent ! Buy(lastPrice, expString)
+        context.parent ! Trigger(action, lastPrice, expString)
         self ! PoisonPill
       }
 

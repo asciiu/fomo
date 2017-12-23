@@ -104,8 +104,6 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
                   bagel.insert(market)
                   marketList += market
               }
-
-              log.info(s"MarketTradeService started for ${marketName}")
             }
           }
 

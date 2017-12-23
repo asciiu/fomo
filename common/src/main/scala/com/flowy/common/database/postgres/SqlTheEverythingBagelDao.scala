@@ -118,6 +118,10 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(trades.filter(t => t.status === tradeStatus && t.marketName === marketName).result)
   }
 
+  def findTradesByStatus(marketName: String, tradeStatus: Seq[TradeStatus.Value]): Future[Seq[Trade]] = {
+    db.run(trades.filter(t => t.marketName === marketName && t.status.inSetBind(tradeStatus) ).result)
+  }
+
   def findTradeById(tradeId: UUID): Future[Option[Trade]] = {
     db.run(trades.filter(t => t.id === tradeId).result.headOption)
   }
