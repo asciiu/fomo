@@ -1,11 +1,12 @@
 package com.flowy.bexchange.trade
 
-import java.time.{Instant, ZoneOffset}
-
 import akka.actor.{Actor, ActorLogging, ActorRef, PoisonPill, Props}
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
+import java.time.{Instant, ZoneOffset}
+
+import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,8 +57,6 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       case _ =>
         log.warning(s"encountered a trade status of ${status}")
     }
-
-    log.info(s"${trade.id} trade actor started")
   }
 
   override def postStop() = {}
@@ -103,13 +102,14 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   private def loadSellConditions() = {
     def parseConditions(conditions: String) = {
       conditions.split(" or ").foreach { cond =>
-          val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
-          cond match {
-            case extractParams(percent, refPrice) =>
-              println(s"loading TrailingStop($percent, $refPrice")
-            case sellConditions =>
-              context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions))
-          }
+        val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+        cond match {
+          case extractParams(percent, refPrice) =>
+            val trail = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
+            context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail), "TrailingStop")
+          case sellConditions =>
+            context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions), "SimpleCondition")
+        }
       }
     }
 

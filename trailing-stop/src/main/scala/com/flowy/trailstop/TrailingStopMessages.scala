@@ -8,6 +8,11 @@ case class TrailingStop(userId: UUID, tradeId: UUID, marketName: String, percent
 
   private var ceilingPrice: Double = refPrice
 
+  /**
+    * updates the trailing stop state
+    * @param price last price
+    * @return
+    */
   def update(price: Double): Boolean = {
     if (ceilingPrice < price) {
       println(s"new ceiling ${price}")
@@ -21,7 +26,10 @@ case class TrailingStop(userId: UUID, tradeId: UUID, marketName: String, percent
 
   def triggerPrice: Double = ceilingPrice * (1.0 - percent)
 
-  def isStop(price: Double): Boolean = price <= triggerPrice
+  def isStop(price: Double): Boolean = {
+    update(price)
+    price <= triggerPrice
+  }
 
   override def toString() = s"userId: $userId tradeId: $tradeId marketName: $marketName triggerPrice:$triggerPrice"
 }
