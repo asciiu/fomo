@@ -46,8 +46,7 @@ class TrailingStopLossActor(action: TradeAction.Value, trail: TrailingStop) exte
       log.info(s"new ceiling ${price}")
       ceilingPrice = price
     } else if (price <= triggerPrice) {
-      log.info(s"current trigger ${triggerPrice}")
-      context.parent ! Trigger(action, price, "TrailingStop")
+      context.parent ! Trigger(action, price, s"TrailingStop: ceiling - $ceilingPrice trigger - $triggerPrice last - $price")
       self ! PoisonPill
     }
   }
