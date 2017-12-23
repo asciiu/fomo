@@ -102,7 +102,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   private def loadSellConditions() = {
     def parseConditions(conditions: String) = {
       conditions.split(" or ").foreach { cond =>
-        val extractParams = """^.*?TrailingStop\((0\.\d{2}),\s(\d+\.\d+).*?""".r
+        val extractParams = """^.*?TrailingStop\((0\.\d{2,}),\s(\d+\.\d+).*?""".r
         cond match {
           case extractParams(percent, refPrice) =>
             val trail = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
