@@ -11,7 +11,7 @@ import com.flowy.bexchange.ExchangeService.GetMarkets
 import com.flowy.bexchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.{Market, Trade, TradeRequest}
+import com.flowy.common.models.{Market, Trade, TradeRequest, TradeStatus}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
@@ -83,7 +83,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
       delete {
         userFromSession { user =>
           onSuccess(bagel.findTradeById(tradeId)) {
-            case Some(trade) if (trade.userId == user.id) =>
+            case Some(trade) if (trade.userId == user.id && trade.status != TradeStatus.Sold) =>
 
               onSuccess( (bittrexService ? DeleteTrade(trade))(2.second).mapTo[Option[Trade]] ) {
                 case Some(trade) =>
@@ -91,6 +91,9 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
                 case _ =>
                   complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
               }
+            case Some(trade) if (trade.userId == user.id && trade.status == TradeStatus.Sold) =>
+              complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "sold trades cannot be cancelled", Json.Null))
+
             case _ =>
               complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
           }

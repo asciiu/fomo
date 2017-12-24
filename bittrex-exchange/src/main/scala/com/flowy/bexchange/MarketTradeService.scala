@@ -39,6 +39,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
   with ActorLogging {
 
   import MarketTradeService._
+  import trade.TradeActor.Cancel
   import scala.reflect.runtime.currentMirror
 
   implicit val akkaSystem = context.system
@@ -117,8 +118,8 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
     if (trades.contains(trade.id)) {
-      context stop trades(trade.id)
-      sender ! Some(trade)
+
+      trades(trade.id) ! Cancel(sender)
     } else {
       sender ! None
     }

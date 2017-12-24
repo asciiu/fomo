@@ -20,8 +20,8 @@ object TradeActor {
   case class Trigger(action: TradeAction.Value, price: Double, condition: String)
   case class Buy(price: Double, atCondition: String)
   case class Sell(price: Double, atCondition: String)
-  case class DeleteTrade(senderOpt: Option[ActorRef] = None)
-  case class UpdateTrade(request: TradeRequest, senderOpt: Option[ActorRef] = None)
+  case class Cancel(sender: ActorRef)
+  case class Update(request: TradeRequest, senderOpt: Option[ActorRef] = None)
 }
 
 
@@ -59,19 +59,29 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
   }
 
-  override def postStop() = {}
+  override def postStop() = {
+    status match {
+      case TradeStatus.Pending =>
+        // remove the trade from the system
+      case TradeStatus.Bought =>
+        // bought trade must monitor sell conditions
+        loadSellConditions()
+      case _ =>
+        log.warning(s"encountered a trade status of ${status}")
+    }
+  }
 
   def receive: Receive = {
     case update: MarketUpdate =>
       context.system.actorSelection(s"${self.path}/*") ! update
 
-    case UpdateTrade(request, Some(sender)) =>
+    case Update(request, Some(sender)) =>
       // TODO
     //updateTrade(user, tradeId, request, sender)
 
-    case DeleteTrade(Some(sender)) =>
+    case Cancel(sender) =>
       // TODO
-      deleteTrade(sender)
+      cancelTrade(sender)
 
     case Trigger(TradeAction.Buy, price, condition) =>
       executeBuy(price, condition)
@@ -142,7 +152,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
   }
 
-  private def deleteTrade(sender: ActorRef) = {
+  private def cancelTrade(sender: ActorRef) = {
     status match {
       case TradeStatus.Sold =>
         // cannot cancel a sold trade because it is already finished.
