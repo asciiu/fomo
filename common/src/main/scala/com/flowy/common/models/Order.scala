@@ -41,10 +41,13 @@ case class TradeRequest(
                          marketCurrencyLong: Option[String],
                          baseCurrency: Option[String],
                          baseCurrencyLong: Option[String],
+                         units: Option[Double],
+                         bid: Option[Double],
+                         ask: Option[Double],
                          baseQuantity: Double,
                          buyConditions: String,
                          stopLossConditions: Option[String],
-                         takeProfitConditions: Option[String])
+                         profitConditions: Option[String])
 
 
 //case class Trade(id: UUID,
@@ -78,13 +81,15 @@ case class MarketInfo(exchangeName: String,
                       baseCurrency: String,
                       baseCurrencyLong: String)
 
-case class TradeStat(buyTime: Option[OffsetDateTime] = None,
-                     buyPrice: Option[Double] = None,
-                     buyCondition: Option[String] = None,
-                     sellTime: Option[OffsetDateTime] = None,
-                     sellPrice: Option[Double] = None,
-                     sellCondition: Option[String] = None,
-                     marketQuantity: Option[Double] = None)
+case class TradeStat(bid: Option[Double] = None,
+                     ask: Option[Double] = None,
+                     boughtTime: Option[OffsetDateTime] = None,
+                     boughtPrice: Option[Double] = None,
+                     boughtCondition: Option[String] = None,
+                     soldTime: Option[OffsetDateTime] = None,
+                     soldPrice: Option[Double] = None,
+                     soldCondition: Option[String] = None,
+                     currencyQuantity: Option[Double] = None)
 
 object TradeStat {
   def empty(): TradeStat = TradeStat()
@@ -110,31 +115,31 @@ object Trade {
 
   implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
     final def apply(trade: Trade): Json = {
-      val marketQuantity = trade.stat.marketQuantity match {
+      val marketQuantity = trade.stat.currencyQuantity match {
         case Some(q) => Json.fromDoubleOrNull(q)
         case None => Json.Null
       }
-      val buyPrice = trade.stat.buyPrice match {
+      val buyPrice = trade.stat.boughtPrice match {
         case Some(price) => Json.fromDoubleOrNull(price)
         case None => Json.Null
       }
-      val buyTime = trade.stat.buyTime match {
+      val buyTime = trade.stat.boughtTime match {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val buyCondition = trade.stat.buyCondition match {
+      val buyCondition = trade.stat.boughtCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
-      val sellPrice = trade.stat.sellPrice match {
+      val sellPrice = trade.stat.soldPrice match {
         case Some(price) => Json.fromDoubleOrNull(price)
         case None => Json.Null
       }
-      val sellTime = trade.stat.sellTime match {
+      val sellTime = trade.stat.soldTime match {
         case Some(time) => Json.fromString(time.toString)
         case None => Json.Null
       }
-      val sellCondition = trade.stat.sellCondition match {
+      val sellCondition = trade.stat.soldCondition match {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
@@ -238,7 +243,7 @@ object Trade {
       now,
       tradeRequest.buyConditions,
       tradeRequest.stopLossConditions,
-      tradeRequest.takeProfitConditions
+      tradeRequest.profitConditions
     )
   }
 }

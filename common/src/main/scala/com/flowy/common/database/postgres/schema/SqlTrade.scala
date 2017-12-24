@@ -29,19 +29,21 @@ trait SqlTrade {
     def baseCurrencyAbbrev = column[String]("base_currency")
     def baseCurrencyName = column[String]("base_currency_long")
     def bQuantity = column[Double]("base_quantity")
-    def mQuantity = column[Double]("market_quantity")
+    def mQuantity = column[Double]("currency_quantity")
+    def bid = column[Double]("bid_price")
+    def ask = column[Double]("ask_price")
     def status = column[TradeStatus.Value]("status")
     def createdOn = column[OffsetDateTime]("created_on")
     def updatedOn = column[OffsetDateTime]("updated_on")
-    def buyTime = column[OffsetDateTime]("buy_time")
-    def buyPrice = column[Double]("buy_price")
-    def buyCondition = column[String]("buy_condition")
-    def buyConditions = column[String]("buy_conditions")
-    def sellTime = column[OffsetDateTime]("sell_time")
-    def sellPrice = column[Double]("sell_price")
-    def sellCondition = column[String]("sell_condition")
-    def stopLossConditions = column[String]("stop_loss_conditions")
-    def takeProfitConditions = column[String]("take_profit_conditions")
+    def buyTime = column[OffsetDateTime]("bought_time")
+    def buyPrice = column[Double]("bought_price")
+    def buyCondition = column[String]("bought_condition")
+    def sellTime = column[OffsetDateTime]("sold_time")
+    def sellPrice = column[Double]("sold_price")
+    def sellCondition = column[String]("sold_condition")
+    def buyConditions = column[String]("buy_condition")
+    def stopLossConditions = column[String]("stop_loss_condition")
+    def takeProfitConditions = column[String]("profit_condition")
 
     def marketInfoColumns = (
       exchangeName,
@@ -52,6 +54,8 @@ trait SqlTrade {
       baseCurrencyName) <>((MarketInfo.apply _).tupled, MarketInfo.unapply)
 
     def tradeStatColumns = (
+      bid.?,
+      ask.?,
       buyTime.?,
       buyPrice.?,
       buyCondition.?,

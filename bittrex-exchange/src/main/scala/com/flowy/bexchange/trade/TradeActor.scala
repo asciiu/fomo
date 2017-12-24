@@ -90,9 +90,9 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
     val updatedTrade = trade.copy(
       stat = TradeStat(
-        buyCondition = Some(condition),
-        buyPrice = Some(price),
-        buyTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
+        boughtCondition = Some(condition),
+        boughtPrice = Some(price),
+        boughtTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Bought
     )
 
@@ -130,9 +130,9 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     log.info(s"sell ${trade.info.marketName} condition: $condition for user: ${trade.userId}")
     val updatedTrade = trade.copy(
       stat = TradeStat(
-        sellCondition = Some(condition),
-        sellPrice = Some(price),
-        sellTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
+        soldCondition = Some(condition),
+        soldPrice = Some(price),
+        soldTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Sold
     )
 

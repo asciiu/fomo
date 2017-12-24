@@ -137,7 +137,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
             baseQuantity = request.baseQuantity,
             buyConditions = request.buyConditions,
             stopLossConditions = request.stopLossConditions,
-            takeProfitConditions = request.takeProfitConditions)
+            takeProfitConditions = request.profitConditions)
         ).map { updated =>
           sender ! updated
         }
@@ -147,7 +147,7 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
         bagel.updateTrade(
           trade.copy(
             stopLossConditions = request.stopLossConditions,
-            takeProfitConditions = request.takeProfitConditions)
+            takeProfitConditions = request.profitConditions)
         ).map { updated =>
           sender ! updated
         }
