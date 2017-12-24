@@ -5,6 +5,7 @@ import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
 import java.time.{Instant, ZoneOffset}
+import java.util.UUID
 
 import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 
@@ -21,7 +22,7 @@ object TradeActor {
   case class Buy(price: Double, atCondition: String)
   case class Sell(price: Double, atCondition: String)
   case class Cancel(sender: ActorRef)
-  case class Update(request: TradeRequest, senderOpt: Option[ActorRef] = None)
+  case class Update(user: UserData, request: TradeRequest, sender: ActorRef)
 }
 
 
@@ -60,27 +61,17 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   }
 
   override def postStop() = {
-    status match {
-      case TradeStatus.Pending =>
-        // remove the trade from the system
-      case TradeStatus.Bought =>
-        // bought trade must monitor sell conditions
-        loadSellConditions()
-      case _ =>
-        log.warning(s"encountered a trade status of ${status}")
-    }
+    log.info(s"trade ${trade.id} is shutting down")
   }
 
   def receive: Receive = {
     case update: MarketUpdate =>
       context.system.actorSelection(s"${self.path}/*") ! update
 
-    case Update(request, Some(sender)) =>
-      // TODO
-    //updateTrade(user, tradeId, request, sender)
+    case Update(user, request, sender) =>
+      updateTrade(user, request, sender)
 
     case Cancel(sender) =>
-      // TODO
       cancelTrade(sender)
 
     case Trigger(TradeAction.Buy, price, condition) =>
@@ -183,6 +174,37 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
         // all other trades statuses are cancellable
         bagel.updateTrade(trade.copy(status = TradeStatus.Cancelled)).map (sender ! _)
         self ! PoisonPill
+    }
+  }
+
+  private def updateTrade(userData: UserData, request: TradeRequest, sender: ActorRef) = {
+    // users can only update their own trades
+    if (userData.id != trade.userId) {
+      sender ! None
+    } else if (status == TradeStatus.Pending) {
+
+      bagel.updateTrade(
+        trade.copy(
+          baseQuantity = request.baseQuantity,
+          buyCondition = request.buyCondition,
+          stopLossCondition = request.stopLossCondition,
+          profitCondition = request.profitCondition)
+      ).map { updated =>
+        sender ! updated
+      }
+
+    } else if (status == TradeStatus.Bought) {
+
+      bagel.updateTrade(
+        trade.copy(
+          stopLossCondition = request.stopLossCondition,
+          profitCondition = request.profitCondition)
+      ).map { updated =>
+        sender ! updated
+      }
+
+    } else {
+      sender ! None
     }
   }
 }

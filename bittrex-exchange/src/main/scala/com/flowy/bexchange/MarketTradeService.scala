@@ -7,6 +7,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.flowy.bexchange.trade.TradeActor
+import com.flowy.bexchange.trade.TradeActor.Update
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.models.MarketStructures.MarketUpdate
 import com.flowy.common.models._
@@ -118,7 +119,6 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
 
   private def deleteTrade(trade: Trade, sender: ActorRef) = {
     if (trades.contains(trade.id)) {
-
       trades(trade.id) ! Cancel(sender)
     } else {
       sender ! None
@@ -126,35 +126,10 @@ class MarketTradeService(val marketName: String, bagel: TheEverythingBagelDao, r
   }
 
   private def updateTrade(user: UserData, tradeId: UUID, request: TradeRequest, sender: ActorRef) = {
-    bagel.findTradeById(tradeId).map {
-      // not permitted to change someone elses trade
-      case Some(trade) if trade.userId != user.id =>
-        sender ! None
-
-      // trade status pending update quantity and conditions
-      case Some(trade) if trade.status == TradeStatus.Pending =>
-        bagel.updateTrade(
-          trade.copy(
-            baseQuantity = request.baseQuantity,
-            buyCondition = request.buyCondition,
-            stopLossCondition = request.stopLossCondition,
-            profitCondition = request.profitCondition)
-        ).map { updated =>
-          sender ! updated
-        }
-
-      // trade status bought update sellconditions only
-      case Some(trade) if trade.status == TradeStatus.Bought =>
-        bagel.updateTrade(
-          trade.copy(
-            stopLossCondition = request.stopLossCondition,
-            profitCondition = request.profitCondition)
-        ).map { updated =>
-          sender ! updated
-        }
-
-      case None =>
-        sender ! None
+    if (trades.contains(tradeId)) {
+      trades(tradeId) ! Update(user, request, sender)
+    } else {
+      sender ! None
     }
   }
 }
