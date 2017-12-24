@@ -9,6 +9,7 @@ import java.util.UUID
 
 import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.tools.reflect.ToolBox
@@ -31,7 +32,7 @@ object TradeActor {
   * @param trade
   * @param bagel
   */
-class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
+class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   with ActorLogging {
 
   import TradeActor._
@@ -40,24 +41,17 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
   implicit val akkaSystem = context.system
 
+  private var myTrade = trade
   private var status = trade.status
 
   private val dynamic = currentMirror.mkToolBox()
 
+  private val buyConditions = scala.collection.mutable.ListBuffer[ActorRef]()
+  private val lossConditions = scala.collection.mutable.ListBuffer[ActorRef]()
+  private val profitConditions = scala.collection.mutable.ListBuffer[ActorRef]()
 
   override def preStart() = {
-
-    // this actor can start a trade from any status
-    status match {
-      case TradeStatus.Pending =>
-        // pending trade must monitor buy conditions
-        context.actorOf(SimpleConditionActor.props(TradeAction.Buy, trade.buyCondition))
-      case TradeStatus.Bought =>
-        // bought trade must monitor sell conditions
-        loadSellConditions()
-      case _ =>
-        log.warning(s"encountered a trade status of ${status}")
-    }
+    loadConditions()
   }
 
   override def postStop() = {
@@ -86,10 +80,10 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
 
   private def executeBuy(price: Double, condition: String) = {
-    log.info(s"buy ${trade.baseQuantity} ${trade.info.marketName} for user: ${trade.userId}")
+    log.info(s"buy ${myTrade.baseQuantity} ${myTrade.info.marketName} for user: ${myTrade.userId}")
     status = TradeStatus.Bought
 
-    val updatedTrade = trade.copy(
+    val updatedTrade = myTrade.copy(
       stat = TradeStat(
         boughtCondition = Some(condition),
         boughtPrice = Some(price),
@@ -97,45 +91,60 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       status = TradeStatus.Bought
     )
 
-    bagel.updateTrade(updatedTrade).map(_ => loadSellConditions() )
+    myTrade = updatedTrade
+
+    bagel.updateTrade(updatedTrade).map(_ => loadConditions() )
   }
 
-  private def loadSellConditions() = {
-    def parseConditions(conditions: String) = {
+  private def loadConditions() = {
+    def parseConditions(conditions: String, actorBuffer: ListBuffer[ActorRef]) = {
       conditions.split(" or ").foreach { cond =>
         val extractParams = """^.*?TrailingStop\((0\.\d{2,}),\s(\d+\.\d+).*?""".r
         cond match {
           case extractParams(percent, refPrice) =>
             val trail = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-            context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail), "TrailingStop")
+            actorBuffer += context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail), "TrailingStop")
           case sellConditions =>
-            context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions), "SimpleCondition")
+            actorBuffer += context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions), "SimpleCondition")
         }
       }
     }
 
-    val stopLoss = trade.stopLossCondition.getOrElse("")
-    if (stopLoss != "") {
-      parseConditions(stopLoss)
-    }
+    // this actor can start a trade from any status
+    myTrade.status match {
+      case TradeStatus.Pending =>
+        // pending trade must monitor buy conditions
+        buyConditions += context.actorOf(SimpleConditionActor.props(TradeAction.Buy, myTrade.buyCondition))
 
-    val stopProfit = trade.profitCondition.getOrElse("")
-    if (stopProfit != "") {
-       parseConditions(stopProfit)
+      case TradeStatus.Bought =>
+        // bought trade must monitor sell conditions
+        val stopLoss = myTrade.stopLossCondition.getOrElse("")
+        if (stopLoss != "") {
+          parseConditions(stopLoss, lossConditions)
+        }
+
+        val stopProfit = myTrade.profitCondition.getOrElse("")
+        if (stopProfit != "") {
+          parseConditions(stopProfit, profitConditions)
+        }
+      case _ =>
+        log.warning(s"encountered a trade status of ${status}")
     }
   }
 
   private def executeSell(price: Double, condition: String) = {
     // TODO execute sell logic here
 
-    log.info(s"sell ${trade.info.marketName} condition: $condition for user: ${trade.userId}")
-    val updatedTrade = trade.copy(
+    log.info(s"sell ${myTrade.info.marketName} condition: $condition for user: ${myTrade.userId}")
+    val updatedTrade = myTrade.copy(
       stat = TradeStat(
         soldCondition = Some(condition),
         soldPrice = Some(price),
         soldTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Sold
     )
+
+    myTrade = updatedTrade
 
     bagel.updateTrade(updatedTrade).map { updated =>
       // this trade is finished kill this actor
@@ -144,6 +153,12 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   }
 
   private def cancelTrade(sender: ActorRef) = {
+    // first stop all children condition
+    // stop previous conditions
+    lossConditions.foreach ( a => context stop a)
+    profitConditions.foreach ( a => context stop a)
+    buyConditions.foreach (a => context stop a)
+
     status match {
       case TradeStatus.Sold =>
         // cannot cancel a sold trade because it is already finished.
@@ -182,6 +197,8 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     if (userData.id != trade.userId) {
       sender ! None
     } else if (status == TradeStatus.Pending) {
+      // stop previous conditions
+      buyConditions.foreach ( a => context stop a)
 
       bagel.updateTrade(
         trade.copy(
@@ -190,16 +207,30 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           stopLossCondition = request.stopLossCondition,
           profitCondition = request.profitCondition)
       ).map { updated =>
+        if (updated.isDefined) {
+          myTrade = updated.get
+          loadConditions()
+        }
         sender ! updated
       }
 
+
     } else if (status == TradeStatus.Bought) {
+      // stop previous conditions
+      profitConditions.foreach ( a => context stop a)
+      buyConditions.foreach (a => context stop a)
 
       bagel.updateTrade(
         trade.copy(
           stopLossCondition = request.stopLossCondition,
           profitCondition = request.profitCondition)
       ).map { updated =>
+
+        if (updated.isDefined) {
+          myTrade = updated.get
+          loadConditions()
+        }
+
         sender ! updated
       }
 
