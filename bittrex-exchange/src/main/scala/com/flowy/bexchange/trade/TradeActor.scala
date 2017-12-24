@@ -50,7 +50,7 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     status match {
       case TradeStatus.Pending =>
         // pending trade must monitor buy conditions
-        context.actorOf(SimpleConditionActor.props(TradeAction.Buy, trade.buyConditions))
+        context.actorOf(SimpleConditionActor.props(TradeAction.Buy, trade.buyCondition))
       case TradeStatus.Bought =>
         // bought trade must monitor sell conditions
         loadSellConditions()
@@ -113,12 +113,12 @@ class TradeActor(val trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       }
     }
 
-    val stopLoss = trade.stopLossConditions.getOrElse("")
+    val stopLoss = trade.stopLossCondition.getOrElse("")
     if (stopLoss != "") {
       parseConditions(stopLoss)
     }
 
-    val stopProfit = trade.takeProfitConditions.getOrElse("")
+    val stopProfit = trade.profitCondition.getOrElse("")
     if (stopProfit != "") {
        parseConditions(stopProfit)
     }

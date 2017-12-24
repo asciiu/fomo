@@ -33,21 +33,17 @@ object TradeAction extends Enumeration {
 
 case class Condition(id: Option[UUID], conditionType: String, indicator: String, operator: String, value: Double, description: Option[String])
 case class ConditionArray(collectionType: String, conditions: List[Condition])
-case class TradeRequest(
-                         exchangeName: String,
-                         apiKeyId: String,
-                         marketName: String,
-                         marketCurrency: Option[String],
-                         marketCurrencyLong: Option[String],
-                         baseCurrency: Option[String],
-                         baseCurrencyLong: Option[String],
-                         units: Option[Double],
-                         bid: Option[Double],
-                         ask: Option[Double],
-                         baseQuantity: Double,
-                         buyConditions: String,
-                         stopLossConditions: Option[String],
-                         profitConditions: Option[String])
+case class TradeRequest(exchangeName: String,
+                        apiKeyId: String,
+                        marketName: String,
+                        marketCurrency: Option[String],
+                        marketCurrencyLong: Option[String],
+                        baseCurrency: Option[String],
+                        baseCurrencyLong: Option[String],
+                        baseQuantity: Double,
+                        buyCondition: String,
+                        stopLossCondition: Option[String],
+                        profitCondition: Option[String])
 
 
 //case class Trade(id: UUID,
@@ -81,9 +77,7 @@ case class MarketInfo(exchangeName: String,
                       baseCurrency: String,
                       baseCurrencyLong: String)
 
-case class TradeStat(bid: Option[Double] = None,
-                     ask: Option[Double] = None,
-                     boughtTime: Option[OffsetDateTime] = None,
+case class TradeStat(boughtTime: Option[OffsetDateTime] = None,
                      boughtPrice: Option[Double] = None,
                      boughtCondition: Option[String] = None,
                      soldTime: Option[OffsetDateTime] = None,
@@ -104,9 +98,9 @@ case class Trade(id: UUID,
                  status: TradeStatus.Value,
                  createdOn: OffsetDateTime,
                  updatedOn: OffsetDateTime,
-                 buyConditions: String,
-                 stopLossConditions: Option[String],
-                 takeProfitConditions: Option[String])
+                 buyCondition: String,
+                 stopLossCondition: Option[String],
+                 profitCondition: Option[String])
 
 object Trade {
 
@@ -143,11 +137,11 @@ object Trade {
         case Some(cond) => Json.fromString(cond.toString)
         case None => Json.Null
       }
-      val stopLossConditions = trade.stopLossConditions match {
+      val stopLossCondition = trade.stopLossCondition match {
         case Some(conds) => Json.fromString(conds.toString)
         case None => Json.Null
       }
-      val takeProfitConditions = trade.takeProfitConditions match {
+      val takeProfitCondition = trade.profitCondition match {
         case Some(conds) => Json.fromString(conds.toString)
         case None => Json.Null
       }
@@ -157,24 +151,24 @@ object Trade {
         ("apiKeyId", Json.fromString(trade.apiKeyId.toString)),
         ("exchangeName", Json.fromString(trade.info.exchangeName)),
         ("marketName", Json.fromString(trade.info.marketName)),
-        ("marketCurrency", Json.fromString(trade.info.marketCurrency)),
-        ("marketCurrencyLong", Json.fromString(trade.info.marketCurrencyLong)),
+        ("currency", Json.fromString(trade.info.marketCurrency)),
+        ("currencyLong", Json.fromString(trade.info.marketCurrencyLong)),
         ("baseCurrency", Json.fromString(trade.info.baseCurrency)),
         ("baseCurrencyLong", Json.fromString(trade.info.baseCurrencyLong)),
         ("baseQuantity", Json.fromDoubleOrNull(trade.baseQuantity)),
-        ("marketQuantity", marketQuantity),
+        ("currencyQuantity", marketQuantity),
         ("status", Json.fromString(trade.status.toString)),
         ("createdOn", Json.fromString(trade.createdOn.toString)),
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),
-        ("buyTime", buyTime),
-        ("buyPrice", buyPrice),
+        ("boughtTime", buyTime),
+        ("boughtPrice", buyPrice),
         ("boughtCondition", buyCondition),
-        ("buyConditions", Json.fromString(trade.buyConditions)),
-        ("sellTime", sellTime),
-        ("sellPrice", sellPrice),
+        ("buyCondition", Json.fromString(trade.buyCondition)),
+        ("soldTime", sellTime),
+        ("soldPrice", sellPrice),
         ("soldCondition", sellCondition),
-        ("stopLossConditions", stopLossConditions),
-        ("takeProfitConditions", takeProfitConditions)
+        ("stopLossCondition", stopLossCondition),
+        ("profitCondition", takeProfitCondition)
       )
     }
   }
@@ -187,18 +181,17 @@ object Trade {
         apiKeyId <- c.downField("apiKeyId").as[String]
         exchangeName <- c.downField("exchangeName").as[String]
         marketName <- c.downField("marketName").as[String]
-        marketCurrency <- c.downField("marketCurrency").as[String]
-        marketCurrencyLong <- c.downField("marketCurrencyLong").as[String]
+        marketCurrency <- c.downField("currency").as[String]
+        marketCurrencyLong <- c.downField("currencyLong").as[String]
         baseCurrency <- c.downField("baseCurrency").as[String]
         baseCurrencyLong <- c.downField("baseCurrencyLong").as[String]
-        baseQuantity <- c.downField("quantity").as[Double]
-        marketQuantity <- c.downField("marketQuantity").as[Double]
+        baseQuantity <- c.downField("baseQuantity").as[Double]
         status <- c.downField("status").as[String]
         createdOn <- c.downField("createdOn").as[String]
         updatedOn <- c.downField("updatedOn").as[String]
-        buyConditions <- c.downField("buyConditions").as[String]
-        stopLossConditions <- c.downField("stopLossConditions").as[String]
-        takeProfitConditions <- c.downField("takeProfitConditions").as[String]
+        buyConditions <- c.downField("buyCondition").as[String]
+        stopLossConditions <- c.downField("stopLossCondition").as[String]
+        takeProfitConditions <- c.downField("takeProfitCondition").as[String]
       } yield {
         new Trade(UUID.fromString(id),
           UUID.fromString(userId),
@@ -241,9 +234,9 @@ object Trade {
       TradeStatus.Pending,
       now,
       now,
-      tradeRequest.buyConditions,
-      tradeRequest.stopLossConditions,
-      tradeRequest.profitConditions
+      tradeRequest.buyCondition,
+      tradeRequest.stopLossCondition,
+      tradeRequest.profitCondition
     )
   }
 }

@@ -30,8 +30,6 @@ trait SqlTrade {
     def baseCurrencyName = column[String]("base_currency_long")
     def bQuantity = column[Double]("base_quantity")
     def mQuantity = column[Double]("currency_quantity")
-    def bid = column[Double]("bid_price")
-    def ask = column[Double]("ask_price")
     def status = column[TradeStatus.Value]("status")
     def createdOn = column[OffsetDateTime]("created_on")
     def updatedOn = column[OffsetDateTime]("updated_on")
@@ -54,8 +52,6 @@ trait SqlTrade {
       baseCurrencyName) <>((MarketInfo.apply _).tupled, MarketInfo.unapply)
 
     def tradeStatColumns = (
-      bid.?,
-      ask.?,
       buyTime.?,
       buyPrice.?,
       buyCondition.?,

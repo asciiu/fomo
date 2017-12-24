@@ -14,8 +14,6 @@ CREATE TABLE "trades" (
  "base_currency_long" text NOT NULL,
  "base_quantity" decimal NOT NULL,
  "currency_quantity" decimal,
- "bid_price" decimal,
- "ask_price" decimal,
  "status" text NOT NULL,
  "created_on" TIMESTAMP DEFAULT now(),
  "updated_on" TIMESTAMP DEFAULT now(),
