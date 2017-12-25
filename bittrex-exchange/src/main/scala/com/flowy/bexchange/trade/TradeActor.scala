@@ -10,7 +10,7 @@ import java.util.UUID
 import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.tools.reflect.ToolBox
 
@@ -83,8 +83,10 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     log.info(s"buy ${myTrade.baseQuantity} ${myTrade.info.marketName} for user: ${myTrade.userId}")
     status = TradeStatus.Bought
 
+    val currencyUnits = myTrade.baseQuantity / price
     val updatedTrade = myTrade.copy(
       stat = TradeStat(
+        currencyQuantity = Some(currencyUnits),
         boughtCondition = Some(condition),
         boughtPrice = Some(price),
         boughtTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
@@ -93,7 +95,17 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
     myTrade = updatedTrade
 
-    bagel.updateTrade(updatedTrade).map(_ => loadConditions() )
+    bagel.updateTrade(updatedTrade).map {
+      case Some(t) =>
+        // todo add this to the balance
+        // update the currency balance
+        updateBalance(t.userId, t.apiKeyId, t.info.marketCurrency, currencyUnits)
+        // update the base balance
+
+
+        loadConditions()
+      case None =>
+    }
   }
 
   private def loadConditions() = {
@@ -191,6 +203,66 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
         self ! PoisonPill
     }
   }
+
+  // First pass
+  private def updateBalance(userId: UUID, apiKeyId: UUID, currencyName: String, amount: Double): Future[Boolean] = {
+    bagel.findBalance(trade.userId, trade.apiKeyId, currencyName).flatMap {
+      case Some(balance) =>
+        bagel
+          .updateBalance(balance.copy(availableBalance = balance.availableBalance + amount))
+          .map {
+            case Some(bal) => true
+            case None => false
+          }
+
+       case None =>
+        Future.successful(false)
+    }
+  }
+
+//  private def rebalance(): Unit = {
+//
+//    // ##Simulated case
+//    // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
+//    // #2 you need to update the availableBalance for bought currency
+//    // #3 the totalExchange and totalexchangeavailable will also need to be updated
+//
+//    // #4 add remainder from calc above to base remainder
+//    // #5 subtract from the exchange total and exchangeavailable
+//
+//    // if sell the estimated base qty will be currencyUnits * lastPrice
+//    // add this amount to the base available, base total, and base exchange available
+//
+//    // subtract currency Units from currency available, total, and exchange available.
+//
+//
+//    // ## actual case
+//    // execute the buy order and get the UUID of order from bittrex
+//    // wait 3 seconds and getorder request with UUID of order to retrieve deets
+//    // do step #2 & 3 from above
+//
+//
+//
+//
+//    // TODO update the baseCurrency balance
+//    val baseFu = bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency)
+//    val currFu = bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency)
+//
+//    val updatedBalances = for {
+//      baseOpt <- baseFu
+//      currOpt <- currFu
+//    } yield for {
+//      updatedBase <- baseOpt
+//      updatedCurr <- currOpt
+//    } yield for {
+//      // TODO compute these
+//      baseBal <- updatedBase.copy(availableBalance = 0.0, exchangeAvailableBalance = 0.0, exchangeTotalBalance =  0.0)
+//      currencyBal <- updatedCurr
+//    } yield for {
+//      baseBalance <- bagel.updateBalance(baseBal)
+//      currencyBalance <- bagel.updateBalance(currencyBal)
+//    } yield (baseBalance, currencyBalance)
+//  }
 
   private def updateTrade(userData: UserData, request: TradeRequest, sender: ActorRef) = {
     // users can only update their own trades

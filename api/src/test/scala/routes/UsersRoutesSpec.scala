@@ -1,12 +1,16 @@
 package routes
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
+import akka.stream.ActorMaterializer
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.test.{BaseRoutesSpec, TestHelpersWithDb}
 import com.flowy.fomoapi.routes.UsersRoutes
 import com.flowy.common.api.BittrexClient
-import com.flowy.common.models.UserKey
+import com.flowy.common.database.postgres.SqlTheEverythingBagelDao
+import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
+import com.flowy.fomoapi.services.UserKeyService
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -15,9 +19,12 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
 
   val routes = Route.seal(new UsersRoutes with TestRoutesSupport {
     override val userService = spec.userService
-    override val userKeyService = spec.userKeyService
     override val bittrexClient = new BittrexClient()
+    override val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
+    override val userKeyService = new UserKeyService(bagel)
+    override val system = ActorSystem("test")
   }.usersRoutes)
+
 
   "POST /register" should "register new user" in {
     Post("/user/register", Map("first" -> "John", "last"-> "Doe", "email" -> "newUser@sml.com", "password" -> "secret")) ~> routes ~> check {
@@ -144,7 +151,7 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     val secret = "secret_key"
     val email = "user11@sml.com"
     val user = newUser("user11", "11", email, "pass", "salt")
-    val userKey = UserKey.withRandomUUID(user.id, "test exchange", key, secret, "testy")
+    val userKey = UserKey.withRandomUUID(user.id, Exchange.Bittrex, key, secret, "testy", ApiKeyStatus.Added)
 
     userDao.add(user)
     val future = userKeyDao.add(userKey)
