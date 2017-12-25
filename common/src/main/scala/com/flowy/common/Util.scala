@@ -22,4 +22,8 @@ object Util {
   def roundUpPrecision4(number: Double): BigDecimal = {
     BigDecimal(number).setScale(4, BigDecimal.RoundingMode.HALF_UP).setScale(8, BigDecimal.RoundingMode.HALF_UP)
   }
+
+  def roundUpPrecision8(number: Double): BigDecimal = {
+    BigDecimal(number).setScale(8, BigDecimal.RoundingMode.HALF_UP)
+  }
 }

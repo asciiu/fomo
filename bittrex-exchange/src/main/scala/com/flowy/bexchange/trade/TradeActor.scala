@@ -95,7 +95,12 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     )
 
     myTrade = updatedTrade
-    balanceBuy(price)
+    bagel.updateTrade(updatedTrade).map {
+      case Some(t) =>
+        balanceBuy(price)
+        loadConditions()
+      case None =>
+    }
   }
 
   private def loadConditions() = {
@@ -198,16 +203,16 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     // ##Simulated case
     // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
     val currencyUnitsPurchased = Util.roundUpPrecision4(myTrade.baseQuantity / atPrice)
-    val cost = atPrice * currencyUnitsPurchased
+    val cost = Util.roundUpPrecision4(atPrice * currencyUnitsPurchased.toDouble)
 
     // subtrade cost from the baseQuantity
     val remainingBase = myTrade.baseQuantity - cost
     // add this back to the available balance for the base
 
-    println(s"bought at: $atPrice")
+    println(s"bought at: ${atPrice}")
     println(s"units purchased: $currencyUnitsPurchased")
     println(s"cost: $cost")
-    println(s"change: $remainingBase")
+    println(s"change: ${Util.roundUpPrecision8(remainingBase.toDouble)}")
 
     // update the base currency balances
     bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency).map {
