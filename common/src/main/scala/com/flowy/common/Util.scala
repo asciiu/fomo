@@ -18,4 +18,8 @@ object Util {
     val m = dateTime.getMinute() / minutes
     dateTime.withMinute(minutes* m).truncatedTo(ChronoUnit.MINUTES)
   }
+
+  def roundUpPrecision4(number: Double): BigDecimal = {
+    BigDecimal(number).setScale(4, BigDecimal.RoundingMode.HALF_UP).setScale(8, BigDecimal.RoundingMode.HALF_UP)
+  }
 }

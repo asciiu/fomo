@@ -8,6 +8,7 @@ import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
+import com.flowy.common.Util
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
@@ -94,18 +95,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     )
 
     myTrade = updatedTrade
-
-    bagel.updateTrade(updatedTrade).map {
-      case Some(t) =>
-        // todo add this to the balance
-        // update the currency balance
-        updateBalance(t.userId, t.apiKeyId, t.info.marketCurrency, currencyUnits)
-        // update the base balance
-
-
-        loadConditions()
-      case None =>
-    }
+    balanceBuy(price)
   }
 
   private def loadConditions() = {
@@ -204,28 +194,70 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
   }
 
-  // First pass
-  private def updateBalance(userId: UUID, apiKeyId: UUID, currencyName: String, amount: Double): Future[Boolean] = {
-    bagel.findBalance(trade.userId, trade.apiKeyId, currencyName).flatMap {
-      case Some(balance) =>
-        bagel
-          .updateBalance(balance.copy(availableBalance = balance.availableBalance + amount))
-          .map {
-            case Some(bal) => true
-            case None => false
-          }
+  private def balanceBuy(atPrice: Double): Unit = {
+    // ##Simulated case
+    // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
+    val currencyUnitsPurchased = Util.roundUpPrecision4(myTrade.baseQuantity / atPrice)
+    val cost = atPrice * currencyUnitsPurchased
 
-       case None =>
-        Future.successful(false)
+    // subtrade cost from the baseQuantity
+    val remainingBase = myTrade.baseQuantity - cost
+    // add this back to the available balance for the base
+
+    println(s"bought at: $atPrice")
+    println(s"units purchased: $currencyUnitsPurchased")
+    println(s"cost: $cost")
+    println(s"change: $remainingBase")
+
+    // update the base currency balances
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency).map {
+      case Some(baseBal) =>
+        val updatedBalance = baseBal.copy(
+          availableBalance = remainingBase.toDouble,
+          exchangeTotalBalance = baseBal.exchangeTotalBalance - cost.toDouble,
+          exchangeAvailableBalance = baseBal.exchangeAvailableBalance - cost.toDouble)
+
+        println(s"base balance before: $baseBal")
+        println(s"base balance after: $updatedBalance")
+
+        bagel.updateBalance(updatedBalance)
+      case None => ???
     }
-  }
 
-//  private def rebalance(): Unit = {
-//
-//    // ##Simulated case
-//    // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
-//    // #2 you need to update the availableBalance for bought currency
-//    // #3 the totalExchange and totalexchangeavailable will also need to be updated
+    // update the currency balances
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency).map {
+      case Some(currBal) =>
+        val updatedCurrency = currBal.copy(
+          availableBalance = currBal.availableBalance + currencyUnitsPurchased.toDouble,
+          exchangeTotalBalance = currBal.exchangeTotalBalance + currencyUnitsPurchased.toDouble,
+          exchangeAvailableBalance = currBal.exchangeAvailableBalance + currencyUnitsPurchased.toDouble)
+
+        bagel.updateBalance(updatedCurrency)
+
+        println(s"currency balance before: $currBal")
+        println(s"currency balance after: $updatedCurrency")
+
+      case None =>
+        val newBalance = Balance(
+          UUID.randomUUID(),
+          trade.userId,
+          trade.apiKeyId,
+          Exchange.withName(trade.info.exchangeName),
+          trade.info.marketCurrency,
+          trade.info.marketCurrencyLong,
+          None,
+          currencyUnitsPurchased.toDouble,
+          currencyUnitsPurchased.toDouble,
+          currencyUnitsPurchased.toDouble,
+          None)
+
+        println(s"new currency balance : $newBalance")
+
+        bagel.insert(Seq(newBalance))
+    }
+
+    // #2 you need to update the availableBalance for bought currency
+    // #3 the totalExchange and totalexchangeavailable will also need to be updated
 //
 //    // #4 add remainder from calc above to base remainder
 //    // #5 subtract from the exchange total and exchangeavailable
@@ -262,7 +294,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 //      baseBalance <- bagel.updateBalance(baseBal)
 //      currencyBalance <- bagel.updateBalance(currencyBal)
 //    } yield (baseBalance, currencyBalance)
-//  }
+  }
 
   private def updateTrade(userData: UserData, request: TradeRequest, sender: ActorRef) = {
     // users can only update their own trades
@@ -272,6 +304,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       // stop previous conditions
       buyConditions.foreach ( a => context stop a)
 
+      // TODO if update the quantity you also need to update the available balance
       bagel.updateTrade(
         trade.copy(
           baseQuantity = request.baseQuantity,
