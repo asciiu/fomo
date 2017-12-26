@@ -179,8 +179,8 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
       case TradeStatus.Pending =>
         // delete the trade from the system if pending
         for {
-          deletedOpt <- bagel.deleteTrade(trade)
-          balanceOpt <- bagel.findBalance(trade.userId, trade.apiKeyId, trade.info.baseCurrency)
+          deletedOpt <- bagel.deleteTrade(myTrade)
+          balanceOpt <- bagel.findBalance(myTrade.userId, myTrade.apiKeyId, myTrade.info.baseCurrency)
         } yield {
 
           (deletedOpt, balanceOpt) match {
