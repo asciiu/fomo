@@ -19,7 +19,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     with SqlTrade
     with SqlUserDeviceSchema
     with SqlUserbalance
-    with SqlMarket {
+    with SqlMarket
+    with SqlTradeHistory {
 
   import database._
   import database.driver.api._
@@ -189,12 +190,23 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   def insert(market: Market): Future[Int] = {
     db.run(markets += market)
   }
-
   def findAllMarkets(exchange: Exchange.Value): Future[Seq[Market]] = {
     db.run(markets.filter(_.exchangeName === exchange).result)
   }
-
   def findMarketByName(exchange: Exchange.Value, marketName: String): Future[Option[Market]] = {
     db.run(markets.filter(m => m.exchangeName === exchange && m.marketName === marketName).result.headOption)
+  }
+
+  /*******************************************************************************************
+    * TradeHistory
+    *****************************************************************************************/
+  def insert(event: TradeHistory): Future[Int] = {
+    db.run(tradeHistory += event)
+  }
+  def findTradeHistoryByUserId(userId: UUID): Future[Seq[TradeHistory]] = {
+    db.run(tradeHistory.filter(_.userId === userId).result)
+  }
+  def findTradeHistoryByUserId(userId: UUID, marketName: String): Future[Seq[TradeHistory]] = {
+    db.run(tradeHistory.filter( x => x.userId === userId && x.marketName === marketName).result)
   }
 }

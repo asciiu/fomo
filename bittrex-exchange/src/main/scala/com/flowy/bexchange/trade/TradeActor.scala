@@ -212,11 +212,13 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     // subtrade cost from the baseQuantity
     val remainingBase = myTrade.baseQuantity - cost
     // add this back to the available balance for the base
+    val summary = s"bought at: ${atPrice} units purchased: $purchasedQty cost: ${Util.roundUpPrecision8(cost)} change: ${Util.roundUpPrecision8(remainingBase.toDouble)}"
 
-    println(s"bought at: ${atPrice}")
-    println(s"units purchased: $purchasedQty")
-    println(s"cost: ${Util.roundUpPrecision8(cost)}")
-    println(s"change: ${Util.roundUpPrecision8(remainingBase.toDouble)}")
+    val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
+      myTrade.info.marketCurrency, myTrade.info.marketCurrencyLong, purchasedQty, myTrade.info.baseCurrency,
+      myTrade.info.baseCurrencyLong, cost, TradeAction.Buy, atPrice, atPrice, s"Buy ${myTrade.info.marketCurrency}", summary
+    )
+    bagel.insert(history)
 
     // update the base currency balances
     bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency).map {
@@ -225,9 +227,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           availableBalance = remainingBase.toDouble,
           exchangeTotalBalance = baseBal.exchangeTotalBalance - cost.toDouble,
           exchangeAvailableBalance = baseBal.exchangeAvailableBalance - cost.toDouble)
-
-        println(s"base balance before: $baseBal")
-        println(s"base balance after: $updatedBalance")
 
         bagel.updateBalance(updatedBalance)
       case None => ???
@@ -243,9 +242,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
         bagel.updateBalance(updatedCurrency)
 
-        println(s"currency balance before: $currBal")
-        println(s"currency balance after: $updatedCurrency")
-
       case None =>
         val newBalance = Balance(
           UUID.randomUUID(),
@@ -259,8 +255,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           purchasedQty.toDouble,
           purchasedQty.toDouble,
           None)
-
-        println(s"new currency balance : $newBalance")
 
         bagel.insert(Seq(newBalance))
     }

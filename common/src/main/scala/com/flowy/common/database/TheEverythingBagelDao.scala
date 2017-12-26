@@ -38,4 +38,9 @@ trait TheEverythingBagelDao {
   def findUserDevices(userId: UUID): Future[Seq[UserDevice]]
   def insert(userDevice: UserDevice): Future[Int]
   def updateDevice(userDevice: UserDevice): Future[Option[UserDevice]]
+
+  // insert trade history
+  def insert(event: TradeHistory): Future[Int]
+  def findTradeHistoryByUserId(userId: UUID): Future[Seq[TradeHistory]]
+  def findTradeHistoryByUserId(userId: UUID, marketName: String): Future[Seq[TradeHistory]]
 }
