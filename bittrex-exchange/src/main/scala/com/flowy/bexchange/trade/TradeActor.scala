@@ -43,8 +43,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   implicit val akkaSystem = context.system
 
   private var myTrade = trade
-  private var status = trade.status
-
   private val dynamic = currentMirror.mkToolBox()
 
   private val buyConditions = scala.collection.mutable.ListBuffer[ActorRef]()
@@ -82,22 +80,21 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
   private def executeBuy(price: Double, condition: String) = {
     log.info(s"buy ${myTrade.baseQuantity} ${myTrade.info.marketName} for user: ${myTrade.userId}")
-    status = TradeStatus.Bought
 
-    val currencyUnits = myTrade.baseQuantity / price
+    val currencyUnits = Util.roundDownPrecision4(myTrade.baseQuantity / price)
     val updatedTrade = myTrade.copy(
       stat = TradeStat(
-        currencyQuantity = Some(currencyUnits),
+        currencyQuantity = Some(currencyUnits.toDouble),
         boughtCondition = Some(condition),
         boughtPrice = Some(price),
         boughtTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Bought
     )
 
-    myTrade = updatedTrade
     bagel.updateTrade(updatedTrade).map {
-      case Some(t) =>
-        balanceBuy(price)
+      case Some(updated) =>
+        myTrade = updated
+        balanceBuy(currencyUnits, price)
         loadConditions()
       case None =>
     }
@@ -110,9 +107,9 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
         cond match {
           case extractParams(percent, refPrice) =>
             val trail = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-            actorBuffer += context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail), "TrailingStop")
+            actorBuffer += context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail))
           case sellConditions =>
-            actorBuffer += context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions), "SimpleCondition")
+            actorBuffer += context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions))
         }
       }
     }
@@ -135,7 +132,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           parseConditions(stopProfit, profitConditions)
         }
       case _ =>
-        log.warning(s"encountered a trade status of ${status}")
+        log.warning(s"encountered a trade status of ${myTrade.status}")
     }
   }
 
@@ -144,18 +141,26 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
     log.info(s"sell ${myTrade.info.marketName} condition: $condition for user: ${myTrade.userId}")
     val updatedTrade = myTrade.copy(
-      stat = TradeStat(
+      stat = myTrade.stat.copy(
         soldCondition = Some(condition),
         soldPrice = Some(price),
         soldTime = Some(Instant.now().atOffset(ZoneOffset.UTC))),
       status = TradeStatus.Sold
     )
 
-    myTrade = updatedTrade
+    bagel.updateTrade(updatedTrade).map {
+      case Some(updated) =>
+        myTrade = updated
 
-    bagel.updateTrade(updatedTrade).map { updated =>
-      // this trade is finished kill this actor
-      self ! PoisonPill
+        updated.stat.currencyQuantity match {
+          case Some(qty) =>
+            balanceSell(qty, price)
+          case None => ???
+        }
+
+        // this trade is finished kill this actor
+        self ! PoisonPill
+      case None =>
     }
   }
 
@@ -166,7 +171,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     profitConditions.foreach ( a => context stop a)
     buyConditions.foreach (a => context stop a)
 
-    status match {
+    myTrade.status match {
       case TradeStatus.Sold =>
         // cannot cancel a sold trade because it is already finished.
         sender ! None
@@ -199,19 +204,18 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
   }
 
-  private def balanceBuy(atPrice: Double): Unit = {
+  private def balanceBuy(purchasedQty: BigDecimal, atPrice: Double): Unit = {
     // ##Simulated case
     // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
-    val currencyUnitsPurchased = Util.roundUpPrecision4(myTrade.baseQuantity / atPrice)
-    val cost = Util.roundUpPrecision4(atPrice * currencyUnitsPurchased.toDouble)
+    val cost = atPrice * purchasedQty.toDouble
 
     // subtrade cost from the baseQuantity
     val remainingBase = myTrade.baseQuantity - cost
     // add this back to the available balance for the base
 
     println(s"bought at: ${atPrice}")
-    println(s"units purchased: $currencyUnitsPurchased")
-    println(s"cost: $cost")
+    println(s"units purchased: $purchasedQty")
+    println(s"cost: ${Util.roundUpPrecision8(cost)}")
     println(s"change: ${Util.roundUpPrecision8(remainingBase.toDouble)}")
 
     // update the base currency balances
@@ -233,9 +237,9 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency).map {
       case Some(currBal) =>
         val updatedCurrency = currBal.copy(
-          availableBalance = currBal.availableBalance + currencyUnitsPurchased.toDouble,
-          exchangeTotalBalance = currBal.exchangeTotalBalance + currencyUnitsPurchased.toDouble,
-          exchangeAvailableBalance = currBal.exchangeAvailableBalance + currencyUnitsPurchased.toDouble)
+          availableBalance = currBal.availableBalance + purchasedQty.toDouble,
+          exchangeTotalBalance = currBal.exchangeTotalBalance + purchasedQty.toDouble,
+          exchangeAvailableBalance = currBal.exchangeAvailableBalance + purchasedQty.toDouble)
 
         bagel.updateBalance(updatedCurrency)
 
@@ -251,9 +255,9 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           trade.info.marketCurrency,
           trade.info.marketCurrencyLong,
           None,
-          currencyUnitsPurchased.toDouble,
-          currencyUnitsPurchased.toDouble,
-          currencyUnitsPurchased.toDouble,
+          purchasedQty.toDouble,
+          purchasedQty.toDouble,
+          purchasedQty.toDouble,
           None)
 
         println(s"new currency balance : $newBalance")
@@ -301,11 +305,51 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 //    } yield (baseBalance, currencyBalance)
   }
 
+  private def balanceSell(qty: Double, atPrice: Double) = {
+    // ##Simulated case
+    val totalSale = atPrice * qty.toDouble
+
+    println(s"total at sell: ${totalSale}")
+    println(s"sell at price: $atPrice")
+    println(s"units sold: $qty")
+
+    // update the base currency balances
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency).map {
+      case Some(baseBal) =>
+        val updatedBalance = baseBal.copy(
+          availableBalance = baseBal.availableBalance + totalSale,
+          exchangeTotalBalance = baseBal.exchangeTotalBalance + totalSale,
+          exchangeAvailableBalance = baseBal.exchangeAvailableBalance + totalSale)
+
+        println(s"base balance before: $baseBal")
+        println(s"base balance after: $updatedBalance")
+
+        bagel.updateBalance(updatedBalance)
+      case None => ???
+    }
+
+    // update the currency balances
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency).map {
+      case Some(currBal) =>
+        val updatedCurrency = currBal.copy(
+          availableBalance = currBal.availableBalance - qty,
+          exchangeTotalBalance = currBal.exchangeTotalBalance - qty,
+          exchangeAvailableBalance = currBal.exchangeAvailableBalance - qty)
+
+        bagel.updateBalance(updatedCurrency)
+
+        println(s"currency balance before: $currBal")
+        println(s"currency balance after: $updatedCurrency")
+
+      case None => ???
+    }
+  }
+
   private def updateTrade(userData: UserData, request: TradeRequest, sender: ActorRef) = {
     // users can only update their own trades
     if (userData.id != trade.userId) {
       sender ! None
-    } else if (status == TradeStatus.Pending) {
+    } else if (myTrade.status == TradeStatus.Pending) {
       // stop previous conditions
       buyConditions.foreach ( a => context stop a)
 
@@ -316,16 +360,16 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           buyCondition = request.buyCondition,
           stopLossCondition = request.stopLossCondition,
           profitCondition = request.profitCondition)
-      ).map { updated =>
-        if (updated.isDefined) {
-          myTrade = updated.get
+      ).map {
+        case Some(updated) =>
+          myTrade = updated
           loadConditions()
-        }
-        sender ! updated
+          sender ! updated
+        case None => ???
       }
 
 
-    } else if (status == TradeStatus.Bought) {
+    } else if (myTrade.status == TradeStatus.Bought) {
       // stop previous conditions
       profitConditions.foreach ( a => context stop a)
       buyConditions.foreach (a => context stop a)
