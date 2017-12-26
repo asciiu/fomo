@@ -265,44 +265,10 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
         bagel.insert(Seq(newBalance))
     }
 
-    // #2 you need to update the availableBalance for bought currency
-    // #3 the totalExchange and totalexchangeavailable will also need to be updated
-//
-//    // #4 add remainder from calc above to base remainder
-//    // #5 subtract from the exchange total and exchangeavailable
-//
-//    // if sell the estimated base qty will be currencyUnits * lastPrice
-//    // add this amount to the base available, base total, and base exchange available
-//
-//    // subtract currency Units from currency available, total, and exchange available.
-//
-//
-//    // ## actual case
-//    // execute the buy order and get the UUID of order from bittrex
-//    // wait 3 seconds and getorder request with UUID of order to retrieve deets
-//    // do step #2 & 3 from above
-//
-//
-//
-//
-//    // TODO update the baseCurrency balance
-//    val baseFu = bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency)
-//    val currFu = bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency)
-//
-//    val updatedBalances = for {
-//      baseOpt <- baseFu
-//      currOpt <- currFu
-//    } yield for {
-//      updatedBase <- baseOpt
-//      updatedCurr <- currOpt
-//    } yield for {
-//      // TODO compute these
-//      baseBal <- updatedBase.copy(availableBalance = 0.0, exchangeAvailableBalance = 0.0, exchangeTotalBalance =  0.0)
-//      currencyBal <- updatedCurr
-//    } yield for {
-//      baseBalance <- bagel.updateBalance(baseBal)
-//      currencyBalance <- bagel.updateBalance(currencyBal)
-//    } yield (baseBalance, currencyBalance)
+    // ## TODO actual case
+    // execute the buy order and get the UUID of order from bittrex
+    // wait 3 seconds and getorder request with UUID of order to retrieve deets
+    // update all the balances here
   }
 
   private def balanceSell(qty: Double, atPrice: Double) = {
@@ -343,6 +309,11 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
       case None => ???
     }
+
+    // ## TODO actual case
+    // execute the sell order and get the UUID of order from bittrex
+    // wait 3 seconds and getorder request with UUID of order to retrieve deets
+    // update all the balances here
   }
 
   private def updateTrade(userData: UserData, request: TradeRequest, sender: ActorRef) = {
