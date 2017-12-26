@@ -352,8 +352,20 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     } else if (myTrade.status == TradeStatus.Pending) {
       // stop previous conditions
       buyConditions.foreach ( a => context stop a)
+      val previousReserved = myTrade.baseQuantity
+      val delta = previousReserved - request.baseQuantity
 
-      // TODO if update the quantity you also need to update the available balance
+      bagel.findBalance(myTrade.userId, myTrade.apiKeyId, myTrade.info.baseCurrency).map {
+        case Some(baseBal) =>
+          val updatedBalance = baseBal.copy(
+            availableBalance = baseBal.availableBalance + delta,
+            exchangeTotalBalance = baseBal.exchangeTotalBalance + delta,
+            exchangeAvailableBalance = baseBal.exchangeAvailableBalance + delta)
+
+          bagel.updateBalance(updatedBalance)
+        case None => ???
+      }
+
       bagel.updateTrade(
         trade.copy(
           baseQuantity = request.baseQuantity,
@@ -364,7 +376,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
         case Some(updated) =>
           myTrade = updated
           loadConditions()
-          sender ! updated
+          sender ! Some(updated)
         case None => ???
       }
 
