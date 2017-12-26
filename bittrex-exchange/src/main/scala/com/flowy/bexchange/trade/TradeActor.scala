@@ -269,9 +269,12 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     // ##Simulated case
     val totalSale = atPrice * qty.toDouble
 
-    println(s"total at sell: ${totalSale}")
-    println(s"sell at price: $atPrice")
-    println(s"units sold: $qty")
+    val summary = s"sold at: ${atPrice} units sold: $qty total: ${Util.roundUpPrecision8(totalSale)}"
+    val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
+      myTrade.info.marketCurrency, myTrade.info.marketCurrencyLong, qty, myTrade.info.baseCurrency,
+      myTrade.info.baseCurrencyLong, totalSale, TradeAction.Sell, atPrice, atPrice, s"Sell ${myTrade.info.marketCurrency}", summary
+    )
+    bagel.insert(history)
 
     // update the base currency balances
     bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.baseCurrency).map {
@@ -280,9 +283,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           availableBalance = baseBal.availableBalance + totalSale,
           exchangeTotalBalance = baseBal.exchangeTotalBalance + totalSale,
           exchangeAvailableBalance = baseBal.exchangeAvailableBalance + totalSale)
-
-        println(s"base balance before: $baseBal")
-        println(s"base balance after: $updatedBalance")
 
         bagel.updateBalance(updatedBalance)
       case None => ???
@@ -297,9 +297,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           exchangeAvailableBalance = currBal.exchangeAvailableBalance - qty)
 
         bagel.updateBalance(updatedCurrency)
-
-        println(s"currency balance before: $currBal")
-        println(s"currency balance after: $updatedCurrency")
 
       case None => ???
     }
