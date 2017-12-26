@@ -11,7 +11,7 @@ import com.flowy.bexchange.ExchangeService.GetMarkets
 import com.flowy.bexchange.MarketTradeService.{DeleteTrade, PostTrade, UpdateTrade}
 import com.flowy.common.api.Bittrex.MarketResult
 import com.flowy.common.database.TheEverythingBagelDao
-import com.flowy.common.models.{Market, Trade, TradeRequest, TradeStatus}
+import com.flowy.common.models._
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
@@ -35,6 +35,7 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   // when a trade does not execute successfully you need an error log to tell you why
   val tradeRoutes = logRequestResult("TradeRoutes") {
     pathPrefix("trades") {
+      tradeHistory ~
       deleteTrade ~
       getTrade ~
       directory ~
@@ -96,6 +97,23 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
             case _ =>
               complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
+          }
+        }
+      }
+    }
+  }
+
+  def tradeHistory = {
+    path("history") {
+      get {
+        parameters('marketName.?, 'exchangeName.?) { (marketNameOpt, exchangeNameOpt) =>
+          userFromSession { user =>
+            onSuccess(bagel.findTradeHistoryByUserId(user.id, exchangeNameOpt, marketNameOpt).mapTo[Seq[TradeHistory]]) {
+              case history: Seq[TradeHistory] =>
+                complete(JSendResponse(JsonStatus.Success, "", history.asJson))
+              case _ =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trade history not found", Json.Null))
+            }
           }
         }
       }

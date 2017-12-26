@@ -206,7 +206,15 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   def findTradeHistoryByUserId(userId: UUID): Future[Seq[TradeHistory]] = {
     db.run(tradeHistory.filter(_.userId === userId).result)
   }
-  def findTradeHistoryByUserId(userId: UUID, marketName: String): Future[Seq[TradeHistory]] = {
-    db.run(tradeHistory.filter( x => x.userId === userId && x.marketName === marketName).result)
+  def findTradeHistoryByUserId(userId: UUID, exchangeNameOpt: Option[String], marketNameOpt: Option[String]): Future[Seq[TradeHistory]] = {
+    val query = for {
+      tradeRecords <- tradeHistory.filter(r =>
+        r.userId === userId &&
+          exchangeNameOpt.map(m => r.exchangeName.toLowerCase === m.toLowerCase).getOrElse(slick.lifted.LiteralColumn(true)) &&
+          marketNameOpt.map(n => r.marketName.toLowerCase === n.toLowerCase).getOrElse(slick.lifted.LiteralColumn(true))
+      )
+    } yield tradeRecords
+
+    db.run(query.result)
   }
 }

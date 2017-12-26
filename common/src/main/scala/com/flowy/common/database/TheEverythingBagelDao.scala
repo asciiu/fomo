@@ -42,5 +42,5 @@ trait TheEverythingBagelDao {
   // insert trade history
   def insert(event: TradeHistory): Future[Int]
   def findTradeHistoryByUserId(userId: UUID): Future[Seq[TradeHistory]]
-  def findTradeHistoryByUserId(userId: UUID, marketName: String): Future[Seq[TradeHistory]]
+  def findTradeHistoryByUserId(userId: UUID, exchangeNameOpt: Option[String], marketNameOpt: Option[String]): Future[Seq[TradeHistory]]
 }
