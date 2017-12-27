@@ -24,8 +24,8 @@ trait SqlUserbalance extends SqlSchema {
     def userId = column[UUID]("user_id")
     def apiKeyId = column[UUID]("user_api_key_id")
     def exchangeName = column[Exchange.Value]("exchange_name")
-    def currencyName = column[String]("currency_name")
-    def currencyNameLong = column[String]("currency_name_long")
+    def currency = column[String]("currency")
+    def currencyLong = column[String]("currency_long")
     def address = column[String]("blockchain_address")
     def available = column[Double]("available")
     def exchangeTotal = column[Double]("exchange_total")
@@ -36,8 +36,8 @@ trait SqlUserbalance extends SqlSchema {
       userId,
       apiKeyId,
       exchangeName,
-      currencyName,
-      currencyNameLong,
+      currency,
+      currencyLong,
       address.?,
       available,
       exchangeTotal,

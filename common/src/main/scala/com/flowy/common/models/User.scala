@@ -48,8 +48,8 @@ case class Balance(id: UUID,
                    userId: UUID,
                    apiKeyId: UUID,
                    exchange: Exchange.Value,
-                   currencyName: String,
-                   currencyNameLong: String,
+                   currency: String,
+                   currencyLong: String,
                    blockchainAddress: Option[String],
                    availableBalance: Double,
                    exchangeTotalBalance: Double,
@@ -65,7 +65,7 @@ object Balance {
       }
 
       Json.obj(
-        ("currencyName", Json.fromString(balance.currencyName)),
+        ("currency", Json.fromString(balance.currency)),
         ("availableBalance", Json.fromDoubleOrNull(balance.availableBalance)),
         ("exchangeTotalBalance", Json.fromDoubleOrNull(balance.exchangeTotalBalance)),
         ("exchangeAvailableBalance", Json.fromDoubleOrNull(balance.exchangeAvailableBalance)),

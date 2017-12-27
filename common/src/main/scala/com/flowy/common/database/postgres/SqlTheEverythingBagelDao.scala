@@ -54,8 +54,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(balances.filter(b => b.userId === userId && b.exchangeName === exchange).result)
   }
 
-  def findBalance(userId: UUID, apiKey: UUID, currencyName: String): Future[Option[Balance]] = {
-    db.run(balances.filter(b => b.userId === userId && b.apiKeyId === apiKey && b.currencyName === currencyName).result.headOption)
+  def findBalance(userId: UUID, apiKey: UUID, currency: String): Future[Option[Balance]] = {
+    db.run(balances.filter(b => b.userId === userId && b.apiKeyId === apiKey && b.currency === currency).result.headOption)
   }
 
   def updateBalance(balance: Balance): Future[Option[Balance]] = {
