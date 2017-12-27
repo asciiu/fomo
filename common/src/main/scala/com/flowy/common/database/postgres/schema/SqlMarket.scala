@@ -13,8 +13,8 @@ trait SqlMarket extends SqlSchema {
     def id = column[UUID]("id", O.PrimaryKey)
     def exchangeName = column[Exchange.Value]("exchange_name")
     def marketName = column[String]("market_name")
-    def currencyName = column[String]("market_currency")
-    def currencyNameLong = column[String]("market_currency_long")
+    def currency = column[String]("currency")
+    def currencyLong = column[String]("currency_long")
     def baseCurrency = column[String]("base_currency")
     def baseCurrencyLong = column[String]("base_currency_long")
 
@@ -22,8 +22,8 @@ trait SqlMarket extends SqlSchema {
     def * = (id,
       exchangeName,
       marketName,
-      currencyName,
-      currencyNameLong,
+      currency,
+      currencyLong,
       baseCurrency,
       baseCurrencyLong) <>
       ((Market.apply _).tupled, Market.unapply)

@@ -63,8 +63,8 @@ trait TradeRoutes extends RoutesSupport with StrictLogging with SessionSupport {
               case seq: Seq[Market] =>
                 val info = seq.map(x =>
                   MarketBasicInfo(x.marketName,
-                    x.marketCurrency,
-                    x.marketCurrencyLong,
+                    x.currency,
+                    x.currencyLong,
                     x.baseCurrency,
                     x.baseCurrencyLong,
                     "Bittrex"))

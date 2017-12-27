@@ -13,8 +13,8 @@ import com.flowy.common.Util
 case class Market(id: UUID,
                   exchangeName: Exchange.Value,
                   marketName: String,
-                  marketCurrency: String,
-                  marketCurrencyLong: String,
+                  currency: String,
+                  currencyLong: String,
                   baseCurrency: String,
                   baseCurrencyLong: String)
 

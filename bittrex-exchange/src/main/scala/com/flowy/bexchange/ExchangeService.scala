@@ -124,8 +124,8 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
       (filterOpt, senderOpt) match {
         case (Some(filter), Some(s)) =>
           val mrks = marketList.filter( m =>
-            m.marketCurrency.toLowerCase().contains(filter.toLowerCase()) ||
-            m.marketCurrencyLong.toLowerCase().contains(filter.toLowerCase()) ||
+            m.currency.toLowerCase().contains(filter.toLowerCase()) ||
+            m.currencyLong.toLowerCase().contains(filter.toLowerCase()) ||
             m.marketName.toLowerCase().contains(filter.toLowerCase())
           )
           // only send markets that we have market actors for
@@ -170,8 +170,8 @@ class ExchangeService(bagel: TheEverythingBagelDao, redis: RedisClient)(implicit
 
           val newRequest = request.copy(baseCurrency = Some(lookup.baseCurrency),
             baseCurrencyLong = Some(lookup.baseCurrencyLong),
-            marketCurrency = Some(lookup.marketCurrency),
-            marketCurrencyLong = Some(lookup.marketCurrencyLong)
+            marketCurrency = Some(lookup.currency),
+            marketCurrencyLong = Some(lookup.currencyLong)
           )
 
           // send the request with completed names to the market service
