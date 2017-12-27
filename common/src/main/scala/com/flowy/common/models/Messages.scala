@@ -7,6 +7,7 @@ import java.util.UUID
 case object TrailingStopLossRegistration
 case object BittrexWebsocketClientRegistration
 
+case class PriceCheck(exchangeName: Exchange.Value, marketName: String, price: BigDecimal)
 
 case class TradeHistory(id: UUID,
                         userId: UUID,

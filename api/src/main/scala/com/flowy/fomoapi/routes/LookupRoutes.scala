@@ -1,6 +1,7 @@
 package com.flowy.fomoapi.routes
 
 import akka.NotUsed
+import akka.pattern.ask
 import akka.actor.ActorSystem
 import com.flowy.fomoapi.services.{MarketUpdateService, Subscriber, UserKeyService, UserService}
 import com.softwaremill.bootzooka.common.api.RoutesSupport
@@ -11,9 +12,17 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 import akka.actor._
+import akka.http.scaladsl.model.StatusCodes
+import com.flowy.common.models.PriceCheck
+import com.flowy.fomoapi.services.BittrexService.GetPrices
+import io.circe.Json
+import io.circe.syntax._
+import io.circe.generic.auto._
+
+import scala.concurrent.duration._
 
 
-trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
+trait LookupRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
   def bittrexService: ActorRef
   def userService: UserService
@@ -21,30 +30,29 @@ trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
   def system: ActorSystem
 
   val marketUpdater = system.actorOf(MarketUpdateService.props())
-  val socketRoutes = logRequestResult("SocketRoutes") {
-    marketUpdates
+  val marketRoutes = logRequestResult("KitchenRoutes") {
+    pathPrefix("lookup") {
+      marketSocket ~
+      marketPrice
+    }
   }
 
-  def marketUpdates =
-    path("markets") {
-      marketSocket
-      //marketPrice
+  def marketPrice = {
+    path("prices") {
+      get {
+        parameters('marketName.*) { marketNames =>
+          userFromSession { user =>
+            onSuccess((bittrexService ? GetPrices(marketNames.toSeq)) (1.seconds).mapTo[Seq[PriceCheck]]) {
+              case prices: Seq[PriceCheck] =>
+                complete(JSendResponse(JsonStatus.Success, "", prices.asJson))
+              case _ =>
+                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "fomo's priceline.com is OOO", Json.Null))
+            }
+          }
+        }
+      }
     }
-
-  //def marketPrice = {
-  //  get {
-  //    parameters('marketName.?, 'exchangeName.?) { (marketNameOpt, exchangeNameOpt) =>
-  //      userFromSession { user =>
-  //        onSuccess(bagel.findTradeHistoryByUserId(user.id, exchangeNameOpt, marketNameOpt).mapTo[Seq[TradeHistory]]) {
-  //          case history: Seq[TradeHistory] =>
-  //            complete(JSendResponse(JsonStatus.Success, "", history.asJson))
-  //          case _ =>
-  //            complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trade history not found", Json.Null))
-  //        }
-  //      }
-  //    }
-  //  }
-  //}
+  }
 
   def marketSocket = {
     get {

@@ -15,7 +15,7 @@ trait Routes extends RoutesRequestWrapper
   with PasswordResetRoutes
   with VersionRoutes
   with TradeRoutes
-  with SocketRoutes {
+  with LookupRoutes {
 
   def system: ActorSystem
   def config: ServerConfig
@@ -27,9 +27,9 @@ trait Routes extends RoutesRequestWrapper
       passwordResetRoutes ~
       usersRoutes ~
       versionRoutes ~
-      tradeRoutes
+      tradeRoutes ~
+      marketRoutes
     } ~
-    socketRoutes ~
     indexRoute ~
     swaggerDocs
   }
