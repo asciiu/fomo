@@ -24,12 +24,12 @@ trait SqlTrade {
     def apiKeyId = column[UUID]("user_api_key_id")
     def exchangeName = column[String]("exchange_name")
     def marketName = column[String]("market_name")
-    def marketCurrencyAbbrev = column[String]("market_currency")
-    def marketCurrencyName = column[String]("market_currency_long")
+    def currency = column[String]("currency")
+    def currencyLong = column[String]("currency_long")
+    def currencyQuantity = column[Double]("currency_quantity")
     def baseCurrencyAbbrev = column[String]("base_currency")
     def baseCurrencyName = column[String]("base_currency_long")
     def bQuantity = column[Double]("base_quantity")
-    def mQuantity = column[Double]("currency_quantity")
     def status = column[TradeStatus.Value]("status")
     def createdOn = column[OffsetDateTime]("created_on")
     def updatedOn = column[OffsetDateTime]("updated_on")
@@ -46,8 +46,8 @@ trait SqlTrade {
     def marketInfoColumns = (
       exchangeName,
       marketName,
-      marketCurrencyAbbrev,
-      marketCurrencyName,
+      currency,
+      currencyLong,
       baseCurrencyAbbrev,
       baseCurrencyName) <>((MarketInfo.apply _).tupled, MarketInfo.unapply)
 
@@ -58,7 +58,7 @@ trait SqlTrade {
       sellTime.?,
       sellPrice.?,
       sellCondition.?,
-      mQuantity.?) <>((TradeStat.apply _).tupled, TradeStat.unapply)
+      currencyQuantity.?) <>((TradeStat.apply _).tupled, TradeStat.unapply)
 
     def * = (id,
       userId,

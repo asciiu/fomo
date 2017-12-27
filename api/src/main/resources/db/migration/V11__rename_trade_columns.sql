@@ -8,24 +8,24 @@ CREATE TABLE "trades" (
  "user_api_key_id" UUID NOT NULL,
  "exchange_name" text NOT NULL,
  "market_name" text NOT NULL,
- "market_currency" text NOT NULL,
- "market_currency_long" text NOT NULL,
+ "currency" text NOT NULL,
+ "currency_long" text NOT NULL,
+ "currency_quantity" decimal,
  "base_currency" text NOT NULL,
  "base_currency_long" text NOT NULL,
  "base_quantity" decimal NOT NULL,
- "currency_quantity" decimal,
  "status" text NOT NULL,
  "created_on" TIMESTAMP DEFAULT now(),
  "updated_on" TIMESTAMP DEFAULT now(),
+ "buy_condition" text NOT NULL,
  "bought_time" timestamp,
  "bought_price" decimal,
  "bought_condition" text,
+ "stop_loss_condition" text,
+ "profit_condition" text,
  "sold_time" timestamp,
  "sold_price" decimal,
- "sold_condition" text,
- "buy_condition" text NOT NULL,
- "stop_loss_condition" text,
- "profit_condition" text
+ "sold_condition" text
 );
 
 ALTER TABLE "trades" ADD CONSTRAINT "trade_user_fk"

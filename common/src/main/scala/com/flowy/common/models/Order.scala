@@ -72,8 +72,8 @@ case class TradeRequest(exchangeName: String,
 
 case class MarketInfo(exchangeName: String,
                       marketName: String,
-                      marketCurrency: String,
-                      marketCurrencyLong: String,
+                      currency: String,
+                      currencyLong: String,
                       baseCurrency: String,
                       baseCurrencyLong: String)
 
@@ -109,7 +109,7 @@ object Trade {
 
   implicit val encodeTrade: Encoder[Trade] = new Encoder[Trade] {
     final def apply(trade: Trade): Json = {
-      val marketQuantity = trade.stat.currencyQuantity match {
+      val currencyQuantity = trade.stat.currencyQuantity match {
         case Some(q) => Json.fromDoubleOrNull(q)
         case None => Json.Null
       }
@@ -151,12 +151,12 @@ object Trade {
         ("apiKeyId", Json.fromString(trade.apiKeyId.toString)),
         ("exchangeName", Json.fromString(trade.info.exchangeName)),
         ("marketName", Json.fromString(trade.info.marketName)),
-        ("currency", Json.fromString(trade.info.marketCurrency)),
-        ("currencyLong", Json.fromString(trade.info.marketCurrencyLong)),
+        ("currency", Json.fromString(trade.info.currency)),
+        ("currencyLong", Json.fromString(trade.info.currencyLong)),
+        ("currencyQuantity", currencyQuantity),
         ("baseCurrency", Json.fromString(trade.info.baseCurrency)),
         ("baseCurrencyLong", Json.fromString(trade.info.baseCurrencyLong)),
         ("baseQuantity", Json.fromDoubleOrNull(trade.baseQuantity)),
-        ("currencyQuantity", marketQuantity),
         ("status", Json.fromString(trade.status.toString)),
         ("createdOn", Json.fromString(trade.createdOn.toString)),
         ("updatedOn", Json.fromString(trade.updatedOn.toString)),

@@ -226,8 +226,8 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     val summary = s"bought at: ${atPrice} units purchased: $purchasedQty cost: ${Util.roundUpPrecision8(cost)} change: ${Util.roundUpPrecision8(remainingBase.toDouble)}"
 
     val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
-      myTrade.info.marketCurrency, myTrade.info.marketCurrencyLong, purchasedQty, myTrade.info.baseCurrency,
-      myTrade.info.baseCurrencyLong, cost, TradeAction.Buy, atPrice, atPrice, s"Buy ${myTrade.info.marketCurrency}", summary
+      myTrade.info.currency, myTrade.info.currencyLong, purchasedQty, myTrade.info.baseCurrency,
+      myTrade.info.baseCurrencyLong, cost, TradeAction.Buy, atPrice, atPrice, s"Buy ${myTrade.info.currency}", summary
     )
     bagel.insert(history)
 
@@ -244,7 +244,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
 
     // update the currency balances
-    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency).map {
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.currency).map {
       case Some(currBal) =>
         val updatedCurrency = currBal.copy(
           availableBalance = currBal.availableBalance + purchasedQty.toDouble,
@@ -259,8 +259,8 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
           trade.userId,
           trade.apiKeyId,
           Exchange.withName(trade.info.exchangeName),
-          trade.info.marketCurrency,
-          trade.info.marketCurrencyLong,
+          trade.info.currency,
+          trade.info.currencyLong,
           None,
           purchasedQty.toDouble,
           purchasedQty.toDouble,
@@ -282,8 +282,8 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
     val summary = s"sold at: ${atPrice} units sold: $qty total: ${Util.roundUpPrecision8(totalSale)}"
     val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
-      myTrade.info.marketCurrency, myTrade.info.marketCurrencyLong, qty, myTrade.info.baseCurrency,
-      myTrade.info.baseCurrencyLong, totalSale, TradeAction.Sell, atPrice, atPrice, s"Sell ${myTrade.info.marketCurrency}", summary
+      myTrade.info.currency, myTrade.info.currencyLong, qty, myTrade.info.baseCurrency,
+      myTrade.info.baseCurrencyLong, totalSale, TradeAction.Sell, atPrice, atPrice, s"Sell ${myTrade.info.currency}", summary
     )
     bagel.insert(history)
 
@@ -300,7 +300,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
 
     // update the currency balances
-    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.marketCurrency).map {
+    bagel.findBalance(trade.userId, trade.apiKeyId, myTrade.info.currency).map {
       case Some(currBal) =>
         val updatedCurrency = currBal.copy(
           availableBalance = currBal.availableBalance - qty,
