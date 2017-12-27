@@ -9,8 +9,8 @@ import scala.tools.reflect.ToolBox
 
 
 object SimpleConditionActor {
-  def props(action: TradeAction.Value, condition: String)(implicit context: ExecutionContext) =
-    Props(new SimpleConditionActor(action, condition))
+  def props(action: TradeAction.Value, condition: String, name: String)(implicit context: ExecutionContext) =
+    Props(new SimpleConditionActor(action, condition, name))
 
   case class UpdateCondition(condition: String)
 }
@@ -20,7 +20,7 @@ object SimpleConditionActor {
   * Keeps track of simple conditions based upon an expression e.g. (price > 0.999)
   * @param condition
   */
-class SimpleConditionActor(action: TradeAction.Value, condition: String) extends Actor
+class SimpleConditionActor(action: TradeAction.Value, condition: String, name: String) extends Actor
   with ActorLogging {
 
   import TradeActor._
@@ -45,7 +45,7 @@ class SimpleConditionActor(action: TradeAction.Value, condition: String) extends
 
       // if true tell parent to buy and exit
       if (dynamic.eval(dynamic.parse(s"$expString")) == true) {
-        context.parent ! Trigger(action, lastPrice, expString)
+        context.parent ! Trigger(action, lastPrice, expString, name)
         self ! PoisonPill
       }
 

@@ -23,7 +23,7 @@ object TradeActor {
   def props(trade: Trade, bagel: TheEverythingBagelDao)(implicit context: ExecutionContext) =
     Props(new TradeActor(trade, bagel))
 
-  case class Trigger(action: TradeAction.Value, price: Double, condition: String)
+  case class Trigger(action: TradeAction.Value, price: Double, condition: String, name: String)
   case class Buy(price: Double, atCondition: String)
   case class Sell(price: Double, atCondition: String)
   case class Cancel(sender: ActorRef)
@@ -55,12 +55,6 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   private val profitConditions = scala.collection.mutable.ListBuffer[ActorRef]()
 
   override def preStart() = {
-    bagel.findUserDevices(trade.userId).map { devices =>
-      devices.foreach { d =>
-        val token = d.deviceToken
-        mediator ! Publish("ApplePushNotification", ApplePushNotification(token, "Trade started!"))
-      }
-    }
     loadConditions()
   }
 
@@ -78,21 +72,22 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     case Cancel(sender) =>
       cancelTrade(sender)
 
-    case Trigger(TradeAction.Buy, price, condition) =>
-      executeBuy(price, condition)
+    case Trigger(TradeAction.Buy, price, condition, name) =>
+      executeBuy(price, condition, name)
 
-    case Trigger(TradeAction.Sell, price, condition) =>
-      executeSell(price, condition)
+    case Trigger(TradeAction.Sell, price, condition, name) =>
+      executeSell(price, condition, name)
 
     case x =>
       log.warning(s"received unknown message - $x")
   }
 
 
-  private def executeBuy(price: Double, condition: String) = {
+  private def executeBuy(price: Double, condition: String, name: String) = {
     log.info(s"buy ${myTrade.baseQuantity} ${myTrade.info.marketName} for user: ${myTrade.userId}")
 
     val currencyUnits = Util.roundDownPrecision4(myTrade.baseQuantity / price)
+
     val updatedTrade = myTrade.copy(
       stat = TradeStat(
         currencyQuantity = Some(currencyUnits.toDouble),
@@ -105,22 +100,22 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     bagel.updateTrade(updatedTrade).map {
       case Some(updated) =>
         myTrade = updated
-        balanceBuy(currencyUnits, price)
+        balanceBuy(currencyUnits, price, name)
         loadConditions()
       case None =>
     }
   }
 
   private def loadConditions() = {
-    def parseConditions(conditions: String, actorBuffer: ListBuffer[ActorRef]) = {
+    def parseConditions(conditions: String, actorBuffer: ListBuffer[ActorRef], name: String) = {
       conditions.split(" or ").foreach { cond =>
         val extractParams = """^.*?TrailingStop\((0\.\d{2,}),\s(\d+\.\d+).*?""".r
         cond match {
           case extractParams(percent, refPrice) =>
             val trail = TrailingStop(trade.userId, trade.id, trade.info.marketName, percent.toDouble, refPrice.toDouble)
-            actorBuffer += context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail))
+            actorBuffer += context.actorOf(TrailingStopLossActor.props(TradeAction.Sell, trail, name))
           case sellConditions =>
-            actorBuffer += context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions))
+            actorBuffer += context.actorOf(SimpleConditionActor.props(TradeAction.Sell, sellConditions, name))
         }
       }
     }
@@ -129,25 +124,25 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     myTrade.status match {
       case TradeStatus.Pending =>
         // pending trade must monitor buy conditions
-        buyConditions += context.actorOf(SimpleConditionActor.props(TradeAction.Buy, myTrade.buyCondition))
+        buyConditions += context.actorOf(SimpleConditionActor.props(TradeAction.Buy, myTrade.buyCondition, "buy"))
 
       case TradeStatus.Bought =>
         // bought trade must monitor sell conditions
         val stopLoss = myTrade.stopLossCondition.getOrElse("")
         if (stopLoss != "") {
-          parseConditions(stopLoss, lossConditions)
+          parseConditions(stopLoss, lossConditions, "stop-loss")
         }
 
-        val stopProfit = myTrade.profitCondition.getOrElse("")
-        if (stopProfit != "") {
-          parseConditions(stopProfit, profitConditions)
+        val profit = myTrade.profitCondition.getOrElse("")
+        if (profit != "") {
+          parseConditions(profit, profitConditions, "take-profit")
         }
       case _ =>
         log.warning(s"encountered a trade status of ${myTrade.status}")
     }
   }
 
-  private def executeSell(price: Double, condition: String) = {
+  private def executeSell(price: Double, condition: String, name: String) = {
     // TODO execute sell logic here
 
     log.info(s"sell ${myTrade.info.marketName} condition: $condition for user: ${myTrade.userId}")
@@ -165,7 +160,7 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
         updated.stat.currencyQuantity match {
           case Some(qty) =>
-            balanceSell(qty, price)
+            balanceSell(qty, price, name)
           case None => ???
         }
 
@@ -215,15 +210,23 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     }
   }
 
-  private def balanceBuy(purchasedQty: BigDecimal, atPrice: Double): Unit = {
+  private def balanceBuy(purchasedQty: BigDecimal, atPrice: Double, name: String): Unit = {
     // ##Simulated case
     // #1 if buy the estimated qty will be  val currencyUnits = myTrade.baseQuantity / lastPrice
     val cost = atPrice * purchasedQty.toDouble
 
     // subtrade cost from the baseQuantity
     val remainingBase = myTrade.baseQuantity - cost
+
     // add this back to the available balance for the base
-    val summary = s"bought at: ${atPrice} units purchased: $purchasedQty cost: ${Util.roundUpPrecision8(cost)} change: ${Util.roundUpPrecision8(remainingBase.toDouble)}"
+    val summary = s"${myTrade.info.marketName} bought $cost BTC at $atPrice on ${name} condition ${myTrade.buyCondition}"
+
+    bagel.findUserDevices(trade.userId).map { devices =>
+      devices.foreach { d =>
+        val token = d.deviceToken
+        mediator ! Publish("ApplePushNotification", ApplePushNotification(token, summary))
+      }
+    }
 
     val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
       myTrade.info.currency, myTrade.info.currencyLong, purchasedQty, myTrade.info.baseCurrency,
@@ -276,11 +279,20 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
     // update all the balances here
   }
 
-  private def balanceSell(qty: Double, atPrice: Double) = {
+  private def balanceSell(qty: Double, atPrice: Double, name: String) = {
     // ##Simulated case
     val totalSale = atPrice * qty.toDouble
 
-    val summary = s"sold at: ${atPrice} units sold: $qty total: ${Util.roundUpPrecision8(totalSale)}"
+    val condition = myTrade.stat.soldCondition.getOrElse("")
+
+    val summary = s"${myTrade.info.marketName} sold ${totalSale} BTC at $atPrice on $name condition ${condition}"
+    bagel.findUserDevices(trade.userId).map { devices =>
+      devices.foreach { d =>
+        val token = d.deviceToken
+        mediator ! Publish("ApplePushNotification", ApplePushNotification(token, summary))
+      }
+    }
+
     val history = TradeHistory.createInstance(myTrade.userId, myTrade.id, myTrade.info.exchangeName, myTrade.info.marketName,
       myTrade.info.currency, myTrade.info.currencyLong, qty, myTrade.info.baseCurrency,
       myTrade.info.baseCurrencyLong, totalSale, TradeAction.Sell, atPrice, atPrice, s"Sell ${myTrade.info.currency}", summary

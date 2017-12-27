@@ -10,13 +10,13 @@ import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 import scala.concurrent.ExecutionContext
 
 object TrailingStopLossActor {
-  def props(action: TradeAction.Value, trail: TrailingStop) (implicit context: ExecutionContext) =
-    Props(new TrailingStopLossActor(action, trail))
+  def props(action: TradeAction.Value, trail: TrailingStop, name: String) (implicit context: ExecutionContext) =
+    Props(new TrailingStopLossActor(action, trail, name))
 
   case class TrailingStop(userId: UUID, tradeId: UUID, marketName: String, percent: Double, refPrice: Double)
 }
 
-class TrailingStopLossActor(action: TradeAction.Value, trail: TrailingStop) extends Actor with ActorLogging{
+class TrailingStopLossActor(action: TradeAction.Value, trail: TrailingStop, name: String) extends Actor with ActorLogging{
   import TradeActor._
 
   private var ceilingPrice: Double = trail.refPrice
@@ -46,7 +46,7 @@ class TrailingStopLossActor(action: TradeAction.Value, trail: TrailingStop) exte
       log.info(s"new ceiling ${price}")
       ceilingPrice = price
     } else if (price <= triggerPrice) {
-      context.parent ! Trigger(action, price, s"TrailingStop: ceiling - $ceilingPrice trigger - $triggerPrice last - $price")
+      context.parent ! Trigger(action, price, s"TrailingStop triggered at $triggerPrice", name)
       self ! PoisonPill
     }
   }
