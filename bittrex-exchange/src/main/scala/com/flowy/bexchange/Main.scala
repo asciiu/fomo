@@ -7,9 +7,11 @@ import com.flowy.cache.CacheService
 import com.flowy.common.utils.ServerConfig
 import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
 import com.flowy.common.database.postgres.{SqlMarketUpdateDao, SqlTheEverythingBagelDao}
+import com.flowy.notification.NotificationService
 import com.typesafe.config.ConfigFactory
 import com.flowy.trailstop.TrailingStopLossService
 import redis.RedisClient
+
 import scala.concurrent.ExecutionContext
 
 
@@ -36,4 +38,5 @@ object Main extends App {
   system.actorOf(BittrexSignalrActor.props(marketUpdateDao), name = "bfeed")
   system.actorOf(CacheService.props(bagel, redis), name = "cache")
   system.actorOf(Props[TrailingStopLossService], name = "trailstop")
+  system.actorOf(NotificationService.props(config), name = "notification")
 }

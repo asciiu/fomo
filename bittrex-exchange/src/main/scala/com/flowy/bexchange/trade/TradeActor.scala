@@ -7,8 +7,11 @@ import com.flowy.common.models._
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Publish
 import com.flowy.bexchange.trade.TrailingStopLossActor.TrailingStop
 import com.flowy.common.Util
+import com.flowy.notification.NotificationService.ApplePushNotification
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,6 +43,8 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
 
   import scala.reflect.runtime.currentMirror
 
+  val mediator = DistributedPubSub(context.system).mediator
+
   implicit val akkaSystem = context.system
 
   private var myTrade = trade
@@ -50,6 +55,12 @@ class TradeActor(trade: Trade, bagel: TheEverythingBagelDao) extends Actor
   private val profitConditions = scala.collection.mutable.ListBuffer[ActorRef]()
 
   override def preStart() = {
+    bagel.findUserDevices(trade.userId).map { devices =>
+      devices.foreach { d =>
+        val token = d.deviceToken
+        mediator ! Publish("ApplePushNotification", ApplePushNotification(token, "Trade started!"))
+      }
+    }
     loadConditions()
   }
 

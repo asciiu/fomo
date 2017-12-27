@@ -15,6 +15,7 @@ import akka.actor._
 
 trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 
+  def bittrexService: ActorRef
   def userService: UserService
   def userKeyService: UserKeyService
   def system: ActorSystem
@@ -26,11 +27,30 @@ trait SocketRoutes extends RoutesSupport with StrictLogging with SessionSupport 
 
   def marketUpdates =
     path("markets") {
-      get {
-        handleWebSocketMessages(subscribe)
-      }
+      marketSocket
+      //marketPrice
     }
 
+  //def marketPrice = {
+  //  get {
+  //    parameters('marketName.?, 'exchangeName.?) { (marketNameOpt, exchangeNameOpt) =>
+  //      userFromSession { user =>
+  //        onSuccess(bagel.findTradeHistoryByUserId(user.id, exchangeNameOpt, marketNameOpt).mapTo[Seq[TradeHistory]]) {
+  //          case history: Seq[TradeHistory] =>
+  //            complete(JSendResponse(JsonStatus.Success, "", history.asJson))
+  //          case _ =>
+  //            complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trade history not found", Json.Null))
+  //        }
+  //      }
+  //    }
+  //  }
+  //}
+
+  def marketSocket = {
+    get {
+      handleWebSocketMessages(subscribe)
+    }
+  }
 
   def subscribe(): Flow[Message, Message, NotUsed] = {
     // new connection - new user actor

@@ -197,7 +197,8 @@ lazy val bexchange: Project = (project in file("bittrex-exchange"))
   .settings(
     assemblyJarName in assembly := "bexchange.jar",
     name := "bittrex-exchange",
-    libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
+    libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson),
+    javaOptions in reStart ++= addAlpnPath((managedClasspath in Runtime).value)
   )
   .dependsOn(cache, common, trailstop, bfeed, notification)
 
@@ -236,7 +237,7 @@ lazy val trailstop: Project = (project in file("trailing-stop"))
   .dependsOn(common)
 
 /****************************************************************
-  * trailing stop
+  * notification
   ***************************************************************/
 lazy val notification: Project = (project in file("notification"))
   .settings(commonSettings: _*)
