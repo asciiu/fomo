@@ -42,7 +42,7 @@ trait LookupRoutes extends RoutesSupport with StrictLogging with SessionSupport 
       get {
         parameters('marketName.*) { marketNames =>
           userFromSession { user =>
-            onSuccess((bittrexService ? GetPrices(marketNames.toSeq)) (1.seconds).mapTo[Seq[PriceCheck]]) {
+            onSuccess((bittrexService ? GetPrices(marketNames.toSeq))(1.seconds).mapTo[Seq[PriceCheck]]) {
               case prices: Seq[PriceCheck] =>
                 complete(JSendResponse(JsonStatus.Success, "", prices.asJson))
               case _ =>
