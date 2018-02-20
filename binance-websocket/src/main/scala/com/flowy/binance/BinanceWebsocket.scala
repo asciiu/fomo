@@ -8,10 +8,10 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.{Message, TextMessage, WebSocketRequest}
 import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import com.flowy.common.database.MarketUpdateDao
+import io.circe.generic.auto._, io.circe.parser._
 import com.flowy.common.models.MarketStructures.MarketUpdate
 
 import scala.concurrent.duration._
@@ -32,8 +32,7 @@ object BinanceWebsocket {
 class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
                        (implicit executionContext: ExecutionContext,
                         system: ActorSystem,
-                        materializer: ActorMaterializer) extends Directives
-  with BinanceJsonSupport with Actor with ActorLogging {
+                        materializer: ActorMaterializer) extends Directives with Actor with ActorLogging {
 
   import BinanceWebsocket._
   import akka.cluster.pubsub.DistributedPubSubMediator.Publish
@@ -41,7 +40,7 @@ class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
   val cluster = Cluster(context.system)
 
   //val signalRServiceUrl = "http://socket.bittrex.com/signalr"
-  val websocketUrl = "wss://stream.binance.com"
+  val websocketUrl = "wss://stream.binance.com:9443/ws/!ticker@arr"
 
   val mediator = DistributedPubSub(context.system).mediator
 
@@ -51,7 +50,7 @@ class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
     Sink.foreach[Message] {
       case TextMessage.Streamed(source) =>
         source.runFold("")(_ + _)(materializer).map{ str =>
-          //publishSummary(str)
+          publishSummary(str)
         }(materializer.executionContext)
 
       case TextMessage.Strict(str) =>
@@ -84,45 +83,46 @@ class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
   // implements empty receive for actor
   def receive = {
     case ConnectFeed =>
-      log.debug("connect to binance here!")
-      //checkConnected()
+      checkConnected()
 
     case x =>
       log.warning(s"received unknown $x")
   }
 
-  //private def checkConnected() = {
-  //  if (!connected) {
-  //    log.info("connecting to resident bittrex feed")
-  //    val (upgradeResponse, closed) = Http().singleWebSocketRequest(
-  //      WebSocketRequest("ws://localhost:9090"),
-  //      flow)
+  private def checkConnected() = {
+    if (!connected) {
+      log.info(s"connecting to Binance websocket $websocketUrl")
+      val (upgradeResponse, closed) = Http().singleWebSocketRequest(
+        WebSocketRequest(websocketUrl),
+        flow)
 
-  //    closed.future.map { c =>
-  //      log.info("not connected retrying in 10 seconds")
-  //      system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
-  //      connected = false
-  //    }
+      closed.future.map { c =>
+        log.info("not connected to Binance, retrying in 10 seconds")
+        system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
+        connected = false
+      }
 
-  //    upgradeResponse.map { r =>
-  //      if (r.response.status == StatusCodes.SwitchingProtocols) {
-  //        log.info("connected to resident bittrex feed")
-  //        connected = true
-  //      }
-  //    }
-  //  }
-  //}
+      upgradeResponse.map { r =>
+        if (r.response.status == StatusCodes.SwitchingProtocols) {
+          log.info("connected to Binance stream")
+          connected = true
+        }
+      }
+    }
+  }
 
 
-  //private def publishSummary(json: String): Unit = {
-  //  Unmarshal(json).to[BittrexSummary].map { summary =>
-  //    summary.A.foreach { nonce =>
-  //      marketUpdateDao.insert(nonce.Deltas)
+  private def publishSummary(json: String): Unit = {
+    // decode json string using circe
+    val decodedFoo = decode[List[Binance24HrTicker]](json)
 
-  //      publishDeltas(nonce.Deltas)
-  //    }
-  //  }
-  //}
+    decodedFoo match {
+      case Left(x) =>
+        log.info("what the fuck!")
+      case Right(list) =>
+        list.foreach ( println )
+    }
+  }
 
   //private def publishSummary(summary: List[BittrexNonce]) = {
   //  summary.foreach{ s =>
