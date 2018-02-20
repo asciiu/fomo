@@ -110,13 +110,13 @@ class BittrexSignalrActor(marketUpdateDao: MarketUpdateDao)
 
   private def checkConnected() = {
     if (!connected) {
-      log.info("connecting to resident bittrex feed")
+      //log.info("connecting to resident bittrex feed")
       val (upgradeResponse, closed) = Http().singleWebSocketRequest(
         WebSocketRequest("ws://localhost:9090"),
         flow)
 
       closed.future.map { c =>
-        log.info("not connected retrying in 10 seconds")
+        //log.info("not connected retrying in 10 seconds")
         system.scheduler.scheduleOnce(10 seconds, self, ConnectFeed)
         connected = false
       }

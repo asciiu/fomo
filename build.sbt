@@ -215,6 +215,20 @@ lazy val bfeed: Project = (project in file("bittrex-websocket"))
   )
   .dependsOn(common)
 
+
+/****************************************************************
+  * this is the bittrex signalr client
+  ***************************************************************/
+lazy val binance_websocket: Project = (project in file("binance-websocket"))
+  .settings(commonSettings: _*)
+  .settings(
+    assemblyJarName in assembly := "binance-websocket.jar",
+    name := "binance-websocket",
+    libraryDependencies ++= akkaClusterStack ++ Seq(sprayJson)
+  )
+  .dependsOn(common)
+
+
 lazy val cache: Project = (project in file("cache-service"))
   .settings(commonSettings: _*)
   .settings(
