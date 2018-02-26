@@ -1,0 +1,30 @@
+
+-- this is the new trade system will represent trades
+CREATE TABLE "binance_24hr_tickers" (
+ "id" SERIAL,
+ "event_type" text NOT NULL,
+ "event_time" bigint NOT NULL,
+ "symbol" text NOT NULL,
+ "price_change" text NOT NULL,
+ "price_change_percent" text NOT NULL,
+ "weighted_average_price" text NOT NULL,
+ "previous_day_close" text NOT NULL,
+ "current_day_close" text NOT NULL,
+ "close_trade_qty" text NOT NULL,
+ "best_bid_price" text NOT NULL,
+ "best_bid_qty" text NOT NULL,
+ "best_ask_price" text NOT NULL,
+ "best_ask_qty" text NOT NULL,
+ "open" text NOT NULL,
+ "high" text NOT NULL,
+ "low" text NOT NULL,
+ "base_volume" text NOT NULL,
+ "volume" text NOT NULL,
+ "open_time" bigint NOT NULL,
+ "close_time" bigint NOT NULL,
+ "first_trade_id" bigint NOT NULL,
+ "last_trade_id" bigint NOT NULL,
+ "total_trades" bigint NOT NULL,
+ "created_on" TIMESTAMP DEFAULT now(),
+ "updated_on" TIMESTAMP default current_timestamp
+);

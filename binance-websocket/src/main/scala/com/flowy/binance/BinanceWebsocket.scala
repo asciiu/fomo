@@ -20,16 +20,16 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 
 object BinanceWebsocket {
 
-  def props(marketUpdateDao: MarketUpdateDao)(implicit context: ExecutionContext,
+  def props(dao: SqlBinanceDao)(implicit context: ExecutionContext,
                                               system: ActorSystem,
                                               materializer: ActorMaterializer): Props =
-    Props(new BinanceWebsocket(marketUpdateDao))
+    Props(new BinanceWebsocket(dao))
 
   object ConnectFeed
 }
 
 
-class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
+class BinanceWebsocket(dao: SqlBinanceDao)
                        (implicit executionContext: ExecutionContext,
                         system: ActorSystem,
                         materializer: ActorMaterializer) extends Directives with Actor with ActorLogging {
@@ -114,13 +114,13 @@ class BinanceWebsocket(marketUpdateDao: MarketUpdateDao)
 
   private def publishSummary(json: String): Unit = {
     // decode json string using circe
-    val decodedFoo = decode[List[Binance24HrTicker]](json)
+    val decoded = decode[List[Binance24HrTicker]](json)
 
-    decodedFoo match {
+    decoded match {
       case Left(x) =>
         log.info("what the fuck!")
       case Right(list) =>
-        list.foreach ( println )
+        dao.insert(list)
     }
   }
 

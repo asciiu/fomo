@@ -25,7 +25,7 @@ object Main extends App {
 
   lazy val sqlDatabase = SqlDatabase.create(config)
   lazy val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
-  lazy val marketUpdateDao = new SqlMarketUpdateDao(sqlDatabase)
+  lazy val binanceDao = new SqlBinanceDao(sqlDatabase)
 
-  val bittrexFeed = system.actorOf(BinanceWebsocket.props(marketUpdateDao), name = "binance-websocket")
+  val bittrexFeed = system.actorOf(BinanceWebsocket.props(binanceDao), name = "binance-websocket")
 }

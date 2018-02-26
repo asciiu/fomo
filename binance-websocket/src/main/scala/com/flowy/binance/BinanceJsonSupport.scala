@@ -37,3 +37,30 @@ case class Binance24HrTicker(
   L: Long,     // 18150,          Last trade Id
   n: Long      // 18151           Total number of trades
  )
+
+case class BinanceTicker(frag1: BinanceTickerFrag1, frag2: BinanceTickerFrag2)
+
+case class BinanceTickerFrag1(eventType: String,
+                              eventTime: Long,
+                              symbol: String)
+
+case class BinanceTickerFrag2(priceChange: String,
+                              priceChangePercent: String,
+                              weightedAveragePrice: String,
+                              previousDayClose: String,
+                              currentDayClose: String,
+                              closeTradeQty: String,
+                              bestBidPrice: String,
+                              bestBidQty: String,
+                              bestAskPrice: String,
+                              bestAskQty: String,
+                              open: String,
+                              high: String,
+                              low: String,
+                              baseVolume: String,
+                              volume: String,
+                              openTime: Long,
+                              closeTime: Long,
+                              firstTradeId: Long,
+                              lastTradeId: Long,
+                              totalTrades: Long)
