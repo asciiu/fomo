@@ -25,7 +25,7 @@ trait SqlUserKeySchema {
     // format: OFF
     def id              = column[UUID]("id", O.PrimaryKey)
     def userId          = column[UUID]("user_id")
-    def exchange        = column[Exchange.Value]("exchange")
+    def exchange        = column[Exchange.Value]("exchange_name")
     def key             = column[String]("api_key")
     def secret          = column[String]("secret")
     def description     = column[String]("description")

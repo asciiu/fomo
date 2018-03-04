@@ -105,7 +105,7 @@ lazy val commonSettings = Seq(
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   libraryDependencies ++= commonDependencies,
-  javaOptions in Test += "-Dconfig.file=resources/test.conf",
+  javaOptions in Test += "-Dconfig.file=src/test/resources/test.conf",
   assemblyMergeStrategy in assembly := {
     case PathList("META-INF", xs @ _*) => MergeStrategy.discard
     case PathList("application.conf") => MergeStrategy.first

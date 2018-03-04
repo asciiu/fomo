@@ -2,6 +2,8 @@ package com.flowy.common.models
 
 import java.time.{Instant, OffsetDateTime, ZoneOffset}
 import java.util.UUID
+
+import com.flowy.common.models.User.encryptPassword
 import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.semiauto._
 
@@ -10,6 +12,8 @@ object Exchange extends Enumeration {
   val Bittrex   = Value("bittrex")
   val GDax      = Value("gdax")
   val Poloniex  = Value("poloniex")
+  val Binance   = Value("binance")
+  val Test      = Value("test")
 }
 
 object ApiKeyStatus extends Enumeration {
@@ -54,6 +58,43 @@ case class Order(id: UUID,
                  conditions: Json,
                  createdOn: OffsetDateTime,
                  updatedOn: OffsetDateTime)
+
+object Order {
+  def withRandomUUID(userId: UUID,
+                     apiKeyId: UUID,
+                     exchangeName: String,
+                     exchangeOrderId: String,
+                     exchangeMarketName: String,
+                     marketName: String,
+                     side: OrderSide.Value,
+                     otype: OrderType.Value,
+                     price: BigDecimal,
+                     qty: BigDecimal,
+                     qtyRemaining: BigDecimal,
+                     status: OrderStatus.Value,
+                     conditions: Json) = {
+
+    val now = OffsetDateTime.now()
+
+    Order(
+      UUID.randomUUID(),
+      userId,
+      apiKeyId,
+      exchangeName,
+      exchangeOrderId,
+      exchangeMarketName,
+      marketName,
+      side,
+      otype,
+      price,
+      qty,
+      qtyRemaining,
+      status,
+      conditions,
+      now,
+      now)
+  }
+}
 
 case class OrderStat(boughtTime: Option[OffsetDateTime] = None,
                      boughtPrice: Option[Double] = None,

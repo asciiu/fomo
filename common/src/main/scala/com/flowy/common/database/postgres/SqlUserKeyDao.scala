@@ -26,7 +26,10 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
     db.run(query.asTry).map { result =>
       result match {
         case Success(count) if count > 0 => Some(key)
-        case _ => None
+        case x =>
+          println("HELLO")
+          println(x)
+          None
       }
     }
   }
