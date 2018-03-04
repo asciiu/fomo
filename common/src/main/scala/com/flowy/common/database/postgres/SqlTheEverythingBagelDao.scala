@@ -20,7 +20,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     with SqlUserDeviceSchema
     with SqlUserbalance
     with SqlMarket
-    with SqlTradeHistory {
+    with SqlTradeHistory
+    with SqlOrder {
 
   import database._
   import database.driver.api._
@@ -66,6 +67,16 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(updatedBal).map {
       case None => Some(balance)
       case _ => None
+    }
+  }
+
+  /*******************************************************************************************
+    * Order Stuff
+    *****************************************************************************************/
+  def insertOrder(order: Order): Future[Int] = {
+    db.run(orders += order).andThen {
+        case Success(count) => count
+        case Failure(e) => 0
     }
   }
 

@@ -97,6 +97,7 @@ lazy val updateNpm = taskKey[Unit]("Update npm")
 lazy val npmTask   = inputKey[Unit]("Run npm with arguments")
 
 lazy val commonSettings = Seq(
+  fork := true,
   organization := "com.flowy",
   version := "0.0.1-SNAPSHOT",
   scalaVersion := scalaVer,
@@ -104,6 +105,7 @@ lazy val commonSettings = Seq(
   crossVersion := CrossVersion.binary,
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   libraryDependencies ++= commonDependencies,
+  javaOptions in Test += "-Dconfig.file=resources/test.conf",
   assemblyMergeStrategy in assembly := {
     case PathList("META-INF", xs @ _*) => MergeStrategy.discard
     case PathList("application.conf") => MergeStrategy.first
@@ -288,3 +290,4 @@ def addAlpnPath(attList : Keys.Classpath): Seq[String] = {
 
 RenameProject.settings
 fork := true
+

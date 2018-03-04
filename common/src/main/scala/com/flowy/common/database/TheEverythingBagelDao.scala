@@ -17,6 +17,9 @@ trait TheEverythingBagelDao {
   def findBalance(userId: UUID, apiKey: UUID, currency: String): Future[Option[Balance]]
   def updateBalance(balance: Balance): Future[Option[Balance]]
 
+  // orders
+  def insertOrder(order: Order): Future[Int]
+
   // manage market info
   def insert(market: Market): Future[Int]
   def findAllMarkets(exchange: Exchange.Value): Future[Seq[Market]]
