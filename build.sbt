@@ -43,7 +43,7 @@ val slickspray  = "com.github.tminglei" %% "slick-pg_spray-json" % "0.15.4"
 val slickgen    = "com.typesafe.slick" %% "slick-codegen" % slickVersion
 val h2          = "com.h2database" % "h2" % "1.4.192" //watch out! 1.4.190 is beta
 val postgres    = "org.postgresql" % "postgresql" % "42.1.4"
-val flyway      = "org.flywaydb" % "flyway-core" % "4.2.0"
+val flyway      = "org.flywaydb" % "flyway-core" % "5.0.7"
 val slickStack  = Seq(slick, h2, postgres, slickHikari, flyway, slickpg, slickpgc, slickpgd, slickgen, slickspray)
 val redisScala  = "com.github.etaty" %% "rediscala" % "1.8.0"
 

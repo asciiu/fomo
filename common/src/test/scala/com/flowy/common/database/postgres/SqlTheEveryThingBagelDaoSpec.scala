@@ -30,6 +30,8 @@ class SqlTheEveryThingBagelDaoSpec extends FlatSpec  with BeforeAndAfterAll
 
   override protected def afterAll() {
     super.afterAll()
+    //sqlDatabase.clean()
+    //sqlDatabase.
     //sqlDatabase.db.run(sqlu"DROP ALL OBJECTS").futureValue
     sqlDatabase.close()
   }

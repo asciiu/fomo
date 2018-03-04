@@ -18,6 +18,7 @@ case class SqlDatabase(
 ) {
 
   import driver.api._
+  private val flyway = new Flyway()
 
   implicit val offsetDateTimeColumnType = MappedColumnType.base[OffsetDateTime, java.sql.Timestamp](
     dt => new java.sql.Timestamp(dt.toInstant.toEpochMilli),
@@ -25,9 +26,12 @@ case class SqlDatabase(
   )
 
   def updateSchema() {
-    val flyway = new Flyway()
     flyway.setDataSource(connectionString.url, connectionString.username, connectionString.password)
     flyway.migrate()
+  }
+
+  def clean(): Unit = {
+    flyway.clean()
   }
 
   def close() {
