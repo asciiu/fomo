@@ -8,15 +8,12 @@ import com.flowy.common.slick.MyPostgresDriver.api._
 
 trait SqlSchema {
   protected val database: SqlDatabase
-
-  import database._
-
-  implicit val exMapper = MappedColumnType.base[Exchange.Value, String](
-    { os => os.toString }, { str => Exchange.withName(str) }
-  )
 }
 
 trait SqlUserbalance extends SqlSchema {
+  import database._
+  import com.flowy.common.slick.MyPostgresDriver.api._
+
   protected val balances = TableQuery[UserBalances]
 
   class UserBalances(tag: Tag) extends Table[Balance](tag, "user_balances") {

@@ -8,6 +8,7 @@ import com.flowy.common.slick.MyPostgresDriver.api._
 trait SqlMarket extends SqlSchema {
 
   protected val markets = TableQuery[Markets]
+  import database._
 
   class Markets(tag: Tag) extends Table[Market](tag, "markets") {
     def id = column[UUID]("id", O.PrimaryKey)

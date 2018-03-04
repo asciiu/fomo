@@ -8,8 +8,7 @@ import com.flowy.common.utils.sql.SqlDatabase
 import io.circe.Json
 
 
-trait SqlOrder {
-  protected val database: SqlDatabase
+trait SqlOrder extends SqlSchema {
 
   import com.flowy.common.slick.MyPostgresDriver.api._
   import database._
@@ -32,7 +31,7 @@ trait SqlOrder {
     def id = column[UUID]("id", O.PrimaryKey)
     def userId = column[UUID]("user_id")
     def apiKeyId = column[UUID]("user_api_key_id")
-    def exchangeName = column[String]("exchange_name")
+    def exchangeName = column[Exchange.Value]("exchange_name")
     def exchangeOrderId = column[String]("exchange_order_id")
     def exchangeMarketName = column[String]("exchange_market_name")
     def marketName = column[String]("market_name")

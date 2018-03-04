@@ -8,7 +8,6 @@ import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.database.postgres.schema._
 import com.flowy.common.models.User.UserId
 import com.flowy.common.models._
-import com.flowy.common.utils.FutureHelpers._
 
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}

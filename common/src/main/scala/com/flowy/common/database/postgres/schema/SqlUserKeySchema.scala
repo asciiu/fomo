@@ -6,17 +6,12 @@ import java.util.UUID
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
 import com.flowy.common.utils.sql.SqlDatabase
 
-trait SqlUserKeySchema {
-  protected val database: SqlDatabase
-
+trait SqlUserKeySchema extends SqlSchema {
   import database._
-  import database.driver.api._
+  import com.flowy.common.slick.MyPostgresDriver.api._
 
   protected val userKeys = TableQuery[UserKeys]
 
-  implicit val exchangeStatusMapper = MappedColumnType.base[Exchange.Value, String](
-    { os => os.toString }, { str => Exchange.withName(str) }
-  )
   implicit val apiKeyStatusMapper = MappedColumnType.base[ApiKeyStatus.Value, String](
     { os => os.toString }, { str => ApiKeyStatus.withName(str) }
   )

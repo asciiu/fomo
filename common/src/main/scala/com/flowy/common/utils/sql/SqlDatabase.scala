@@ -4,6 +4,7 @@ import java.net.URI
 import java.time.{OffsetDateTime, ZoneOffset}
 
 import DatabaseConfig._
+import com.flowy.common.models.Exchange
 import com.typesafe.config.ConfigValueFactory._
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.StrictLogging
@@ -23,6 +24,10 @@ case class SqlDatabase(
   implicit val offsetDateTimeColumnType = MappedColumnType.base[OffsetDateTime, java.sql.Timestamp](
     dt => new java.sql.Timestamp(dt.toInstant.toEpochMilli),
     t => t.toInstant.atOffset(ZoneOffset.UTC)
+  )
+
+  implicit val exchangeMapper = MappedColumnType.base[Exchange.Value, String](
+    { os => os.toString }, { str => Exchange.withName(str) }
   )
 
   def updateSchema() {
