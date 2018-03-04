@@ -6,7 +6,9 @@ import java.util.UUID
 import com.flowy.common.utils.sql.SqlDatabase
 import com.flowy.common.database.TheEverythingBagelDao
 import com.flowy.common.database.postgres.schema._
+import com.flowy.common.models.User.UserId
 import com.flowy.common.models._
+import com.flowy.common.utils.FutureHelpers._
 
 import scala.concurrent.{ExecutionContext, Future}
 import slick.jdbc.{PositionedParameters, SetParameter}
@@ -21,7 +23,8 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     with SqlUserbalance
     with SqlMarket
     with SqlTradeHistory
-    with SqlOrder {
+    with SqlOrder
+    with SqlUserSchema {
 
   import database._
   import database.driver.api._
@@ -228,4 +231,28 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
 
     db.run(query.result)
   }
+
+
+  /*******************************************************************************************
+    * User
+    *****************************************************************************************/
+  private def findOneWhere(condition: Users => Rep[Boolean]) = db.run(users.filter(condition).result.headOption)
+
+  def add(user: User): Future[Int] = db.run(users += user)
+
+  def findById(userId: UserId): Future[Option[User]] = findOneWhere(_.id === userId)
+
+  def findBasicDataById(userId: UserId): Future[Option[UserData]] =
+    db.run(users.filter(_.id === userId).result.headOption).map{
+      case Some(user) => Some(UserData.fromUser(user))
+      case None => None
+    }
+
+  def findByEmail(email: String): Future[Option[User]] = findOneWhere(_.email.toLowerCase === email.toLowerCase)
+
+  def changePassword(userId: UserId, newPassword: String): Future[Int] =
+    db.run(users.filter(_.id === userId).map(_.password).update(newPassword))
+
+  def changeEmail(userId: UserId, newEmail: String): Future[Int] =
+    db.run(users.filter(_.id === userId).map(_.email).update(newEmail))
 }

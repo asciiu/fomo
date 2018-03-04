@@ -1,14 +1,12 @@
-package com.flowy.fomoapi.database.postgres.schema
+package com.flowy.common.database.postgres.schema
 
 import java.time.OffsetDateTime
 import java.util.UUID
 
+import com.flowy.common.models.User
 import com.flowy.common.utils.sql.SqlDatabase
-import com.flowy.common.models.{User, UserData}
-
 
 /**
-  * TODO: deprecate this class and move all references to common SqlUserSchema
   * The schemas are in separate traits, so that if your DAO would require to access (e.g. join) multiple tables,
   * you can just mix in the necessary traits and have the `TableQuery` definitions available.
   */

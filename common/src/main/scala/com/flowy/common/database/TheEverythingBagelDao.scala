@@ -1,10 +1,9 @@
 package com.flowy.common.database
 
 import com.flowy.common.models._
+import com.flowy.common.models.User.UserId
 import java.util.UUID
-
 import scala.concurrent.Future
-
 
 trait TheEverythingBagelDao {
 
@@ -46,4 +45,12 @@ trait TheEverythingBagelDao {
   def insert(event: TradeHistory): Future[Int]
   def findTradeHistoryByUserId(userId: UUID): Future[Seq[TradeHistory]]
   def findTradeHistoryByUserId(userId: UUID, exchangeNameOpt: Option[String], marketNameOpt: Option[String]): Future[Seq[TradeHistory]]
+
+  // users
+  def add(user: User): Future[Int]
+  def findById(userId: UserId): Future[Option[User]]
+  def findBasicDataById(userId: UserId): Future[Option[UserData]]
+  def findByEmail(email: String): Future[Option[User]]
+  def changePassword(userId: UserId, newPassword: String): Future[Int]
+  def changeEmail(userId: UserId, newEmail: String): Future[Int]
 }

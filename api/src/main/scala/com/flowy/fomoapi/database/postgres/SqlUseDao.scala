@@ -1,11 +1,11 @@
 package com.flowy.fomoapi.database.postgres
 
+import com.flowy.common.models.User.UserId
 import com.flowy.common.utils.FutureHelpers._
 import com.flowy.common.utils.sql.SqlDatabase
-import com.softwaremill.bootzooka.user._
 import com.flowy.fomoapi.database.dao.UserDao
 import com.flowy.fomoapi.database.postgres.schema.SqlUserSchema
-import com.flowy.common.models.{UserData, User}
+import com.flowy.common.models.{User, UserData}
 
 import scala.concurrent.{ExecutionContext, Future}
 

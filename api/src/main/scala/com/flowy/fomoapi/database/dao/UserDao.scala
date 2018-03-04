@@ -5,6 +5,7 @@ import com.flowy.common.models.{UserData, User}
 
 import scala.concurrent.Future
 
+// TODO depcreate this stuff
 trait UserDao {
    def add(user: User): Future[Unit]
    def findById(userId: UserId): Future[Option[User]]
