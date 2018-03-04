@@ -18,6 +18,51 @@ object ApiKeyStatus extends Enumeration {
   val Invalid    = Value("invalid")
 }
 
+object OrderSide extends Enumeration {
+  val Buy      = Value("buy")
+  val Sell     = Value("sell")
+}
+
+object OrderStatus extends Enumeration {
+  val Draft     = Value("draft")
+  val Open      = Value("open")
+  val Partial   = Value("partially_filled")
+  val Pending   = Value("pending")
+  val Filled    = Value("filled")
+  val Cancelled = Value("cancelled")
+}
+
+object OrderType extends Enumeration {
+  val Limit      = Value("limit")
+  val Market     = Value("market")
+  val Stop       = Value("stop")
+}
+
+case class Order(id: UUID,
+                 userId: UUID,
+                 apiKeyId: UUID,
+                 exchangeName: String,
+                 exchangeOrderId: String,
+                 exchangeMarketName: String,
+                 marketName: String,
+                 side: OrderSide.Value,
+                 otype: OrderType.Value,
+                 price: BigDecimal,
+                 qty: BigDecimal,
+                 qtyRemaining: BigDecimal,
+                 status: OrderStatus.Value,
+                 conditions: Json,
+                 createdOn: OffsetDateTime,
+                 updatedOn: OffsetDateTime)
+
+case class OrderStat(boughtTime: Option[OffsetDateTime] = None,
+                     boughtPrice: Option[Double] = None,
+                     boughtCondition: Option[String] = None,
+                     soldTime: Option[OffsetDateTime] = None,
+                     soldPrice: Option[Double] = None,
+                     soldCondition: Option[String] = None,
+                     currencyQuantity: Option[Double] = None)
+
 object TradeStatus extends Enumeration {
   val Pending    = Value("pending")
   val Bought     = Value("bought")
@@ -76,6 +121,7 @@ case class MarketInfo(exchangeName: String,
                       currencyLong: String,
                       baseCurrency: String,
                       baseCurrencyLong: String)
+
 
 case class TradeStat(boughtTime: Option[OffsetDateTime] = None,
                      boughtPrice: Option[Double] = None,

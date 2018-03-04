@@ -7,23 +7,26 @@ CREATE TABLE "orders" (
  "exchange_name" text NOT NULL,
  "exchange_order_id" text NOT NULL,
  "exchange_market_name" text NOT NULL,
- "order_type" text NOT NULL,
+ "market_name" text NOT NULL,
+ "side" text NOT NULL,
+ "type" text NOT NULL,
  "price" bigint NOT NULL,
  "quantity" bigint NOT NULL,
  "quantity_remaining" bigint NOT NULL,
- "side" text NOT NULL,
  "status" text NOT NULL,
+ "conditions" jsonb NOT NULL,
  "created_on" TIMESTAMP DEFAULT now(),
- "updated_on" TIMESTAMP DEFAULT now(),
- "buy_time" timestamp,
- "buy_price" bigint,
- "buy_condition" text,
- "buy_conditions" text NOT NULL,
- "sell_time" timestamp,
- "sell_price" bigint,
- "sell_condition" text,
- "stop_loss_conditions" text,
- "take_profit_conditions" text
+ "updated_on" TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE "order_fills" (
+  "id" UUID PRIMARY KEY NOT NULL,
+  "order_id" UUID NOT NULL,
+  "condition" jsonb NOT NULL,
+  "price" bigint NOT NULL,
+  "quantity" bigint NOT NULL,
+  "created_on" TIMESTAMP DEFAULT now(),
+  "updated_on" TIMESTAMP DEFAULT now()
 );
 
 ALTER TABLE "orders" ADD CONSTRAINT "order_user_fk"
@@ -31,3 +34,6 @@ ALTER TABLE "orders" ADD CONSTRAINT "order_user_fk"
 
 ALTER TABLE "orders" ADD CONSTRAINT "order_api_key_fk"
   FOREIGN KEY("user_api_key_id") REFERENCES "user_api_keys"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "order_fills" ADD CONSTRAINT "order_fill_order_fk"
+  FOREIGN KEY("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
