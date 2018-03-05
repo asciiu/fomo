@@ -9,6 +9,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
 import com.flowy.common.models._
 import io.circe.Json
 import slick.jdbc.PostgresProfile.api._
+import io.circe.parser._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,8 +43,10 @@ class SqlTheEveryThingBagelDaoSpec extends FlatSpec  with BeforeAndAfterAll
   "The bagel dao" should "insert a record" in {
     val user = User.withRandomUUID("test@test", "Test", "One", "password", "pepper")
     val userApiKey = UserKey.withRandomUUID(user.id, Exchange.Test, "victoria", "secret", "model test", ApiKeyStatus.Verified)
-    val conditions = Json.fromString(s"""{"buyConditions": "price < 2.0"}""")
+    val conditions = parse("""{"buyConditions": "price < 2.0"}""").getOrElse(Json.Null)
     val order = Order.withRandomUUID(user.id, userApiKey.id, Exchange.Test, "123", "test", "test", OrderSide.Buy, OrderType.Limit, 0.01,100, 0, OrderStatus.Open, conditions)
+    val condition = parse(""""price < 2.0"""").getOrElse(Json.Null)
+    val orderFill = OrderFill.create(order.id, condition, 1.2, 2)
 
     val fu1 = bagel.add(user)
 
@@ -56,6 +59,10 @@ class SqlTheEveryThingBagelDaoSpec extends FlatSpec  with BeforeAndAfterAll
     val fu3 = bagel.insertOrder(order)
 
     Await.result(fu3, Duration.Inf)
+
+    val fu4 = bagel.insert(orderFill)
+
+    Await.result(fu4, Duration.Inf)
 
     assert(true === true)
   }

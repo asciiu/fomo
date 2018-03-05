@@ -19,6 +19,9 @@ trait TheEverythingBagelDao {
   // orders
   def insertOrder(order: Order): Future[Int]
 
+  // order fills
+  def insert(orderfill: OrderFill): Future[Int]
+
   // manage market info
   def insert(market: Market): Future[Int]
   def findAllMarkets(exchange: Exchange.Value): Future[Seq[Market]]

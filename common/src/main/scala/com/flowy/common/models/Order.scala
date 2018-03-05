@@ -96,6 +96,23 @@ object Order {
   }
 }
 
+
+case class OrderFill(id: UUID,
+                     orderId: UUID,
+                     condition: Json,
+                     price: BigDecimal,
+                     quantity: BigDecimal,
+                     createdOn: OffsetDateTime,
+                     updatedOn: OffsetDateTime)
+
+object OrderFill {
+
+  def create(orderId: UUID, condition: Json, price: BigDecimal, qty: BigDecimal): OrderFill = {
+    val now = OffsetDateTime.now()
+    OrderFill(UUID.randomUUID(), orderId, condition, price, qty, now, now)
+  }
+}
+
 case class OrderStat(boughtTime: Option[OffsetDateTime] = None,
                      boughtPrice: Option[Double] = None,
                      boughtCondition: Option[String] = None,

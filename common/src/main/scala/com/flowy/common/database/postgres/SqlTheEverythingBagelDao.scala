@@ -23,6 +23,7 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     with SqlMarket
     with SqlTradeHistory
     with SqlOrder
+    with SqlOrderFill
     with SqlUserSchema {
 
   import database._
@@ -79,6 +80,13 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     db.run(orders += order).andThen {
         case Success(count) => count
         case Failure(e) => 0
+    }
+  }
+
+  def insert(of: OrderFill): Future[Int] = {
+    db.run(orderFills += of).andThen {
+      case Success(count) => count
+      case Failure(e) => 0
     }
   }
 

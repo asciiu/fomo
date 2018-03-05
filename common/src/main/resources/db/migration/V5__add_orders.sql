@@ -10,9 +10,9 @@ CREATE TABLE "orders" (
  "market_name" text NOT NULL,
  "side" text NOT NULL,
  "type" text NOT NULL,
- "price" bigint NOT NULL,
- "quantity" bigint NOT NULL,
- "quantity_remaining" bigint NOT NULL,
+ "price" decimal NOT NULL,
+ "quantity" decimal NOT NULL,
+ "quantity_remaining" decimal NOT NULL,
  "status" text NOT NULL,
  "conditions" jsonb NOT NULL,
  "created_on" TIMESTAMP DEFAULT now(),
@@ -23,8 +23,8 @@ CREATE TABLE "order_fills" (
   "id" UUID PRIMARY KEY NOT NULL,
   "order_id" UUID NOT NULL,
   "condition" jsonb NOT NULL,
-  "price" bigint NOT NULL,
-  "quantity" bigint NOT NULL,
+  "price" decimal NOT NULL,
+  "quantity" decimal NOT NULL,
   "created_on" TIMESTAMP DEFAULT now(),
   "updated_on" TIMESTAMP DEFAULT now()
 );
