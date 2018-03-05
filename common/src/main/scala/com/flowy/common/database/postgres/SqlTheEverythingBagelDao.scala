@@ -76,11 +76,14 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
   /*******************************************************************************************
     * Order Stuff
     *****************************************************************************************/
-  def insertOrder(order: Order): Future[Int] = {
+  def insert(order: Order): Future[Int] = {
     db.run(orders += order).andThen {
         case Success(count) => count
         case Failure(e) => 0
     }
+  }
+  def findOrderBy(orderId: UUID): Future[Option[Order]] = {
+    db.run(orders.filter(o => o.id === orderId).result.headOption)
   }
 
   def insert(of: OrderFill): Future[Int] = {
@@ -90,6 +93,9 @@ class SqlTheEverythingBagelDao(protected val database: SqlDatabase)(implicit val
     }
   }
 
+  def findOrderFillBy(orderFillId: UUID): Future[Option[OrderFill]] = {
+    db.run(orderFills.filter(of => of.id === orderFillId).result.headOption)
+  }
 
   /*******************************************************************************************
     * Trade Stuff

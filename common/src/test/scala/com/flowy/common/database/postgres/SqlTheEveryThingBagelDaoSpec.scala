@@ -56,13 +56,21 @@ class SqlTheEveryThingBagelDaoSpec extends FlatSpec  with BeforeAndAfterAll
 
     Await.result(fu2, Duration.Inf)
 
-    val fu3 = bagel.insertOrder(order)
+    val fu3 = bagel.insert(order)
 
     Await.result(fu3, Duration.Inf)
 
     val fu4 = bagel.insert(orderFill)
 
     Await.result(fu4, Duration.Inf)
+
+    val fu5 = bagel.findOrderBy(order.id)
+
+    Await.result(fu5, Duration.Inf)
+
+    fu5.map { result =>
+      println(s"HERE $result")
+    }
 
     assert(true === true)
   }

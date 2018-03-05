@@ -17,10 +17,12 @@ trait TheEverythingBagelDao {
   def updateBalance(balance: Balance): Future[Option[Balance]]
 
   // orders
-  def insertOrder(order: Order): Future[Int]
+  def insert(order: Order): Future[Int]
+  def findOrderBy(id: UUID): Future[Option[Order]]
 
   // order fills
   def insert(orderfill: OrderFill): Future[Int]
+  def findOrderFillBy(id: UUID): Future[Option[OrderFill]]
 
   // manage market info
   def insert(market: Market): Future[Int]
