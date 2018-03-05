@@ -60,19 +60,19 @@ case class Order(id: UUID,
                  updatedOn: OffsetDateTime)
 
 object Order {
-  def withRandomUUID(userId: UUID,
-                     apiKeyId: UUID,
-                     exchangeName: Exchange.Value,
-                     exchangeOrderId: String,
-                     exchangeMarketName: String,
-                     marketName: String,
-                     side: OrderSide.Value,
-                     otype: OrderType.Value,
-                     price: BigDecimal,
-                     qty: BigDecimal,
-                     qtyRemaining: BigDecimal,
-                     status: OrderStatus.Value,
-                     conditions: Json) = {
+  def create(userId: UUID,
+             apiKeyId: UUID,
+             exchangeName: Exchange.Value,
+             exchangeOrderId: String,
+             exchangeMarketName: String,
+             marketName: String,
+             side: OrderSide.Value,
+             otype: OrderType.Value,
+             price: BigDecimal,
+             qty: BigDecimal,
+             qtyRemaining: BigDecimal,
+             status: OrderStatus.Value,
+             conditions: Json) = {
 
     val now = OffsetDateTime.now()
 
@@ -96,6 +96,14 @@ object Order {
   }
 }
 
+case class OrderRequest(apiKeyId: String,
+                        exchangeMarketName: String,
+                        marketName: String,
+                        side: String,
+                        otype: String,
+                        price: BigDecimal,
+                        qty: BigDecimal,
+                        conditions: Json)
 
 case class OrderFill(id: UUID,
                      orderId: UUID,
