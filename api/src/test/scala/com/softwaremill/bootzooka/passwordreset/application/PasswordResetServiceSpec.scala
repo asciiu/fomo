@@ -13,12 +13,12 @@ import com.flowy.common.models.User
 
 class PasswordResetServiceSpec extends FlatSpecWithDb with TestHelpersWithDb {
 
-  lazy val config = new PasswordResetConfig {
+  lazy val conf = new PasswordResetConfig {
     override def rootConfig = ConfigFactory.load()
   }
   val passwordResetCodeDao = new SqlPasswordResetCodeDao(sqlDatabase)
   val passwordResetService =
-    new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, config)
+    new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, conf)
 
   "sendResetCodeToUser" should "do nothing when login doesn't exist" in {
     passwordResetService.sendResetCodeToUser("Does not exist").futureValue

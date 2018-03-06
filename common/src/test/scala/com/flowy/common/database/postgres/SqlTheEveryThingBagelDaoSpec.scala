@@ -44,7 +44,7 @@ class SqlTheEveryThingBagelDaoSpec extends FlatSpec  with BeforeAndAfterAll
     val user = User.withRandomUUID("test@test", "Test", "One", "password", "pepper")
     val userApiKey = UserKey.withRandomUUID(user.id, Exchange.Test, "victoria", "secret", "model test", ApiKeyStatus.Verified)
     val conditions = parse("""{"buyConditions": "price < 2.0"}""").getOrElse(Json.Null)
-    val order = Order.withRandomUUID(user.id, userApiKey.id, Exchange.Test, "123", "test", "test", OrderSide.Buy, OrderType.Limit, 0.01,100, 0, OrderStatus.Open, conditions)
+    val order = Order.create(user.id, userApiKey.id, Exchange.Test, "123", "test", "test", OrderSide.Buy, OrderType.Limit, 0.01,100, 0, OrderStatus.Open, conditions)
     val condition = parse(""""price < 2.0"""").getOrElse(Json.Null)
     val orderFill = OrderFill.create(order.id, condition, 1.2, 2)
 

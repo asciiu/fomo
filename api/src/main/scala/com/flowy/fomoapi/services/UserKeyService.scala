@@ -24,31 +24,29 @@ class UserKeyService(bagel: TheEverythingBagelDao)(implicit system: ActorSystem,
   lazy val userBalanceService = new BalanceService(bagel)
 
   def addUserKey(userId: UUID, exchange: Exchange.Value, key: String, secret: String, description: String): Future[Either[String, UserKey]] = {
-    userKeyDao.findByKeyPair(key, secret).flatMap { optKey =>
-      optKey match {
-        case Some(key) =>
-          Future.successful(Left("user key already exists"))
-        case None =>
+    userKeyDao.findByKeyPair(key, secret).flatMap {
+      case Some(key) =>
+        Future.successful(Left("user key already exists"))
+      case None =>
 
-          getBalances(userId, Auth(defaultApiKeyId, key, secret)).map { balAuth =>
-            (balAuth.response.message, balAuth.response.result) match {
+        getBalances(userId, Auth(defaultApiKeyId, key, secret)).map { balAuth =>
+          (balAuth.response.message, balAuth.response.result) match {
 
-              case ("", Some(balances)) =>
-                val newUserKey = UserKey.withRandomUUID(userId, exchange, key, secret, description, ApiKeyStatus.Verified)
+            case ("", Some(balances)) =>
+              val newUserKey = UserKey.withRandomUUID(userId, exchange, key, secret, description, ApiKeyStatus.Verified)
 
-                userKeyDao.add(newUserKey).map { keyOpt =>
-                  if (keyOpt.isDefined) {
-                    userBalanceService.populateBalances(userId, exchange, keyOpt.get.id, balances)
-                  }
+              userKeyDao.add(newUserKey).map { keyOpt =>
+                if (keyOpt.isDefined) {
+                  userBalanceService.populateBalances(userId, exchange, keyOpt.get.id, balances)
                 }
+              }
 
-                Right(newUserKey)
+              Right(newUserKey)
 
-              case (_, _) =>
-                Left("invalid key")
-            }
+            case (_, _) =>
+              Left("invalid key")
           }
-      }
+        }
     }
   }
 

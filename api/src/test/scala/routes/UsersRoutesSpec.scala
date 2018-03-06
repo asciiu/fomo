@@ -10,7 +10,9 @@ import com.flowy.fomoapi.routes.UsersRoutes
 import com.flowy.common.api.BittrexClient
 import com.flowy.common.database.postgres.SqlTheEverythingBagelDao
 import com.flowy.common.models.{ApiKeyStatus, Exchange, UserKey}
+import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
 import com.flowy.fomoapi.services.UserKeyService
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -20,9 +22,16 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
   val routes = Route.seal(new UsersRoutes with TestRoutesSupport {
     override val userService = spec.userService
     override val bittrexClient = new BittrexClient()
+
+   // lazy val config = new DatabaseConfig {
+   //   override def rootConfig = ConfigFactory.load()
+   // }
+   // val sqlDatabase = SqlDatabase.create(config)
+
     override val bagel = new SqlTheEverythingBagelDao(sqlDatabase)
     override val userKeyService = new UserKeyService(bagel)
     override val system = ActorSystem("test")
+
   }.usersRoutes)
 
 
@@ -133,33 +142,6 @@ class UsersRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesS
     withLoggedInUser("user9@sml.com", "pass") { transform =>
       Post("/user/changepassword", Map("currentPassword" -> "hacker", "newPassword" -> "newPass")) ~> transform ~> routes ~> check {
         status should be(StatusCodes.Forbidden)
-      }
-    }
-  }
-
-  "POST /apikey" should "add a new user key" in {
-    userDao.add(newUser("user10", "10", "user10@sml.com", "pass", "salt")).futureValue
-    withLoggedInUser("user10@sml.com", "pass") { transform =>
-      Post("/user/apikey", Map("key" -> "key", "exchange" -> "test", "secret" -> "sssh", "description" -> "testy key")) ~> transform ~> routes ~> check {
-        status should be(StatusCodes.OK)
-      }
-    }
-  }
-
-  "POST /apikey" should "not add a dupe key" in {
-    val key = "key"
-    val secret = "secret_key"
-    val email = "user11@sml.com"
-    val user = newUser("user11", "11", email, "pass", "salt")
-    val userKey = UserKey.withRandomUUID(user.id, Exchange.Bittrex, key, secret, "testy", ApiKeyStatus.Added)
-
-    userDao.add(user)
-    val future = userKeyDao.add(userKey)
-    Await.ready(future, 5.second)
-
-    withLoggedInUser(email, "pass") { transform =>
-      Post("/user/apikey", Map("key" -> key, "exchange" -> "test", "secret" -> secret, "description" -> "testy key")) ~> transform ~> routes ~> check {
-        status should be(StatusCodes.Conflict)
       }
     }
   }

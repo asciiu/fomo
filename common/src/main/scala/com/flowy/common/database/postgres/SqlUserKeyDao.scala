@@ -18,7 +18,12 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   import database.driver.api._
 
   private def findOneWhere(condition: UserKeys => Rep[Boolean]) =
-    db.run(userKeys.filter(condition).result.headOption)
+    db.run(userKeys.filter(condition).result.headOption.asTry).map { result =>
+      result match {
+        case Success(thing) => thing
+        case x => None
+      }
+    }
 
   def add(key: UserKey): Future[Option[UserKey]] = {
     val query = userKeys += key
@@ -39,8 +44,18 @@ class SqlUserKeyDao (protected val database: SqlDatabase)(implicit val ec: Execu
   def findById(keyId: UUID): Future[Option[UserKey]] =
     findOneWhere(_.id === keyId)
 
-  def findByKeyPair(key: String, secret: String): Future[Option[UserKey]] =
-    findOneWhere(r => r.key === key && r.secret === secret)
+  def findByKeyPair(key: String, secret: String): Future[Option[UserKey]] = {
+    db.run(userKeys.filter(r => r.key === key && r.secret === secret).result.headOption.asTry).map { result =>
+      result match {
+        case Success(thing) =>
+          println("hello")
+          thing
+        case x =>
+          println(x)
+          None
+      }
+    }
+  }
 
   def findByUserId(userId: UUID, keyId: UUID): Future[Option[UserKey]] = {
     findOneWhere(keyR => keyR.userId === userId && keyR.id === keyId)

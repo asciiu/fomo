@@ -14,7 +14,7 @@ import com.flowy.common.models._
 import com.softwaremill.bootzooka.common.api.RoutesSupport
 import com.softwaremill.bootzooka.user.api.SessionSupport
 import com.typesafe.scalalogging.StrictLogging
-import io.circe.Json
+import io.circe.{Encoder, Json}
 import io.circe.generic.auto._
 import io.circe.syntax._
 
@@ -141,6 +141,17 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 //    }
 //  }
 
+  implicit val encodeOrder: Encoder[Order] = new Encoder[Order] {
+    final def apply(order: Order): Json = {
+      Json.obj(
+        ("id", Json.fromString(order.id.toString)),
+        ("userId", Json.fromString(order.userId.toString)),
+        ("apiKeyId", Json.fromString(order.apiKeyId.toString)),
+        ("condition", order.conditions)
+      )
+    }
+  }
+
   def postOrder = {
     post {
       userFromSession { user =>
@@ -150,8 +161,37 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
           Try(UUID.fromString(orderRequest.apiKeyId)) match {
 
             case Success(apiKeyId) =>
-              println(orderRequest)
-              val currencyName = orderRequest.marketName.split("-")(0)
+
+              // key needs to exist before submitting an order request
+              onSuccess(bagel.userKeyDao.findByUserId(user.id, apiKeyId)) {
+                case Some(key) =>
+                  // send order request
+                  println(orderRequest)
+                  // send key with order request to processor
+                  println(key)
+
+                  // send back a mock order for now
+                  val order = Order.create(
+                    user.id,
+                    apiKeyId,
+                    key.exchange,
+                    "externalOrderId",
+                    "externalMarketName",
+                    orderRequest.marketName,
+                    OrderSide.withName(orderRequest.side),
+                    OrderType.withName(orderRequest.otype),
+                    orderRequest.price,
+                    orderRequest.qty,
+                    0,
+                    OrderStatus.Pending,
+                    orderRequest.conditions)
+
+                    complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", order.asJson))
+                case None =>
+                  complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"the api key was either not found or is not longer verified", Json.Null))
+              }
+
+              //val currencyName = orderRequest.marketName.split("-")(0)
               // check base currency balance
               //onSuccess(bagel.findBalance(user.id, apiKeyId, currencyName)) {
                 //case Some(balance) if balance.availableBalance > tradeRequest.baseQuantity =>
@@ -165,8 +205,6 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
                 //case _ =>
                 //  complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user available balance is less than baseQuantity", Json.Null))
               //}
-
-              complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", Json.Null))
             case Failure(_) =>
               complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"invalid api key", Json.Null))
           }

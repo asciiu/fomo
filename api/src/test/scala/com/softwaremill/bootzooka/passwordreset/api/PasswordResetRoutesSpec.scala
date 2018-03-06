@@ -11,15 +11,18 @@ import com.flowy.fomoapi.models.PasswordResetCode
 import com.flowy.fomoapi.routes.PasswordResetRoutes
 import com.flowy.fomoapi.services.PasswordResetService
 import com.flowy.common.models.User
+import com.flowy.common.utils.sql.{DatabaseConfig, SqlDatabase}
 
 class PasswordResetRoutesSpec extends BaseRoutesSpec with TestHelpersWithDb with RoutesSupport { spec =>
 
-  lazy val config = new PasswordResetConfig {
+  //val sqlDatabase = SqlDatabase.create(config)
+  lazy val conf = new PasswordResetConfig {
     override def rootConfig = ConfigFactory.load()
   }
+
   val passwordResetCodeDao = new SqlPasswordResetCodeDao(sqlDatabase)
   val passwordResetService =
-    new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, config)
+    new PasswordResetService(userDao, passwordResetCodeDao, emailService, emailTemplatingEngine, conf)
 
   val routes = Route.seal(new PasswordResetRoutes with TestRoutesSupport {
     override val userService          = spec.userService
