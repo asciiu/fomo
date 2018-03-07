@@ -31,9 +31,11 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   // when a trade does not execute successfully you need an error log to tell you why
   val orderRoutes = logRequestResult("OrderRoutes") {
     pathPrefix("orders") {
+      deleteOrder ~
       getOrder ~
-      listOrders ~
-      postOrder
+      updateOrder ~
+      postOrder ~
+      listOrders
     }
   }
 
@@ -56,81 +58,35 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
   }
 
-//  case class MarketBasicInfo(marketName: String,
-//                             currency: String,
-//                             currencyLong: String,
-//                             baseCurrency: String,
-//                             baseCurrencyLong: String,
-//                             exchangeName: String)
-//
-//  def directory = {
-//    path("directory") {
-//      get {
-//        parameters('name.?) { name =>
-//          userFromSession { user =>
-//            implicit val timeout = Timeout(2.second)
-//            val marketResults = (bittrexService ? GetMarkets(name)).mapTo[Seq[Market]]
-//            onSuccess(marketResults) {
-//              case seq: Seq[Market] =>
-//                val info = seq.map(x =>
-//                  MarketBasicInfo(x.marketName,
-//                    x.currency,
-//                    x.currencyLong,
-//                    x.baseCurrency,
-//                    x.baseCurrencyLong,
-//                    "Bittrex"))
-//
-//                complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", info.asJson))
-//              case _ =>
-//                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "resource not available", Json.Null))
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
+  def deleteOrder = {
+    path(JavaUUID) { orderId =>
+      delete {
+        userFromSession { user =>
+          val now = OffsetDateTime.now()
+          val testOrder = Order(
+            orderId,
+            user.id,
+            UUID.randomUUID(),
+            Exchange.Test,
+            "externalOrderId",
+            "externalMarketName",
+            "marketName",
+            OrderSide.Buy,
+            OrderType.Market,
+            BigDecimal(0.01),
+            BigDecimal(100),
+            BigDecimal(0),
+            OrderStatus.Pending,
+            Json.Null,
+            now,
+            now
+          )
+          complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", testOrder.asJson))
+        }
+      }
+    }
+  }
 
-//  def deleteTrade = {
-//    path(JavaUUID) { tradeId =>
-//      delete {
-//        userFromSession { user =>
-//          onSuccess(bagel.findTradeById(tradeId)) {
-//            case Some(trade) if (trade.userId == user.id && trade.status != TradeStatus.Sold) =>
-//
-//              onSuccess( (bittrexService ? DeleteTrade(trade))(2.second).mapTo[Option[Trade]] ) {
-//                case Some(trade) =>
-//                  complete(JSendResponse(JsonStatus.Success, "", trade.asJson))
-//                case _ =>
-//                  complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
-//              }
-//            case Some(trade) if (trade.userId == user.id && trade.status == TradeStatus.Sold) =>
-//              complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "sold trades cannot be cancelled", Json.Null))
-//
-//            case _ =>
-//              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
-//          }
-//        }
-//      }
-//    }
-//  }
-
-//  def tradeHistory = {
-//    path("history") {
-//      get {
-//        parameters('marketName.?, 'exchangeName.?) { (marketNameOpt, exchangeNameOpt) =>
-//          userFromSession { user =>
-//            onSuccess(bagel.findTradeHistoryByUserId(user.id, exchangeNameOpt, marketNameOpt).mapTo[Seq[TradeHistory]]) {
-//              case history: Seq[TradeHistory] =>
-//                complete(JSendResponse(JsonStatus.Success, "", history.asJson))
-//              case _ =>
-//                complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trade history not found", Json.Null))
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//
   def listOrders = {
     get {
       parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
@@ -240,21 +196,34 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
     }
   }
 
-//  def updateTrade = {
-//    path(JavaUUID) { tradeId =>
-//      put {
-//        userFromSession { user =>
-//          entity(as[TradeRequest]) { tradeRequest =>
-//
-//            onSuccess( (bittrexService ? UpdateTrade(user, tradeId, tradeRequest))(1.second).mapTo[Option[Trade]] ) {
-//              case Some(trade) =>
-//                complete(StatusCodes.OK,  JSendResponse(JsonStatus.Success, "", trade.asJson))
-//              case None =>
-//                complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "can't update trade", Json.Null))
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
+  def updateOrder = {
+    path(JavaUUID) { orderId =>
+      put {
+        userFromSession { user =>
+          entity(as[OrderRequest]) { orderRequest =>
+            val now = OffsetDateTime.now()
+            val testOrder = Order(
+              orderId,
+              user.id,
+              UUID.randomUUID(),
+              Exchange.Test,
+              "externalOrderId",
+              "externalMarketName",
+              orderRequest.marketName,
+              OrderSide.Buy,
+              OrderType.Market,
+              BigDecimal(0.01),
+              BigDecimal(100),
+              BigDecimal(0),
+              OrderStatus.Pending,
+              Json.Null,
+              now,
+              now
+            )
+            complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", testOrder.asJson))
+          }
+        }
+      }
+    }
+  }
 }
