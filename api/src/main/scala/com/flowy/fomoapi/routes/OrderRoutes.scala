@@ -27,8 +27,6 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def bittrexService: ActorRef
   def bagel: TheEverythingBagelDao
 
-  // TODO
-  // when a trade does not execute successfully you need an error log to tell you why
   val orderRoutes = logRequestResult("OrderRoutes") {
     pathPrefix("orders") {
       deleteOrder ~
