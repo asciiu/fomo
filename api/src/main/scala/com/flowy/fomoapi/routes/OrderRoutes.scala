@@ -1,6 +1,7 @@
 package com.flowy.fomoapi.routes
 
 
+import java.time.OffsetDateTime
 import java.util.UUID
 
 import akka.actor.ActorRef
@@ -26,13 +27,32 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
   def bittrexService: ActorRef
   def bagel: TheEverythingBagelDao
 
-  import Trade._
-
   // TODO
   // when a trade does not execute successfully you need an error log to tell you why
   val orderRoutes = logRequestResult("OrderRoutes") {
     pathPrefix("orders") {
+      getOrder ~
+      listOrders ~
       postOrder
+    }
+  }
+
+  implicit val encodeOrder: Encoder[Order] = new Encoder[Order] {
+    final def apply(order: Order): Json = {
+      Json.obj(
+        ("id", Json.fromString(order.id.toString)),
+        ("apiKeyId", Json.fromString(order.apiKeyId.toString)),
+        ("exchangeName", Json.fromString(order.exchangeName.toString)),
+        ("marketName", Json.fromString(order.marketName)),
+        ("side", Json.fromString(order.side.toString)),
+        ("otype", Json.fromString(order.otype.toString)),
+        ("price", Json.fromBigDecimal(order.price)),
+        ("quantity", Json.fromBigDecimal(order.qty)),
+        ("quantityRemaining", Json.fromBigDecimal(order.qtyRemaining)),
+        ("status", Json.fromString(order.status.toString)),
+        ("conditions", order.conditions),
+        ("createdOn", Json.fromString(order.createdOn.toString))
+      )
     }
   }
 
@@ -111,44 +131,65 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
 //    }
 //  }
 //
-//  def listTrades = {
-//    get {
-//      parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
-//        userFromSession { user =>
-//          onSuccess(bagel.findTradesByUserId(user.id, marketName, exchangeName, statusIter.toList).mapTo[Seq[Trade]]) {
-//            case trades: Seq[Trade] =>
-//              complete(JSendResponse(JsonStatus.Success, "", trades.asJson))
-//            case _ =>
-//              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "user trades not found", Json.Null))
-//          }
-//        }
-//      }
-//    }
-// }
+  def listOrders = {
+    get {
+      parameters('marketName.?, 'exchangeName.?, 'status.*) { (marketName, exchangeName, statusIter) =>
+        userFromSession { user =>
+          val now = OffsetDateTime.now()
 
-//  def getOrder = {
-//    path(JavaUUID) { tradeId =>
-//      get {
-//        userFromSession { user =>
-//          onSuccess( bagel.findTradeById(tradeId).mapTo[Option[Trade]] ) {
-//            case Some(trade) =>
-//              complete(JSendResponse(JsonStatus.Success, "", trade.asJson))
-//            case _ =>
-//              complete(StatusCodes.NotFound, JSendResponse(JsonStatus.Fail, "trade not found", Json.Null))
-//          }
-//        }
-//      }
-//    }
-//  }
+          val orders = for (i <- 1 to 3) yield {
+            Order(
+              UUID.randomUUID(),
+              user.id,
+              UUID.randomUUID(),
+              Exchange.Test,
+              "externalOrderId",
+              "externalMarketName",
+              "marketName",
+              OrderSide.Buy,
+              OrderType.Market,
+              BigDecimal(0.01),
+              BigDecimal(100),
+              BigDecimal(0),
+              OrderStatus.Pending,
+              Json.Null,
+              now,
+              now
+            )
+          }
 
-  implicit val encodeOrder: Encoder[Order] = new Encoder[Order] {
-    final def apply(order: Order): Json = {
-      Json.obj(
-        ("id", Json.fromString(order.id.toString)),
-        ("userId", Json.fromString(order.userId.toString)),
-        ("apiKeyId", Json.fromString(order.apiKeyId.toString)),
-        ("condition", order.conditions)
-      )
+          complete(JSendResponse(JsonStatus.Success, "", orders.toList.asJson))
+        }
+      }
+    }
+ }
+
+  def getOrder = {
+    path(JavaUUID) { orderId =>
+      get {
+        userFromSession { user =>
+          val now = OffsetDateTime.now()
+          val testOrder = Order(
+            orderId,
+            user.id,
+            UUID.randomUUID(),
+            Exchange.Test,
+            "externalOrderId",
+            "externalMarketName",
+            "marketName",
+            OrderSide.Buy,
+            OrderType.Market,
+            BigDecimal(0.01),
+            BigDecimal(100),
+            BigDecimal(0),
+            OrderStatus.Pending,
+            Json.Null,
+            now,
+            now
+          )
+          complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", testOrder.asJson))
+        }
+      }
     }
   }
 
@@ -191,20 +232,6 @@ trait OrderRoutes extends RoutesSupport with StrictLogging with SessionSupport {
                   complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"the api key was either not found or is not longer verified", Json.Null))
               }
 
-              //val currencyName = orderRequest.marketName.split("-")(0)
-              // check base currency balance
-              //onSuccess(bagel.findBalance(user.id, apiKeyId, currencyName)) {
-                //case Some(balance) if balance.availableBalance > tradeRequest.baseQuantity =>
-
-                //  onSuccess((bittrexService ? PostTrade(user, tradeRequest)).mapTo[Option[Trade]]) {
-                //    case Some(trade) =>
-                //      complete(StatusCodes.OK, JSendResponse(JsonStatus.Success, "", trade.asJson))
-                //    case None =>
-                //      complete(StatusCodes.Conflict, JSendResponse(JsonStatus.Fail, "trade not posted", Json.Null))
-                //  }
-                //case _ =>
-                //  complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"user available balance is less than baseQuantity", Json.Null))
-              //}
             case Failure(_) =>
               complete(StatusCodes.UnprocessableEntity, JSendResponse(JsonStatus.Fail, s"invalid api key", Json.Null))
           }
